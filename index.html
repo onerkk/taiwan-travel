@@ -37,7 +37,7 @@ const Ico=({d,s=16,c="currentColor",f="none"})=><svg width={s} height={s} viewBo
 const I={pin:"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z|M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",search:"M11 17.25a6.25 6.25 0 1 1 0-12.5 6.25 6.25 0 0 1 0 12.5z|M16 16l4.5 4.5",plus:"M12 5v14|M5 12h14",check:"M20 6L9 17l-5-5",star:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",menu:"M3 12h18|M3 6h18|M3 18h18",x:"M18 6L6 18|M6 6l12 12",chevD:"M6 9l6 6 6-6",chevU:"M18 15l-6-6-6 6",map:"M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z",zap:"M13 2L3 14h9l-1 8 10-12h-9l1-8z",nav:"M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z",rotate:"M1 4v6h6|M23 20v-6h-6",trash:"M3 6h18|M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",key:"M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",eyeOff:"M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94|M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19|M1 1l22 22",compass:"M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z|M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z",sv:"M12 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z|M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2",ext:"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6|M15 3h6v6|M10 14L21 3",arrow:"M5 12h14|M12 5l7 7-7 7",reload:"M23 4v6h-6|M1 20v-6h6|M3.51 9a9 9 0 0 1 14.85-3.36L23 10|M1 14l4.64 4.36A9 9 0 0 0 20.49 15"};
 
 const AK="AIzaSyDAs-_AJ8ZEaR062P0-YlzdzawYEZzObbg";
-const REGIONS=[{n:"台北",lat:25.033,lng:121.565,desc:"首都・夜市・101",rad:12000},{n:"新北",lat:25.012,lng:121.465,desc:"九份・十分・淡水",rad:25000},{n:"基隆",lat:25.128,lng:121.739,desc:"港都・廟口夜市",rad:10000},{n:"桃園",lat:24.994,lng:121.301,desc:"大溪・拉拉山",rad:20000},{n:"新竹",lat:24.804,lng:120.968,desc:"科技城・米粉",rad:15000},{n:"苗栗",lat:24.560,lng:120.821,desc:"客家・油桐花",rad:20000},{n:"台中",lat:24.148,lng:120.674,desc:"歌劇院・高美濕地",rad:18000},{n:"彰化",lat:24.081,lng:120.539,desc:"大佛・鹿港・肉圓",rad:15000},{n:"南投",lat:23.961,lng:120.972,desc:"日月潭・清境",rad:25000},{n:"雲林",lat:23.710,lng:120.431,desc:"北港・布袋戲",rad:18000},{n:"嘉義",lat:23.480,lng:120.449,desc:"阿里山・雞肉飯",rad:20000},{n:"台南",lat:22.997,lng:120.212,desc:"古都・美食之城",rad:15000},{n:"高雄",lat:22.627,lng:120.301,desc:"港灣・駁二・旗津",rad:18000},{n:"屏東",lat:22.002,lng:120.737,desc:"墾丁・海生館",rad:30000},{n:"宜蘭",lat:24.757,lng:121.753,desc:"溫泉・太平山",rad:20000},{n:"花蓮",lat:23.977,lng:121.604,desc:"太魯閣・七星潭",rad:25000},{n:"台東",lat:22.756,lng:121.144,desc:"熱氣球・池上",rad:30000},{n:"澎湖",lat:23.571,lng:119.579,desc:"花火節・石滬",rad:20000},{n:"金門",lat:24.449,lng:118.377,desc:"戰地・高粱酒",rad:15000},{n:"馬祖",lat:26.161,lng:119.952,desc:"藍眼淚・石屋",rad:15000}];
+const REGIONS=[{n:"台北",lat:25.033,lng:121.565,desc:"首都・夜市・101",rad:12000},{n:"新北",lat:25.012,lng:121.465,desc:"九份・十分・淡水",rad:25000},{n:"基隆",lat:25.128,lng:121.739,desc:"港都・廟口夜市",rad:10000},{n:"桃園",lat:24.994,lng:121.301,desc:"大溪・拉拉山",rad:20000},{n:"新竹",lat:24.804,lng:120.968,desc:"科技城・米粉",rad:15000},{n:"苗栗",lat:24.560,lng:120.821,desc:"客家・油桐花",rad:20000},{n:"台中",lat:24.148,lng:120.674,desc:"歌劇院・高美濕地",rad:18000},{n:"彰化",lat:24.081,lng:120.539,desc:"大佛・鹿港・肉圓",rad:15000},{n:"南投",lat:23.961,lng:120.972,desc:"日月潭・清境",rad:25000},{n:"雲林",lat:23.710,lng:120.431,desc:"北港・布袋戲",rad:18000},{n:"嘉義",lat:23.480,lng:120.449,desc:"阿里山・雞肉飯",rad:20000},{n:"台南",lat:23.10,lng:120.22,desc:"古都・美食之城",rad:25000},{n:"高雄",lat:22.627,lng:120.301,desc:"港灣・駁二・旗津",rad:18000},{n:"屏東",lat:22.002,lng:120.737,desc:"墾丁・海生館",rad:30000},{n:"宜蘭",lat:24.757,lng:121.753,desc:"溫泉・太平山",rad:20000},{n:"花蓮",lat:23.977,lng:121.604,desc:"太魯閣・七星潭",rad:25000},{n:"台東",lat:22.756,lng:121.144,desc:"熱氣球・池上",rad:30000},{n:"澎湖",lat:23.571,lng:119.579,desc:"花火節・石滬",rad:20000},{n:"金門",lat:24.449,lng:118.377,desc:"戰地・高粱酒",rad:15000},{n:"馬祖",lat:26.161,lng:119.952,desc:"藍眼淚・石屋",rad:15000}];
 const CATS=[{id:"attraction",n:"景點",c:"#10b981",q:"熱門景點 旅遊景點 觀光"},{id:"food",n:"美食",c:"#f59e0b",q:"必吃美食 餐廳 小吃 夜市"},{id:"hotel",n:"住宿",c:"#6366f1",q:"飯店 旅館 民宿 住宿"}];
 const TRANS=[{id:"car",n:"自駕",e:"🚗",spd:60,gm:"driving"},{id:"scooter",n:"機車",e:"🛵",spd:40,gm:"driving"},{id:"bike",n:"腳踏車",e:"🚲",spd:15,gm:"bicycling"},{id:"walk",n:"徒步",e:"🚶",spd:4,gm:"walking"},{id:"bus",n:"公車客運",e:"🚌",spd:35,gm:"transit"},{id:"train",n:"火車高鐵",e:"🚄",spd:150,gm:"transit"}];
 
@@ -53,17 +53,29 @@ async function fetchP(key,reg,catId){
     cache.set(ck,places);return places;
   }catch(e){return[]}
 }
-const photoUrl=(photos,key)=>{if(!photos?.length||!key)return null;return`https://places.googleapis.com/v1/${photos[0].name}/media?maxHeightPx=400&maxWidthPx=640&key=${key}`};
+const pCache=new Map();
+function Photo({photos,name,apiKey}){
+  const[src,setSrc]=useState(null);const[ld,setLd]=useState(false);const tried=useRef(false);
+  useEffect(()=>{
+    if(tried.current||!photos?.length||!apiKey)return;tried.current=true;
+    const ref=photos[0].name;const ck=ref;
+    if(pCache.has(ck)){setSrc(pCache.get(ck));return}
+    (async()=>{
+      try{
+        const r=await fetch(`https://places.googleapis.com/v1/${ref}/media?maxHeightPx=400&maxWidthPx=640&key=${apiKey}&skipHttpRedirect=true`);
+        if(r.ok){const d=await r.json();if(d.photoUri){pCache.set(ck,d.photoUri);setSrc(d.photoUri);return}}
+        const fallback=`https://places.googleapis.com/v1/${ref}/media?maxHeightPx=400&maxWidthPx=640&key=${apiKey}`;
+        pCache.set(ck,fallback);setSrc(fallback);
+      }catch(e){console.warn('photo err',e)}
+    })();
+  },[photos,apiKey]);
+  const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);
+  const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
+  return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>{!ld&&src&&<div className="shimmer-bg" style={{position:"absolute",inset:0}}/>}<span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{src&&<img className={`ph${ld?" loaded":""}`} src={src} alt={name} onLoad={()=>setLd(true)} onError={()=>setLd(false)} loading="lazy" referrerPolicy="no-referrer"/>}</div>
+}
 const openNav=(n,a,m)=>window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(n+' '+a)}&travelmode=${m}`,'_blank');
 const openSV=(lat,lng)=>window.open(`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`,'_blank');
 const openM=u=>window.open(u||'https://maps.google.com','_blank');
-
-function Photo({photos,name,apiKey}){
-  const[ld,setLd]=useState(false);const url=photoUrl(photos,apiKey);
-  const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);
-  const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
-  return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>{!ld&&url&&<div className="shimmer-bg" style={{position:"absolute",inset:0}}/>}<span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{url&&<img className={`ph${ld?" loaded":""}`} src={url} alt={name} onLoad={()=>setLd(true)} onError={()=>setLd(false)} loading="lazy" referrerPolicy="no-referrer"/>}</div>
-}
 function Skel(){return <div style={{borderRadius:16,height:320,background:"#12141a",overflow:"hidden"}}><div style={{height:170,position:"relative"}}><div className="shimmer-bg" style={{position:"absolute",inset:0}}/></div><div style={{padding:14,display:"flex",flexDirection:"column",gap:10}}><div className="shimmer-bg" style={{height:12,width:"60%",borderRadius:6}}/><div className="shimmer-bg" style={{height:12,width:"80%",borderRadius:6}}/><div className="shimmer-bg" style={{height:12,width:"40%",borderRadius:6}}/></div></div>}
 
 function Card({p,catId,onAdd,added,apiKey,gm}){
@@ -109,7 +121,7 @@ function App(){
   const curT=TRANS.find(x=>x.id===transport)||TRANS[0];
   const refresh=()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);cache.delete(`${region}-${cat}`);setLoading(true);fetchP(apiKey,r,cat).then(d=>{setPlaces(d);setLoading(false)})};
 
-  const geolocate=()=>{if(!navigator.geolocation){setGeoMsg("不支援定位");return}setGeoLoading(true);setGeoMsg("");navigator.geolocation.getCurrentPosition(pos=>{let best=REGIONS[0],min=1e9;REGIONS.forEach(r=>{const d=Math.hypot(r.lat-pos.coords.latitude,r.lng-pos.coords.longitude);if(d<min){min=d;best=r}});setRegion(best.n);setGeoLoading(false);setGeoMsg(`已定位到 ${best.n}`)},()=>{setGeoLoading(false);setGeoMsg("定位失敗，請手動選擇")},{timeout:8000,enableHighAccuracy:true})};
+  const geolocate=()=>{if(!navigator.geolocation){setGeoMsg("不支援定位");return}setGeoLoading(true);setGeoMsg("");navigator.geolocation.getCurrentPosition(async pos=>{const lat=pos.coords.latitude,lng=pos.coords.longitude;try{const r=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=zh-TW&key=${apiKey}`);const d=await r.json();if(d.status==='OK'&&d.results?.length){for(const result of d.results){for(const comp of result.address_components||[]){const nm=comp.long_name;const mt=REGIONS.find(rg=>nm.includes(rg.n)||rg.n===nm.replace(/[市縣]/g,''));if(mt){setRegion(mt.n);setGeoLoading(false);setGeoMsg(`📍 ${nm}`);return}}}}}catch(e){}let best=REGIONS[0],min=1e9;REGIONS.forEach(r=>{const dd=Math.hypot(r.lat-lat,r.lng-lng);if(dd<min){min=dd;best=r}});setRegion(best.n);setGeoLoading(false);setGeoMsg(`已定位到 ${best.n}（近似）`)},()=>{setGeoLoading(false);setGeoMsg("定位失敗，請手動選擇")},{timeout:8000,enableHighAccuracy:true})};
 
   const mkPlan=(items,nd,tid)=>{const t=TRANS.find(x=>x.id===tid)||TRANS[0];const pd=Math.max(3,Math.ceil(items.length/nd));const ds=[];for(let d=0;d<nd;d++){const ch=items.slice(d*pd,(d+1)*pd);if(!ch.length)continue;const ts=["08:00","09:30","11:00","12:30","14:00","15:30","17:00","18:30"];const stops=ch.map((s,i)=>{let tn="";if(i<ch.length-1){const nx=ch[i+1];if(s.lat&&nx.lat){const km=Math.round(Math.sqrt(Math.pow((nx.lat-s.lat)*111,2)+Math.pow((nx.lng-s.lng)*111*Math.cos(s.lat*Math.PI/180),2)));tn=`${t.e} 約${Math.max(5,Math.round(km/t.spd*60))}分（${km}km）`}}return{time:ts[Math.min(i,7)],name:s.n,address:s.a||"",dur:s.category==="food"?"40-60分":"1-2小時",type:s.category,transport:tn,lat:s.lat,lng:s.lng,mapsUrl:s.mapsUrl}});ds.push({day:d+1,stops})}return{title:`${nd}日${t.n}旅行`,days:ds,gm:t.gm}};
 
