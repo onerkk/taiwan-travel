@@ -41,17 +41,28 @@ const REGIONS=[{n:"台北",lat:25.033,lng:121.565,desc:"首都・夜市・101",r
 const CATS=[{id:"attraction",n:"景點",c:"#10b981",q:"熱門景點 旅遊景點 觀光"},{id:"food",n:"美食",c:"#f59e0b",q:"必吃美食 餐廳 小吃 夜市"},{id:"hotel",n:"住宿",c:"#6366f1",q:"飯店 旅館 民宿 住宿"}];
 const TRANS=[{id:"car",n:"自駕",e:"🚗",spd:60,gm:"driving"},{id:"scooter",n:"機車",e:"🛵",spd:40,gm:"driving"},{id:"bike",n:"腳踏車",e:"🚲",spd:15,gm:"bicycling"},{id:"walk",n:"徒步",e:"🚶",spd:4,gm:"walking"},{id:"bus",n:"公車客運",e:"🚌",spd:35,gm:"transit"},{id:"train",n:"火車高鐵",e:"🚄",spd:150,gm:"transit"}];
 
-const cache=new Map();
-async function fetchP(key,reg,catId){
+const cache=new Map();const MAX_PLACES=100;const PER_PAGE=20;
+const parsePlaces=(list,catId)=>(list||[]).map(p=>({id:p.id,n:p.displayName?.text||'',a:p.formattedAddress||'',r:p.rating||0,rc:p.userRatingCount||0,lat:p.location?.latitude,lng:p.location?.longitude,d:p.editorialSummary?.text||'',photos:p.photos||[],hours:p.currentOpeningHours?.weekdayDescriptions||[],isOpen:p.currentOpeningHours?.openNow,mapsUrl:p.googleMapsUri||'',category:catId}));
+async function fetchP(key,reg,catId,onProgress){
   const ck=`${reg.n}-${catId}`;if(cache.has(ck))return cache.get(ck);
-  const cat=CATS.find(c=>c.id===catId);
+  const cat=CATS.find(c=>c.id===catId);const hdrs={'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.priceLevel'};
+  const body={textQuery:`${reg.n} ${cat.q}`,maxResultCount:PER_PAGE,languageCode:'zh-TW',locationBias:{circle:{center:{latitude:reg.lat,longitude:reg.lng},radius:reg.rad||15000}}};
+  let all=[];let pageToken=null;const maxPages=Math.ceil(MAX_PLACES/PER_PAGE);
   try{
-    const res=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.priceLevel'},body:JSON.stringify({textQuery:`${reg.n} ${cat.q}`,maxResultCount:20,languageCode:'zh-TW',locationBias:{circle:{center:{latitude:reg.lat,longitude:reg.lng},radius:reg.rad||15000}}})});
-    if(!res.ok)return[];
-    const data=await res.json();
-    const places=(data.places||[]).map(p=>({id:p.id,n:p.displayName?.text||'',a:p.formattedAddress||'',r:p.rating||0,rc:p.userRatingCount||0,lat:p.location?.latitude,lng:p.location?.longitude,d:p.editorialSummary?.text||'',photos:p.photos||[],hours:p.currentOpeningHours?.weekdayDescriptions||[],isOpen:p.currentOpeningHours?.openNow,mapsUrl:p.googleMapsUri||'',category:catId}));
-    cache.set(ck,places);return places;
-  }catch(e){return[]}
+    for(let page=0;page<maxPages;page++){
+      const reqBody=pageToken?{...body,pageToken}:{...body};
+      const res=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify(reqBody)});
+      if(!res.ok)break;
+      const data=await res.json();
+      const batch=parsePlaces(data.places,catId);
+      const seen=new Set(all.map(p=>p.id));batch.forEach(p=>{if(!seen.has(p.id))all.push(p)});
+      if(onProgress)onProgress(all.length);
+      if(!data.nextPageToken||all.length>=MAX_PLACES)break;
+      pageToken=data.nextPageToken;
+      await new Promise(r=>setTimeout(r,350));/* rate limit courtesy delay */
+    }
+    cache.set(ck,all);return all;
+  }catch(e){if(all.length){cache.set(ck,all);return all}return[]}
 }
 const pCache=new Map();
 function Photo({photos,name,apiKey}){
@@ -109,9 +120,9 @@ function Card({p,catId,onAdd,added,apiKey,gm}){
 }
 
 function App(){
-  const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[days,setDays]=useState(2);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(null);const[view,setView]=useState("explore");const[picker,setPicker]=useState(false);const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[apiKey]=useState(AK);
+  const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[days,setDays]=useState(2);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(null);const[view,setView]=useState("explore");const[picker,setPicker]=useState(false);const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[apiKey]=useState(AK);
 
-  useEffect(()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);if(!r)return;setLoading(true);fetchP(apiKey,r,cat).then(d=>{setPlaces(d);setLoading(false)})},[region,cat,apiKey]);
+  useEffect(()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);if(!r)return;setLoading(true);setLoadCount(0);fetchP(apiKey,r,cat,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)})},[region,cat,apiKey]);
 
   const filtered=search?places.filter(p=>p.n.includes(search)||p.d?.includes(search)||p.a?.includes(search)):places;
   const nameSet=new Set(itin.map(i=>i.n));
@@ -119,7 +130,7 @@ function App(){
   const rm=i=>setItin(p=>p.filter((_,x)=>x!==i));
   const mv=(i,d)=>{const j=i+d;if(j<0||j>=itin.length)return;setItin(p=>{const n=[...p];[n[i],n[j]]=[n[j],n[i]];return n})};
   const curT=TRANS.find(x=>x.id===transport)||TRANS[0];
-  const refresh=()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);cache.delete(`${region}-${cat}`);setLoading(true);fetchP(apiKey,r,cat).then(d=>{setPlaces(d);setLoading(false)})};
+  const refresh=()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);cache.delete(`${region}-${cat}`);setLoading(true);setLoadCount(0);fetchP(apiKey,r,cat,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)})};
 
   const REGION_ALIAS={"台北市":"台北","新北市":"新北","基隆市":"基隆","桃園市":"桃園","新竹市":"新竹","新竹縣":"新竹","苗栗縣":"苗栗","台中市":"台中","臺中市":"台中","彰化縣":"彰化","南投縣":"南投","雲林縣":"雲林","嘉義市":"嘉義","嘉義縣":"嘉義","台南市":"台南","臺南市":"台南","高雄市":"高雄","屏東縣":"屏東","宜蘭縣":"宜蘭","花蓮縣":"花蓮","台東縣":"台東","臺東縣":"台東","澎湖縣":"澎湖","金門縣":"金門","連江縣":"馬祖","臺北市":"台北","新北市":"新北","桃園縣":"桃園","苗栗市":"苗栗","彰化市":"彰化","南投市":"南投","雲林市":"雲林","屏東市":"屏東","宜蘭市":"宜蘭","花蓮市":"花蓮","台東市":"台東","澎湖市":"澎湖","金門市":"金門"};
   const matchRegion=(components)=>{
@@ -173,7 +184,7 @@ function App(){
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
             {CATS.map(c=>{const a=cat===c.id;return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,background:a?c.c+"18":"rgba(255,255,255,.02)",border:`1.5px solid ${a?c.c+"44":"rgba(255,255,255,.04)"}`,color:a?c.c:"#6b7280"}}>{c.n}</button>})}
             <button onClick={refresh} style={{padding:6,borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",display:"flex",alignItems:"center"}}><Ico d={I.reload} s={14}/></button>
-            <span style={{fontSize:9,color:"#444"}}>{loading?"載入中...":places.length?`${places.length} 筆即時資料`:""}</span>
+            <span style={{fontSize:9,color:"#444"}}>{loading?`載入中...${loadCount>0?` (${loadCount}筆)`:""}`:places.length?`${places.length} 筆即時資料`:""}</span>
           </div>
           <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={`搜尋${region}...`} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
           {loading?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{[1,2,3,4,5,6].map(i=><Skel key={i}/>)}</div>:filtered.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{filtered.map(p=><Card key={p.id} p={p} catId={cat} onAdd={add} added={nameSet.has(p.n)} apiKey={apiKey} gm={curT.gm}/>)}</div>:<div style={{textAlign:"center",padding:"48px 0",color:"#555"}}>沒有找到結果</div>}
