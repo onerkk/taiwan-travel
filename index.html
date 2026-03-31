@@ -9,6 +9,9 @@
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#080a0f;color:#fff;overflow-x:hidden}
@@ -23,110 +26,86 @@ img.ph{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @keyframes glow{0%,100%{box-shadow:0 0 20px rgba(16,185,129,.15)}50%{box-shadow:0 0 40px rgba(16,185,129,.3)}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
 .hero-bg{position:absolute;inset:0;overflow:hidden}
 .hero-bg::before{content:'';position:absolute;top:-30%;left:-10%;width:60%;height:60%;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.06),transparent 70%)}
 .shimmer-bg{background:linear-gradient(90deg,rgba(255,255,255,.02) 25%,rgba(255,255,255,.06) 50%,rgba(255,255,255,.02) 75%);background-size:200% 100%;animation:shimmer 1.8s infinite}
 .nav-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;font-size:10px;font-weight:700;border:none;cursor:pointer;transition:all .2s}
+.map-dot{cursor:pointer;transition:all .3s}.map-dot:hover{filter:brightness(1.3)}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const{useState,useEffect,useRef}=React;
+const{useState,useEffect,useRef,useCallback}=React;
 const Ico=({d,s=16,c="currentColor",f="none"})=><svg width={s} height={s} viewBox="0 0 24 24" fill={f} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d.split('|').map((p,i)=><path key={i} d={p}/>)}</svg>;
-const I={pin:"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z|M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",search:"M11 17.25a6.25 6.25 0 1 1 0-12.5 6.25 6.25 0 0 1 0 12.5z|M16 16l4.5 4.5",plus:"M12 5v14|M5 12h14",check:"M20 6L9 17l-5-5",star:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",menu:"M3 12h18|M3 6h18|M3 18h18",x:"M18 6L6 18|M6 6l12 12",chevD:"M6 9l6 6 6-6",chevU:"M18 15l-6-6-6 6",map:"M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z",zap:"M13 2L3 14h9l-1 8 10-12h-9l1-8z",nav:"M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z",rotate:"M1 4v6h6|M23 20v-6h-6",trash:"M3 6h18|M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",eye:"M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z|M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",compass:"M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z|M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z",sv:"M12 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z|M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2",ext:"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6|M15 3h6v6|M10 14L21 3",arrow:"M5 12h14|M12 5l7 7-7 7",reload:"M23 4v6h-6|M1 20v-6h6|M3.51 9a9 9 0 0 1 14.85-3.36L23 10|M1 14l4.64 4.36A9 9 0 0 0 20.49 15"};
+const I={pin:"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z|M12 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",search:"M11 17.25a6.25 6.25 0 1 1 0-12.5 6.25 6.25 0 0 1 0 12.5z|M16 16l4.5 4.5",plus:"M12 5v14|M5 12h14",check:"M20 6L9 17l-5-5",star:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",menu:"M3 12h18|M3 6h18|M3 18h18",x:"M18 6L6 18|M6 6l12 12",chevD:"M6 9l6 6 6-6",chevU:"M18 15l-6-6-6 6",map:"M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z",zap:"M13 2L3 14h9l-1 8 10-12h-9l1-8z",nav:"M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z",rotate:"M1 4v6h6|M23 20v-6h-6",trash:"M3 6h18|M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6",compass:"M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z|M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z",sv:"M12 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6z|M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2",ext:"M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6|M15 3h6v6|M10 14L21 3",arrow:"M5 12h14|M12 5l7 7-7 7",reload:"M23 4v6h-6|M1 20v-6h6|M3.51 9a9 9 0 0 1 14.85-3.36L23 10|M1 14l4.64 4.36A9 9 0 0 0 20.49 15",login:"M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4|M10 17l5-5-5-5|M15 12H3",logout:"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9",flag:"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z|M4 22V2",users:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2|M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z|M23 21v-2a4 4 0 0 0-3-3.87|M16 3.13a4 4 0 0 1 0 7.75"};
 
 const AK="AIzaSyDAs-_AJ8ZEaR062P0-YlzdzawYEZzObbg";
+
+/* ============================================================
+   FIREBASE 設定 — 請替換成你的 Firebase 專案資訊
+   1. https://console.firebase.google.com 建立專案
+   2. Authentication > 登入方式 > 啟用 Google
+   3. Authentication > 設定 > 已授權網域 > 加 onerkk.github.io
+   4. Firestore Database > 建立資料庫（測試模式）
+   5. 專案設定 > 你的應用程式 > 網頁 > 複製 config 貼到下面
+   ============================================================ */
+const FB_CONFIG={
+  apiKey:"AIzaSyBvqejbFgYlv27s5b_RQvDI-gkX1trHGjg",
+  authDomain:"taiwan-travel-6effd.firebaseapp.com",
+  projectId:"taiwan-travel-6effd",
+  storageBucket:"taiwan-travel-6effd.firebasestorage.app",
+  messagingSenderId:"1032819814937",
+  appId:"1:1032819814937:web:e13070aba94f0448797088"
+};
+let auth=null,db=null,fbOK=false;
+try{if(FB_CONFIG.apiKey!=="YOUR_FIREBASE_API_KEY"){firebase.initializeApp(FB_CONFIG);auth=firebase.auth();db=firebase.firestore();fbOK=true}}catch(e){console.warn("FB init err",e)}
+
 const REGIONS=[{n:"台北",lat:25.033,lng:121.565,desc:"首都・夜市・101",rad:12000},{n:"新北",lat:25.012,lng:121.465,desc:"九份・十分・淡水",rad:25000},{n:"基隆",lat:25.128,lng:121.739,desc:"港都・廟口夜市",rad:10000},{n:"桃園",lat:24.994,lng:121.301,desc:"大溪・拉拉山",rad:20000},{n:"新竹",lat:24.804,lng:120.968,desc:"科技城・米粉",rad:15000},{n:"苗栗",lat:24.560,lng:120.821,desc:"客家・油桐花",rad:20000},{n:"台中",lat:24.148,lng:120.674,desc:"歌劇院・高美濕地",rad:18000},{n:"彰化",lat:24.081,lng:120.539,desc:"大佛・鹿港・肉圓",rad:15000},{n:"南投",lat:23.961,lng:120.972,desc:"日月潭・清境",rad:25000},{n:"雲林",lat:23.710,lng:120.431,desc:"北港・布袋戲",rad:18000},{n:"嘉義",lat:23.480,lng:120.449,desc:"阿里山・雞肉飯",rad:20000},{n:"台南",lat:23.00,lng:120.22,desc:"古都・美食之城",rad:30000},{n:"高雄",lat:22.627,lng:120.301,desc:"港灣・駁二・旗津",rad:18000},{n:"屏東",lat:22.002,lng:120.737,desc:"墾丁・海生館",rad:30000},{n:"宜蘭",lat:24.757,lng:121.753,desc:"溫泉・太平山",rad:20000},{n:"花蓮",lat:23.977,lng:121.604,desc:"太魯閣・七星潭",rad:25000},{n:"台東",lat:22.756,lng:121.144,desc:"熱氣球・池上",rad:30000},{n:"澎湖",lat:23.571,lng:119.579,desc:"花火節・石滬",rad:20000},{n:"金門",lat:24.449,lng:118.377,desc:"戰地・高粱酒",rad:15000},{n:"馬祖",lat:26.161,lng:119.952,desc:"藍眼淚・石屋",rad:15000}];
 const CATS=[
   {id:"attraction",n:"景點",c:"#10b981",queries:["熱門景點 觀光","公園 風景區","古蹟 歷史建築","寺廟 宗教","博物館 展覽館"]},
-  {id:"food",n:"美食",c:"#f59e0b",queries:["必吃美食 小吃","餐廳 料理","夜市 攤販","咖啡廳 甜點","早午餐 brunch"]},
+  {id:"food",n:"美食",c:"#f59e0b",queries:["必吃美食 餐廳","小吃 夜市","咖啡 甜點","早午餐 brunch","海鮮 料理"]},
   {id:"hotel",n:"住宿",c:"#6366f1",queries:["飯店 旅館","民宿 包棟","溫泉旅館","青年旅館 背包客棧","villa 度假村"]}
 ];
 const TRANS=[{id:"car",n:"自駕",e:"🚗",spd:60,gm:"driving"},{id:"scooter",n:"機車",e:"🛵",spd:40,gm:"driving"},{id:"bike",n:"腳踏車",e:"🚲",spd:15,gm:"bicycling"},{id:"walk",n:"徒步",e:"🚶",spd:4,gm:"walking"},{id:"bus",n:"公車客運",e:"🚌",spd:35,gm:"transit"},{id:"train",n:"火車高鐵",e:"🚄",spd:150,gm:"transit"}];
+const REGION_ALIAS={"台北市":"台北","新北市":"新北","基隆市":"基隆","桃園市":"桃園","新竹市":"新竹","新竹縣":"新竹","苗栗縣":"苗栗","台中市":"台中","臺中市":"台中","彰化縣":"彰化","南投縣":"南投","雲林縣":"雲林","嘉義市":"嘉義","嘉義縣":"嘉義","台南市":"台南","臺南市":"台南","高雄市":"高雄","屏東縣":"屏東","宜蘭縣":"宜蘭","花蓮縣":"花蓮","台東縣":"台東","臺東縣":"台東","澎湖縣":"澎湖","金門縣":"金門","連江縣":"馬祖","臺北市":"台北","桃園縣":"桃園"};
+const matchRegion=(comps)=>{for(const c of comps){if(c.types?.includes("administrative_area_level_1")){const m=REGION_ALIAS[c.long_name]||REGION_ALIAS[c.short_name];if(m)return m}}for(const c of comps){const m=REGION_ALIAS[c.long_name];if(m)return m;const mt=REGIONS.find(rg=>c.long_name.includes(rg.n));if(mt)return mt.n}return null};
+const hDist=(a,b,c,d)=>{const R=6371,t=x=>x*Math.PI/180,dL=t(c-a),dN=t(d-b),s=Math.sin(dL/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))};
 
-const REGION_ALIAS={"台北市":"台北","新北市":"新北","基隆市":"基隆","桃園市":"桃園","新竹市":"新竹","新竹縣":"新竹","苗栗縣":"苗栗","台中市":"台中","臺中市":"台中","彰化縣":"彰化","南投縣":"南投","雲林縣":"雲林","嘉義市":"嘉義","嘉義縣":"嘉義","台南市":"台南","臺南市":"台南","高雄市":"高雄","屏東縣":"屏東","宜蘭縣":"宜蘭","花蓮縣":"花蓮","台東縣":"台東","臺東縣":"台東","澎湖縣":"澎湖","金門縣":"金門","連江縣":"馬祖","臺北市":"台北","桃園縣":"桃園","苗栗市":"苗栗","彰化市":"彰化","南投市":"南投","雲林市":"雲林","屏東市":"屏東","宜蘭市":"宜蘭","花蓮市":"花蓮","台東市":"台東","澎湖市":"澎湖","金門市":"金門"};
-const matchRegion=(components)=>{
-  for(const comp of components){if(comp.types?.includes("administrative_area_level_1")){const m=REGION_ALIAS[comp.long_name]||REGION_ALIAS[comp.short_name];if(m)return m}}
-  for(const comp of components){if(comp.types?.includes("administrative_area_level_2")){const m=REGION_ALIAS[comp.long_name];if(m)return m;const mt=REGIONS.find(rg=>comp.long_name.includes(rg.n));if(mt)return mt.n}}
-  for(const comp of components){const m=REGION_ALIAS[comp.long_name];if(m)return m;const mt=REGIONS.find(rg=>comp.long_name.includes(rg.n));if(mt)return mt.n}
-  return null;
-};
-
-/* ---- Multi-query fetch: 5 parallel queries x 20 = up to ~100 deduplicated results ---- */
+/* Places API */
 const cache=new Map();
-const HDRS_BASE={'Content-Type':'application/json','X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.priceLevel'};
+const HDRS_B={'Content-Type':'application/json','X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.priceLevel'};
 const parseP=(p,catId)=>({id:p.id,n:p.displayName?.text||'',a:p.formattedAddress||'',r:p.rating||0,rc:p.userRatingCount||0,lat:p.location?.latitude,lng:p.location?.longitude,d:p.editorialSummary?.text||'',photos:p.photos||[],hours:p.currentOpeningHours?.weekdayDescriptions||[],isOpen:p.currentOpeningHours?.openNow,mapsUrl:p.googleMapsUri||'',category:catId});
-const haversineDist=(lat1,lng1,lat2,lng2)=>{const R=6371,toR=x=>x*Math.PI/180,dLat=toR(lat2-lat1),dLng=toR(lng2-lng1),a=Math.sin(dLat/2)**2+Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
-
-async function fetchP(key,cLat,cLng,radius,regionName,catId,isGeo,onProgress){
-  const ck=cLat.toFixed(3)+','+cLng.toFixed(3)+'-'+catId+(isGeo?'-geo':'');
-  if(cache.has(ck))return cache.get(ck);
-  const cat=CATS.find(c=>c.id===catId);
-  const hdrs={...HDRS_BASE,'X-Goog-Api-Key':key};
-  const loc={circle:{center:{latitude:cLat,longitude:cLng},radius}};
+async function fetchP(key,cLat,cLng,radius,rName,catId,isGeo,onProg){
+  const ck=cLat.toFixed(3)+','+cLng.toFixed(3)+'-'+catId;if(cache.has(ck))return cache.get(ck);
+  const cat=CATS.find(c=>c.id===catId);const hdrs={...HDRS_B,'X-Goog-Api-Key':key};const loc={circle:{center:{latitude:cLat,longitude:cLng},radius}};
   const seen=new Set();const all=[];
-  /* GPS模式: 不帶區域名，用純關鍵字+座標搜附近；手動模式: 帶區域名搜全區 */
-  const queries=isGeo
-    ?cat.queries.map(q=>q).concat(cat.queries.slice(0,3).map(q=>regionName+' '+q))
-    :cat.queries.map(q=>regionName+' '+q);
-  const batches=await Promise.all(queries.map(async q=>{
-    try{
-      const body={textQuery:q,maxResultCount:20,languageCode:'zh-TW',locationBias:loc};
-      /* GPS模式用 locationRestriction 嚴格限制範圍 */
-      if(isGeo){delete body.locationBias;body.locationBias=loc}
-      const res=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify(body)});
-      if(!res.ok)return[];
-      const data=await res.json();
-      return(data.places||[]).map(p=>parseP(p,catId));
-    }catch(e){return[]}
-  }));
-  for(const batch of batches){
-    for(const p of batch){if(!seen.has(p.id)){seen.add(p.id);all.push(p)}}
-    if(onProgress)onProgress(all.length);
-  }
-  /* 永遠計算距離，讓前端可以切換排序 */
-  all.forEach(p=>{p._dist=(p.lat&&p.lng)?haversineDist(cLat,cLng,p.lat,p.lng):9999});
+  const qs=isGeo?cat.queries.map(q=>q).concat(cat.queries.slice(0,3).map(q=>rName+' '+q)):cat.queries.map(q=>rName+' '+q);
+  const batches=await Promise.all(qs.map(async q=>{try{const res=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:20,languageCode:'zh-TW',locationBias:loc})});if(!res.ok)return[];const d=await res.json();return(d.places||[]).map(p=>parseP(p,catId))}catch(e){return[]}}));
+  for(const b of batches){for(const p of b){if(!seen.has(p.id)){seen.add(p.id);all.push(p)}}if(onProg)onProg(all.length)}
+  all.forEach(p=>{p._dist=(p.lat&&p.lng)?hDist(cLat,cLng,p.lat,p.lng):9999});
   cache.set(ck,all);return all;
 }
-
-const pCache=new Map();
+const pC=new Map();
 function Photo({photos,name,apiKey}){
   const[src,setSrc]=useState(null);const[ld,setLd]=useState(false);const tried=useRef(false);
-  useEffect(()=>{
-    if(tried.current||!photos?.length||!apiKey)return;tried.current=true;
-    const ref=photos[0].name;
-    if(pCache.has(ref)){setSrc(pCache.get(ref));return}
-    (async()=>{
-      try{
-        const r=await fetch('https://places.googleapis.com/v1/'+ref+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey+'&skipHttpRedirect=true');
-        if(r.ok){const d=await r.json();if(d.photoUri){pCache.set(ref,d.photoUri);setSrc(d.photoUri);return}}
-        const fb='https://places.googleapis.com/v1/'+ref+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey;
-        pCache.set(ref,fb);setSrc(fb);
-      }catch(e){}
-    })();
-  },[photos,apiKey]);
-  const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);
-  const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
+  useEffect(()=>{if(tried.current||!photos?.length||!apiKey)return;tried.current=true;const ref=photos[0].name;if(pC.has(ref)){setSrc(pC.get(ref));return}(async()=>{try{const r=await fetch('https://places.googleapis.com/v1/'+ref+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey+'&skipHttpRedirect=true');if(r.ok){const d=await r.json();if(d.photoUri){pC.set(ref,d.photoUri);setSrc(d.photoUri);return}}const fb='https://places.googleapis.com/v1/'+ref+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey;pC.set(ref,fb);setSrc(fb)}catch(e){}})()},[photos,apiKey]);
+  const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
   return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}>{!ld&&src&&<div className="shimmer-bg" style={{position:"absolute",inset:0}}/>}<span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{src&&<img className={"ph"+(ld?" loaded":"")} src={src} alt={name} onLoad={()=>setLd(true)} onError={()=>setLd(false)} loading="lazy" referrerPolicy="no-referrer"/>}</div>
 }
 const openNav=(n,a,m)=>window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(n+' '+a)+'&travelmode='+m,'_blank');
 const openSV=(lat,lng)=>window.open('https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+lat+','+lng,'_blank');
 const openM=u=>window.open(u||'https://maps.google.com','_blank');
-function Skel(){return <div style={{borderRadius:16,height:320,background:"#12141a",overflow:"hidden"}}><div style={{height:170,position:"relative"}}><div className="shimmer-bg" style={{position:"absolute",inset:0}}/></div><div style={{padding:14,display:"flex",flexDirection:"column",gap:10}}><div className="shimmer-bg" style={{height:12,width:"60%",borderRadius:6}}/><div className="shimmer-bg" style={{height:12,width:"80%",borderRadius:6}}/><div className="shimmer-bg" style={{height:12,width:"40%",borderRadius:6}}/></div></div>}
-
+function Skel(){return <div style={{borderRadius:16,height:320,background:"#12141a",overflow:"hidden"}}><div style={{height:170,position:"relative"}}><div className="shimmer-bg" style={{position:"absolute",inset:0}}/></div><div style={{padding:14,display:"flex",flexDirection:"column",gap:10}}><div className="shimmer-bg" style={{height:12,width:"60%",borderRadius:6}}/><div className="shimmer-bg" style={{height:12,width:"80%",borderRadius:6}}/></div></div>}
 function Card({p,catId,onAdd,added,apiKey,gm}){
   const c=CATS.find(x=>x.id===catId)||CATS[0];const[sv,setSv]=useState(false);
-  const svUrl=p.lat&&apiKey?'https://maps.googleapis.com/maps/api/streetview?size=640x300&location='+p.lat+','+p.lng+'&fov=90&key='+apiKey:null;
   return <div className="ci" style={{background:"#12141a",borderRadius:16,overflow:"hidden",boxShadow:"0 2px 16px rgba(0,0,0,.3)"}}>
     <div style={{position:"relative",height:170,overflow:"hidden",cursor:"pointer"}} onClick={()=>openM(p.mapsUrl)}>
       <Photo photos={p.photos} name={p.n} apiKey={apiKey}/>
       <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,#12141a 0%,rgba(18,20,26,.2) 50%,transparent 100%)"}}/>
       {p.r>0&&<div style={{position:"absolute",top:10,right:10,display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:20,background:"rgba(0,0,0,.6)"}}><Ico d={I.star} s={10} c="#fbbf24" f="#fbbf24"/><span style={{fontSize:11,fontWeight:700}}>{p.r}</span>{p.rc>0&&<span style={{fontSize:9,color:"#888"}}>({p.rc>999?(p.rc/1000).toFixed(1)+'k':p.rc})</span>}</div>}
-      <div style={{position:"absolute",top:10,left:10,display:"flex",gap:4}}>
-        <span style={{padding:"3px 10px",borderRadius:20,background:c.c+"99",fontSize:9,fontWeight:700}}>{c.n}</span>
-        {p.isOpen!=null&&<span style={{padding:"3px 8px",borderRadius:20,background:p.isOpen?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)",fontSize:9,fontWeight:700,color:p.isOpen?"#10b981":"#ef4444"}}>{p.isOpen?"營業中":"已休息"}</span>}
-      </div>
+      <div style={{position:"absolute",top:10,left:10,display:"flex",gap:4}}><span style={{padding:"3px 10px",borderRadius:20,background:c.c+"99",fontSize:9,fontWeight:700}}>{c.n}</span>{p.isOpen!=null&&<span style={{padding:"3px 8px",borderRadius:20,background:p.isOpen?"rgba(16,185,129,.25)":"rgba(239,68,68,.25)",fontSize:9,fontWeight:700,color:p.isOpen?"#10b981":"#ef4444"}}>{p.isOpen?"營業中":"已休息"}</span>}</div>
       <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 14px 10px"}}><h3 style={{fontSize:17,fontWeight:900,textShadow:"0 2px 8px rgba(0,0,0,.7)"}}>{p.n}</h3></div>
     </div>
     <div style={{padding:"8px 14px 14px",display:"flex",flexDirection:"column",gap:7}}>
@@ -135,120 +114,129 @@ function Card({p,catId,onAdd,added,apiKey,gm}){
       {p.hours?.length>0&&<details style={{fontSize:10,color:"#555"}}><summary style={{cursor:"pointer",color:"#777"}}>📅 營業時間</summary><div style={{padding:"6px 0",lineHeight:1.8}}>{p.hours.map((h,i)=><div key={i}>{h}</div>)}</div></details>}
       <div style={{display:"flex",alignItems:"center",gap:6,paddingTop:8,borderTop:"1px solid rgba(255,255,255,.04)",flexWrap:"wrap"}}>
         <button className="nav-btn" onClick={()=>openNav(p.n,p.a,gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa"}}><Ico d={I.compass} s={11} c="#60a5fa"/>導航</button>
-        {p.lat&&apiKey&&<button className="nav-btn" onClick={()=>setSv(!sv)} style={{background:sv?"rgba(168,85,247,.2)":"rgba(168,85,247,.1)",color:"#a855f7"}}><Ico d={I.sv} s={11} c="#a855f7"/>{sv?"收起":"街景"}</button>}
+        {p.lat&&apiKey&&<button className="nav-btn" onClick={()=>setSv(!sv)} style={{background:"rgba(168,85,247,.1)",color:"#a855f7"}}><Ico d={I.sv} s={11} c="#a855f7"/>{sv?"收起":"街景"}</button>}
         {p.mapsUrl&&<button className="nav-btn" onClick={()=>openM(p.mapsUrl)} style={{background:"rgba(255,255,255,.04)",color:"#888"}}><Ico d={I.ext} s={10} c="#888"/>地圖</button>}
         <div style={{flex:1}}/>
         <button onClick={()=>onAdd(p,catId)} disabled={added} style={{display:"flex",alignItems:"center",gap:4,padding:"7px 12px",borderRadius:10,fontSize:11,fontWeight:700,background:added?"rgba(255,255,255,.04)":c.c,color:added?"#555":"#fff"}}>{added?<><Ico d={I.check} s={10}/>已加入</>:<><Ico d={I.plus} s={10}/>加入</>}</button>
       </div>
-      {sv&&svUrl&&<div style={{position:"relative",width:"100%",paddingTop:"50%",borderRadius:12,overflow:"hidden",background:"#111",marginTop:8}}><img src={svUrl} alt="Street View" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} referrerPolicy="no-referrer" onError={e=>{e.target.parentElement.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#555">此位置無街景</div>'}}/><button onClick={()=>openSV(p.lat,p.lng)} style={{position:"absolute",bottom:6,right:6,padding:"4px 10px",borderRadius:6,background:"rgba(0,0,0,.6)",color:"#fff",fontSize:9,fontWeight:700,border:"none"}}><Ico d={I.ext} s={10}/>全景</button></div>}
+      {sv&&p.lat&&<div style={{position:"relative",width:"100%",paddingTop:"50%",borderRadius:12,overflow:"hidden",background:"#111",marginTop:8}}><img src={'https://maps.googleapis.com/maps/api/streetview?size=640x300&location='+p.lat+','+p.lng+'&fov=90&key='+apiKey} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} referrerPolicy="no-referrer" onError={e=>{e.target.parentElement.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#555">無街景</div>'}}/><button onClick={()=>openSV(p.lat,p.lng)} style={{position:"absolute",bottom:6,right:6,padding:"4px 10px",borderRadius:6,background:"rgba(0,0,0,.6)",color:"#fff",fontSize:9,fontWeight:700,border:"none"}}><Ico d={I.ext} s={10}/>全景</button></div>}
     </div>
   </div>
 }
 
+/* ======= 台灣地圖 ======= */
+const TW_PATH="M354,42 L422,74 L406,130 L380,230 L360,306 L320,400 L280,480 L260,550 L216,630 L210,720 L180,700 L100,600 L94,574 L80,500 L84,440 L90,380 L120,320 L150,270 L170,210 L200,150 L230,110 L280,80 L330,60 Z";
+const proj=(lat,lng)=>({x:(lng-119.8)*200,y:(25.5-lat)*200});
+const islandXY={澎湖:{x:22,y:420},金門:{x:22,y:300},馬祖:{x:22,y:120}};
+const mapXY=r=>islandXY[r.n]||proj(r.lat,r.lng);
+
+function TaiwanMap({ck,online,me,onCk,geo,nearest}){
+  const mx=Math.max(1,...Object.values(ck||{}));
+  const[sel,setSel]=useState(null);
+  const color=(cnt)=>{if(!cnt)return"rgba(255,255,255,.06)";const t=Math.min(cnt/mx,1);return `rgba(16,185,129,${(.2+t*.8).toFixed(2)})`};
+  return <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+    <svg viewBox="0 20 460 720" style={{width:"100%",maxWidth:380}}>
+      <defs><filter id="gl"><feGaussianBlur stdDeviation="4" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="dg"><stop offset="0%" stopColor="#10b981" stopOpacity=".3"/><stop offset="100%" stopColor="#10b981" stopOpacity="0"/></radialGradient></defs>
+      <path d={TW_PATH} fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.06)" strokeWidth="1.5"/>
+      {["澎湖","金門","馬祖"].map(n=>{const p=islandXY[n];return <rect key={n} x={p.x-16} y={p.y-16} width={32} height={32} rx={8} fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.05)" strokeWidth=".5"/>})}
+      {REGIONS.map(r=>{const p=mapXY(r);const cnt=ck?.[r.n]||0;const sz=cnt?Math.min(8+cnt*1.5,22):7;const isSel=sel===r.n;return <g key={r.n} className="map-dot" onClick={()=>setSel(isSel?null:r.n)}>
+        {cnt>0&&<circle cx={p.x} cy={p.y} r={sz+10} fill="url(#dg)" opacity={Math.min(cnt/mx,1)}/>}
+        <circle cx={p.x} cy={p.y} r={sz} fill={color(cnt)} stroke={cnt?"#10b981":"rgba(255,255,255,.1)"} strokeWidth={cnt?1.5:.5} filter={cnt>3?"url(#gl)":"none"}/>
+        {cnt>0&&<text x={p.x} y={p.y+1} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={sz>12?10:7} fontWeight="900">{cnt}</text>}
+        <text x={p.x} y={p.y+sz+11} textAnchor="middle" fill={isSel?"#10b981":"rgba(255,255,255,.25)"} fontSize="9" fontWeight="700">{r.n}</text>
+      </g>})}
+      {(online||[]).filter(u=>u.lat&&u.lng).map(u=>{const p=proj(u.lat,u.lng);return <g key={u.uid}>
+        <circle cx={p.x} cy={p.y} r={13} fill="none" stroke="#10b981" strokeWidth="1.5" opacity=".5" style={{animation:"pulse 2s ease-in-out infinite"}}/>
+        <clipPath id={"a"+u.uid}><circle cx={p.x} cy={p.y} r={10}/></clipPath>
+        {u.photo?<image href={u.photo} x={p.x-10} y={p.y-10} width={20} height={20} clipPath={"url(#a"+u.uid+")"}/>:<circle cx={p.x} cy={p.y} r={10} fill="#1a1d24"/>}
+        <text x={p.x} y={p.y+20} textAnchor="middle" fill="#10b981" fontSize="7" fontWeight="700">{(u.name||"").slice(0,4)}</text>
+      </g>})}
+      {geo&&me&&(()=>{const p=proj(geo.lat,geo.lng);return <g>
+        <circle cx={p.x} cy={p.y} r={15} fill="none" stroke="#f59e0b" strokeWidth="2" style={{animation:"pulse 2s ease-in-out infinite"}}/>
+        <clipPath id="mav"><circle cx={p.x} cy={p.y} r={11}/></clipPath>
+        {me.photoURL?<image href={me.photoURL} x={p.x-11} y={p.y-11} width={22} height={22} clipPath="url(#mav)"/>:<circle cx={p.x} cy={p.y} r={11} fill="#f59e0b"/>}
+        <text x={p.x} y={p.y+22} textAnchor="middle" fill="#f59e0b" fontSize="8" fontWeight="900">我</text>
+      </g>})()}
+    </svg>
+    {sel&&<div className="fi" style={{width:"100%",padding:14,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.06)"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><h3 style={{fontSize:18,fontWeight:900}}>{sel}</h3><span style={{fontSize:11,color:"#10b981",fontWeight:700}}>{ck?.[sel]||0} 次</span></div>
+      <p style={{fontSize:11,color:"#555",marginBottom:10}}>{REGIONS.find(r=>r.n===sel)?.desc}</p>
+      {nearest===sel&&me?<button onClick={()=>{onCk(sel);setSel(null)}} style={{width:"100%",padding:12,borderRadius:10,fontSize:13,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none"}}><Ico d={I.flag} s={14} f="white" c="white"/> 打卡</button>:nearest!==sel?<p style={{fontSize:10,color:"#444",textAlign:"center"}}>需在{sel}附近才能打卡</p>:!me&&<p style={{fontSize:10,color:"#f59e0b",textAlign:"center"}}>請先登入</p>}
+    </div>}
+    <div style={{display:"flex",gap:12,fontSize:9,color:"#555"}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}/>未到訪</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.4)"}}/>去過</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>常去</span></div>
+  </div>
+}
+
+/* ======= APP ======= */
 function App(){
-  const[region,setRegion]=useState(null);
-  const[cat,setCat]=useState("attraction");
-  const[search,setSearch]=useState("");
-  const[places,setPlaces]=useState([]);
-  const[loading,setLoading]=useState(false);
-  const[loadCount,setLoadCount]=useState(0);
-  const[itin,setItin]=useState([]);
-  const[sidebar,setSidebar]=useState(false);
-  const[days,setDays]=useState(2);
-  const[transport,setTransport]=useState("car");
-  const[plan,setPlan]=useState(null);
-  const[view,setView]=useState("explore");
-  const[picker,setPicker]=useState(false);
-  const[geoLoading,setGeoLoading]=useState(false);
-  const[geoMsg,setGeoMsg]=useState("");
-  const[apiKey]=useState(AK);
-  const[userLoc,setUserLoc]=useState(null);
-  const[sortMode,setSortMode]=useState("dist");/* "dist" | "rating" */
+  const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[days,setDays]=useState(2);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(null);const[view,setView]=useState("explore");const[picker,setPicker]=useState(false);const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[apiKey]=useState(AK);const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");
+  const[user,setUser]=useState(null);const[checkins,setCheckins]=useState({});const[online,setOnline]=useState([]);const[ckMsg,setCkMsg]=useState("");const[recent,setRecent]=useState([]);
 
-  useEffect(()=>{
-    if(!region||!apiKey)return;
-    const r=REGIONS.find(x=>x.n===region);if(!r)return;
-    const useLoc=userLoc&&userLoc.region===region;
-    const cLat=useLoc?userLoc.lat:r.lat;
-    const cLng=useLoc?userLoc.lng:r.lng;
-    const rad=useLoc?15000:(r.rad||15000);
-    setLoading(true);setLoadCount(0);
-    fetchP(apiKey,cLat,cLng,rad,region,cat,useLoc,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)});
-  },[region,cat,apiKey,userLoc]);
+  /* Auth */
+  useEffect(()=>{if(!fbOK)return;return auth.onAuthStateChanged(u=>{setUser(u);if(u&&db)db.collection("checkins").doc(u.uid).get().then(d=>{if(d.exists)setCheckins(d.data().regions||{})})})},[]);
+  const signIn=async()=>{if(!fbOK){alert("請先在程式碼中設定 Firebase config");return}try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){}};
+  const signOut=async()=>{if(auth){if(user&&db)try{await db.collection("online").doc(user.uid).delete()}catch(e){}auth.signOut()}};
 
-  const filtered=(()=>{const f=search?places.filter(p=>p.n.includes(search)||p.d?.includes(search)||p.a?.includes(search)):[...places];if(sortMode==="dist")f.sort((a,b)=>(a._dist||9999)-(b._dist||9999));else f.sort((a,b)=>{const diff=(b.r*Math.log10(b.rc+1))-(a.r*Math.log10(a.rc+1));return diff!==0?diff:(a._dist||9999)-(b._dist||9999)});return f})();
-  const nameSet=new Set(itin.map(i=>i.n));
-  const add=(p,c)=>{if(nameSet.has(p.n))return;setItin(prev=>[...prev,{...p,category:c,_region:region,id:Date.now()}])};
-  const rm=i=>setItin(p=>p.filter((_,x)=>x!==i));
-  const mv=(i,d)=>{const j=i+d;if(j<0||j>=itin.length)return;setItin(p=>{const n=[...p];[n[i],n[j]]=[n[j],n[i]];return n})};
-  const curT=TRANS.find(x=>x.id===transport)||TRANS[0];
+  /* Presence */
+  useEffect(()=>{if(!fbOK||!user||!db)return;const ref=db.collection("online").doc(user.uid);ref.set({uid:user.uid,name:user.displayName||"旅人",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});return()=>{ref.delete().catch(()=>{})}},[user]);
+  useEffect(()=>{if(user&&db&&userLoc)db.collection("online").doc(user.uid).update({lat:userLoc.lat,lng:userLoc.lng,ts:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{})},[userLoc]);
 
-  const refresh=()=>{
-    if(!region||!apiKey)return;
-    const r=REGIONS.find(x=>x.n===region);
-    const useLoc=userLoc&&userLoc.region===region;
-    const cLat=useLoc?userLoc.lat:r.lat;
-    const cLng=useLoc?userLoc.lng:r.lng;
-    const prefix=cLat.toFixed(3)+','+cLng.toFixed(3)+'-';
-    for(const k of cache.keys()){if(k.startsWith(prefix))cache.delete(k)}
-    const rad=useLoc?15000:(r.rad||15000);
-    setLoading(true);setLoadCount(0);
-    fetchP(apiKey,cLat,cLng,rad,region,cat,useLoc,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)});
+  /* Listen online users */
+  useEffect(()=>{if(!fbOK||!db)return;const unsub=db.collection("online").onSnapshot(snap=>{const u=[];snap.forEach(d=>{const x=d.data();if(!user||x.uid!==user?.uid)u.push(x)});setOnline(u)});return()=>unsub()},[user]);
+
+  /* Listen recent checkins */
+  useEffect(()=>{if(!fbOK||!db)return;const unsub=db.collection("recent_checkins").orderBy("ts","desc").limit(30).onSnapshot(snap=>{const l=[];snap.forEach(d=>l.push({id:d.id,...d.data()}));setRecent(l)});return()=>unsub()},[]);
+
+  /* Check in */
+  const doCheckin=async(rName)=>{
+    if(!user||!db)return;
+    const nc=(checkins[rName]||0)+1;const nck={...checkins,[rName]:nc};setCheckins(nck);
+    try{await db.collection("checkins").doc(user.uid).set({regions:nck,name:user.displayName,photo:user.photoURL},{merge:true})}catch(e){}
+    const data={uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",region:rName,lat:userLoc?.lat||0,lng:userLoc?.lng||0,ts:firebase.firestore.FieldValue.serverTimestamp(),companions:[]};
+    /* Companion detection: same region + within 1km + last 30min */
+    const pals=recent.filter(c=>c.region===rName&&c.uid!==user.uid&&c.lat&&userLoc?.lat&&hDist(c.lat,c.lng,userLoc.lat,userLoc.lng)<1);
+    if(pals.length){
+      data.companions=pals.map(c=>({uid:c.uid,name:c.name}));
+      for(const p of pals)try{await db.collection("recent_checkins").doc(p.id).update({companions:firebase.firestore.FieldValue.arrayUnion({uid:user.uid,name:user.displayName})})}catch(e){}
+      setCkMsg("🎉 "+rName+" 打卡！與 "+pals.map(c=>c.name).join("、")+" 同行！");
+    }else setCkMsg("✅ "+rName+" 第 "+nc+" 次打卡！");
+    try{await db.collection("recent_checkins").add(data)}catch(e){}
+    setTimeout(()=>setCkMsg(""),4000);
   };
 
-  const geolocate=()=>{
-    if(!navigator.geolocation){setGeoMsg("不支援定位");return}
-    setGeoLoading(true);setGeoMsg("");
-    navigator.geolocation.getCurrentPosition(async pos=>{
-      const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy;
-      let district="",foundRegion=null;
-      try{
-        const r=await fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+lng+'&language=zh-TW&key='+apiKey);
-        const d=await r.json();
-        if(d.status==='OK'&&d.results?.length){
-          for(const result of d.results){
-            const comps=result.address_components||[];
-            for(const c of comps){
-              if(!district&&(c.types?.includes("administrative_area_level_3")||c.types?.includes("administrative_area_level_2")||c.types?.includes("locality")||c.types?.includes("sublocality_level_1")))
-                district=c.long_name;
-            }
-            if(!foundRegion)foundRegion=matchRegion(comps);
-          }
-        }
-      }catch(e){}
-      if(!foundRegion){
-        const toRad=x=>x*Math.PI/180;let best=REGIONS[0],min=1e9;
-        REGIONS.forEach(r=>{const dLat=toRad(r.lat-lat),dLng=toRad(r.lng-lng);const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat))*Math.cos(toRad(r.lat))*Math.sin(dLng/2)**2;const km=6371*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));if(km<min){min=km;best=r}});
-        foundRegion=best.n;
-      }
-      setUserLoc({lat,lng,region:foundRegion,district,accuracy:Math.round(acc)});
-      setRegion(foundRegion);
-      setGeoLoading(false);
-      const locStr=district?foundRegion+' · '+district:foundRegion;
-      setGeoMsg('📍 '+locStr+'（精度 ±'+Math.round(acc)+'m）');
-    },err=>{
-      setGeoLoading(false);
-      setGeoMsg(err.code===1?"請允許定位權限後重試":err.code===3?"定位逾時，請確認 GPS 後重試":"定位失敗，請手動選擇");
-    },{timeout:15000,enableHighAccuracy:true,maximumAge:0});
-  };
+  const nearest=userLoc?REGIONS.reduce((b,r)=>{const d=hDist(userLoc.lat,userLoc.lng,r.lat,r.lng);return d<b.d?{n:r.n,d}:b},{n:"",d:1e9}):null;
+  const nearName=nearest&&nearest.d<30?nearest.n:null;
+  const totalCk=Object.values(checkins).reduce((a,b)=>a+b,0);
+  const visitedN=Object.values(checkins).filter(v=>v>0).length;
 
+  /* Explore */
+  useEffect(()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);if(!r)return;const uL=userLoc&&userLoc.region===region;const cLat=uL?userLoc.lat:r.lat;const cLng=uL?userLoc.lng:r.lng;const rad=uL?15000:(r.rad||15000);setLoading(true);setLoadCount(0);fetchP(apiKey,cLat,cLng,rad,region,cat,uL,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)})},[region,cat,apiKey,userLoc]);
+  const filtered=(()=>{const f=search?places.filter(p=>p.n.includes(search)||p.d?.includes(search)||p.a?.includes(search)):[...places];if(sortMode==="dist")f.sort((a,b)=>(a._dist||9999)-(b._dist||9999));else f.sort((a,b)=>{const d=(b.r*Math.log10(b.rc+1))-(a.r*Math.log10(a.rc+1));return d||((a._dist||9999)-(b._dist||9999))});return f})();
+  const nameSet=new Set(itin.map(i=>i.n));const add=(p,c)=>{if(nameSet.has(p.n))return;setItin(prev=>[...prev,{...p,category:c,_region:region,id:Date.now()}])};const rm=i=>setItin(p=>p.filter((_,x)=>x!==i));const mv=(i,d)=>{const j=i+d;if(j<0||j>=itin.length)return;setItin(p=>{const n=[...p];[n[i],n[j]]=[n[j],n[i]];return n})};const curT=TRANS.find(x=>x.id===transport)||TRANS[0];
+  const refresh=()=>{if(!region||!apiKey)return;const r=REGIONS.find(x=>x.n===region);const uL=userLoc&&userLoc.region===region;const cLat=uL?userLoc.lat:r.lat;const cLng=uL?userLoc.lng:r.lng;for(const k of cache.keys())if(k.startsWith(cLat.toFixed(3)))cache.delete(k);const rad=uL?15000:(r.rad||15000);setLoading(true);setLoadCount(0);fetchP(apiKey,cLat,cLng,rad,region,cat,uL,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)})};
+  const geolocate=()=>{if(!navigator.geolocation){setGeoMsg("不支援定位");return}setGeoLoading(true);setGeoMsg("");navigator.geolocation.getCurrentPosition(async pos=>{const lat=pos.coords.latitude,lng=pos.coords.longitude,acc=pos.coords.accuracy;let district="",found=null;try{const r=await fetch('https://maps.googleapis.com/maps/api/geocode/json?latlng='+lat+','+lng+'&language=zh-TW&key='+apiKey);const d=await r.json();if(d.status==='OK'&&d.results?.length)for(const res of d.results){const comps=res.address_components||[];for(const c of comps)if(!district&&(c.types?.includes("administrative_area_level_3")||c.types?.includes("locality")||c.types?.includes("sublocality_level_1")))district=c.long_name;if(!found)found=matchRegion(comps)}}catch(e){}if(!found){let best=REGIONS[0],min=1e9;REGIONS.forEach(r=>{const d=hDist(lat,lng,r.lat,r.lng);if(d<min){min=d;best=r}});found=best.n}setUserLoc({lat,lng,region:found,district,accuracy:Math.round(acc)});setRegion(found);setGeoLoading(false);setGeoMsg('📍 '+(district?found+' · '+district:found)+'（±'+Math.round(acc)+'m）')},err=>{setGeoLoading(false);setGeoMsg(err.code===1?"請允許定位權限":"定位失敗")},{timeout:15000,enableHighAccuracy:true,maximumAge:0})};
   const mkPlan=(items,nd,tid)=>{const t=TRANS.find(x=>x.id===tid)||TRANS[0];const pd=Math.max(3,Math.ceil(items.length/nd));const ds=[];for(let d=0;d<nd;d++){const ch=items.slice(d*pd,(d+1)*pd);if(!ch.length)continue;const ts=["08:00","09:30","11:00","12:30","14:00","15:30","17:00","18:30"];const stops=ch.map((s,i)=>{let tn="";if(i<ch.length-1){const nx=ch[i+1];if(s.lat&&nx.lat){const km=Math.round(Math.sqrt(Math.pow((nx.lat-s.lat)*111,2)+Math.pow((nx.lng-s.lng)*111*Math.cos(s.lat*Math.PI/180),2)));tn=t.e+' 約'+Math.max(5,Math.round(km/t.spd*60))+'分（'+km+'km）'}}return{time:ts[Math.min(i,7)],name:s.n,address:s.a||"",dur:s.category==="food"?"40-60分":"1-2小時",type:s.category,transport:tn,lat:s.lat,lng:s.lng,mapsUrl:s.mapsUrl}});ds.push({day:d+1,stops})}return{title:nd+'日'+t.n+'旅行',days:ds,gm:t.gm}};
+  const tc={attraction:{c:"#10b981",i:"🏛"},food:{c:"#f59e0b",i:"🍽"},hotel:{c:"#6366f1",i:"🏨"}};
+  const locLabel=userLoc&&userLoc.region===region&&userLoc.district?region+' · '+userLoc.district:region;
 
+  /* ========== 首頁 ========== */
   if(!region)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}}><div className="hero-bg"/><div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",position:"relative",zIndex:1}}>
+    <div style={{position:"absolute",top:12,right:16}}>{user?<div style={{display:"flex",alignItems:"center",gap:8}}><img src={user.photoURL} style={{width:28,height:28,borderRadius:"50%",border:"2px solid #10b981"}} referrerPolicy="no-referrer"/><button onClick={signOut} style={{padding:"4px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#666",background:"rgba(255,255,255,.04)"}}><Ico d={I.logout} s={10}/>登出</button></div>:<button onClick={signIn} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",borderRadius:10,fontSize:12,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}><Ico d={I.login} s={14}/>Google 登入</button>}</div>
     <div className="fu" style={{textAlign:"center",marginBottom:28}}>
-      <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 14px",borderRadius:20,background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)",color:"#10b981",fontSize:11,fontWeight:700,marginBottom:20,animation:"float 4s ease-in-out infinite"}}>✨ Google Places API 即時資料 ・ 導航 ・ 街景</div>
+      <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"6px 14px",borderRadius:20,background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)",color:"#10b981",fontSize:11,fontWeight:700,marginBottom:20,animation:"float 4s ease-in-out infinite"}}>✨ 即時景點 ・ 打卡地圖 ・ 好友同行</div>
       <h1 style={{fontSize:48,fontWeight:900,letterSpacing:-2,lineHeight:1.1}}><span style={{background:"linear-gradient(135deg,#10b981,#14b8a6,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>台灣</span>旅遊通</h1>
-      <p style={{color:"#555",fontSize:14,marginTop:12,lineHeight:1.6}}>即時抓取 Google 最新景點・美食・住宿<br/>實景照片 ・ 一鍵導航 ・ 街景預覽 ・ 智慧排程</p>
+      <p style={{color:"#555",fontSize:14,marginTop:12,lineHeight:1.6}}>即時景點・美食・住宿<br/>打卡地圖 ・ 好友定位 ・ 同行偵測</p>
+      {user&&totalCk>0&&<p style={{fontSize:12,color:"#10b981",marginTop:8}}>🏆 {totalCk} 次打卡 ・ {visitedN}/{REGIONS.length} 縣市</p>}
     </div>
     <button className="fu" onClick={geolocate} disabled={geoLoading} style={{animationDelay:".12s",display:"flex",alignItems:"center",gap:8,padding:"14px 28px",borderRadius:16,background:"linear-gradient(135deg,#10b981,#0d9488)",color:"#fff",fontSize:15,fontWeight:700,boxShadow:"0 8px 32px rgba(16,185,129,.25)",marginBottom:8,animation:"glow 3s ease-in-out infinite"}}>{geoLoading?<span style={{width:18,height:18,border:"2.5px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.nav} s={18} f="white" c="white"/>}{geoLoading?"定位中...":"📍 使用目前位置"}</button>
     {geoMsg&&<p className="fi" style={{fontSize:12,color:geoMsg.includes("📍")?"#10b981":"#f59e0b",marginBottom:8}}>{geoMsg}</p>}
     <p className="fu" style={{animationDelay:".2s",fontSize:11,color:"#444",letterSpacing:3,marginTop:16,marginBottom:12}}>或選擇目的地</p>
-    <div className="fu" style={{animationDelay:".25s",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,maxWidth:440,width:"100%"}}>{REGIONS.map(r=><button key={r.n} onClick={()=>{setUserLoc(null);setRegion(r.n)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"12px 4px",borderRadius:14,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:16,fontWeight:900}}>{r.n}</span><span style={{fontSize:8,color:"#555"}}>{r.desc}</span></button>)}</div>
+    <div className="fu" style={{animationDelay:".25s",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,maxWidth:440,width:"100%"}}>{REGIONS.map(r=><button key={r.n} onClick={()=>{setUserLoc(null);setRegion(r.n)}} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"12px 4px",borderRadius:14,background:checkins[r.n]?"rgba(16,185,129,.06)":"rgba(255,255,255,.02)",border:"1px solid "+(checkins[r.n]?"rgba(16,185,129,.15)":"rgba(255,255,255,.06)"),color:"#ccc",transition:"all .25s",position:"relative"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}><span style={{fontSize:16,fontWeight:900}}>{r.n}</span><span style={{fontSize:8,color:"#555"}}>{r.desc}</span>{checkins[r.n]>0&&<span style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{checkins[r.n]}</span>}</button>)}</div>
   </div></div>;
 
-  const tc={attraction:{c:"#10b981",i:"🏛"},food:{c:"#f59e0b",i:"🍽"},hotel:{c:"#6366f1",i:"🏨"}};
-  const locLabel=userLoc&&userLoc.region===region&&userLoc.district?region+' · '+userLoc.district:region;
+  /* ========== 主頁 ========== */
   return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+    {ckMsg&&<div className="fi" style={{position:"fixed",top:56,left:"50%",transform:"translateX(-50%)",zIndex:100,padding:"12px 24px",borderRadius:14,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",boxShadow:"0 8px 32px rgba(0,0,0,.5)",fontSize:13,fontWeight:700,color:"#10b981",whiteSpace:"nowrap"}}>{ckMsg}</div>}
     <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,10,15,.93)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
       <div style={{maxWidth:1200,margin:"0 auto",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -258,31 +246,45 @@ function App(){
           </div>
         </div>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
-          {["explore","plan"].map(v=><button key={v} onClick={()=>{setView(v);setPicker(false)}} style={{padding:"5px 14px",borderRadius:8,fontSize:11,fontWeight:700,background:view===v?"#10b981":"transparent",color:view===v?"#fff":"#555",border:"none"}}>{v==="explore"?"探索":"行程"}</button>)}
+          {["explore","map","plan"].map(v=><button key={v} onClick={()=>{setView(v);setPicker(false)}} style={{padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:700,background:view===v?"#10b981":"transparent",color:view===v?"#fff":"#555",border:"none"}}>{v==="explore"?"探索":v==="map"?"地圖":"行程"}</button>)}
+          {user?<img src={user.photoURL} onClick={signOut} style={{width:24,height:24,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer",marginLeft:4}} referrerPolicy="no-referrer" title="登出"/>:<button onClick={signIn} style={{padding:"4px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)",marginLeft:4}}>登入</button>}
           <button onClick={()=>{setSidebar(!sidebar);setPicker(false)}} style={{position:"relative",padding:6,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:18,height:18,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:9,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
         </div>
       </div>
     </div>
     {picker&&<div style={{position:"fixed",inset:0,zIndex:40}} onClick={()=>setPicker(false)}/>}
-
     <div style={{flex:1,display:"flex",maxWidth:1200,margin:"0 auto",width:"100%",position:"relative"}}>
       <div style={{flex:1,minWidth:0,padding:"12px 12px 40px"}} onClick={()=>setPicker(false)}>
+
         {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
             {CATS.map(c=>{const a=cat===c.id;return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,background:a?c.c+"18":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"44":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}>{c.n}</button>})}
             <button onClick={refresh} style={{padding:6,borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",display:"flex",alignItems:"center"}}><Ico d={I.reload} s={14}/></button>
             <div style={{flex:1}}/>
-            {[{id:"dist",label:"📍 最近",ico:I.nav},{id:"rating",label:"⭐ 評分",ico:I.star}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{s.label}</button>)}
-            <span style={{fontSize:9,color:"#444"}}>{loading?'載入中...'+(loadCount>0?' ('+loadCount+'筆)':''):places.length?places.length+' 筆':""}</span>
+            {[{id:"dist",label:"📍 最近"},{id:"rating",label:"⭐ 評分"}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{s.label}</button>)}
+            <span style={{fontSize:9,color:"#444"}}>{loading?'載入中...'+(loadCount>0?' ('+loadCount+'筆)':''):places.length?places.length+'筆':""}</span>
           </div>
-          <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={'搜尋'+locLabel+'...'} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
+          <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={'搜尋'+(locLabel||'')+'...'} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
           {loading?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{[1,2,3,4,5,6].map(i=><Skel key={i}/>)}</div>:filtered.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{filtered.map(p=><Card key={p.id} p={p} catId={cat} onAdd={add} added={nameSet.has(p.n)} apiKey={apiKey} gm={curT.gm}/>)}</div>:<div style={{textAlign:"center",padding:"48px 0",color:"#555"}}>沒有找到結果</div>}
+        </div>}
+
+        {view==="map"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:16}}>
+          <div style={{textAlign:"center"}}><h2 style={{fontSize:20,fontWeight:900,marginBottom:4}}>🗺️ 台灣打卡地圖</h2>{user&&<p style={{fontSize:11,color:"#666"}}>{user.displayName} ・ {visitedN}/{REGIONS.length} 縣市 ・ {totalCk} 次</p>}{!user&&<p style={{fontSize:11,color:"#f59e0b"}}>登入即可打卡</p>}{online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}><Ico d={I.users} s={10} c="#10b981"/> {online.length} 位旅人在線</p>}</div>
+          {nearName&&user&&<button onClick={()=>doCheckin(nearName)} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"14px 20px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",boxShadow:"0 4px 20px rgba(16,185,129,.3)"}}><Ico d={I.flag} s={16} f="white" c="white"/>在 {nearName} 打卡</button>}
+          <TaiwanMap ck={checkins} online={online} me={user} onCk={doCheckin} geo={userLoc} nearest={nearName}/>
+          {recent.length>0&&<div style={{borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)",overflow:"hidden"}}>
+            <div style={{padding:"10px 14px",borderBottom:"1px solid rgba(255,255,255,.04)"}}><h3 style={{fontSize:13,fontWeight:700,color:"#888"}}>📋 最近打卡</h3></div>
+            <div style={{maxHeight:200,overflowY:"auto"}}>{recent.slice(0,15).map(c=><div key={c.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",borderBottom:"1px solid rgba(255,255,255,.02)"}}>
+              {c.photo?<img src={c.photo} style={{width:20,height:20,borderRadius:"50%"}} referrerPolicy="no-referrer"/>:<div style={{width:20,height:20,borderRadius:"50%",background:"#1a1d24"}}/>}
+              <div style={{flex:1}}><span style={{fontSize:11,fontWeight:700,color:"#aaa"}}>{c.name}</span><span style={{fontSize:10,color:"#555",marginLeft:6}}>📍 {c.region}</span></div>
+              {c.companions?.length>0&&<span style={{fontSize:9,padding:"2px 6px",borderRadius:6,background:"rgba(245,158,11,.1)",color:"#f59e0b",fontWeight:700}}>👥 {c.companions.length+1}人同行</span>}
+            </div>)}</div>
+          </div>}
         </div>}
 
         {view==="plan"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:16}}>
           {!plan?<div style={{textAlign:"center",padding:"40px 16px",borderRadius:18,background:"rgba(255,255,255,.01)",border:"1px solid rgba(255,255,255,.04)"}}>
-            <div style={{fontSize:40,marginBottom:12}}>🗺️</div><h3 style={{fontSize:20,fontWeight:800,marginBottom:6}}>行程規劃</h3>
-            <p style={{fontSize:13,color:"#555",marginBottom:20}}>{itin.length===0?"到「探索」加入地點":'已選 '+itin.length+' 個地點'}</p>
+            <div style={{fontSize:40,marginBottom:12}}>🗺️</div><h3 style={{fontSize:20,fontWeight:800,marginBottom:6}}>行程規劃</h3><p style={{fontSize:13,color:"#555",marginBottom:20}}>{itin.length===0?"到「探索」加入地點":'已選 '+itin.length+' 個地點'}</p>
             {itin.length>0&&<><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:380,margin:"0 auto 20px"}}>{TRANS.map(tr=><button key={tr.id} onClick={()=>setTransport(tr.id)} style={{padding:"12px 8px",borderRadius:12,textAlign:"center",background:transport===tr.id?"rgba(16,185,129,.1)":"rgba(255,255,255,.02)",border:"1.5px solid "+(transport===tr.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:transport===tr.id?"#10b981":"#777"}}><div style={{fontSize:24}}>{tr.e}</div><div style={{fontSize:11,fontWeight:700,marginTop:2}}>{tr.n}</div></button>)}</div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:20}}><div style={{display:"flex",alignItems:"center",borderRadius:10,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}><button onClick={()=>setDays(Math.max(1,days-1))} style={{padding:"6px 14px",color:"#777",fontWeight:700,fontSize:18,background:"none",border:"none"}}>−</button><span style={{padding:"6px 18px",fontSize:22,fontWeight:900,color:"#10b981"}}>{days}</span><button onClick={()=>setDays(Math.min(7,days+1))} style={{padding:"6px 14px",color:"#777",fontWeight:700,fontSize:18,background:"none",border:"none"}}>+</button></div><span style={{fontSize:13,color:"#666"}}>天</span></div>
             <button onClick={()=>setPlan(mkPlan(itin,days,transport))} style={{padding:"14px 32px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",display:"inline-flex",alignItems:"center",gap:6}}><Ico d={I.zap} s={16} f="white" c="white"/> 產生行程</button></>}
@@ -293,7 +295,7 @@ function App(){
               <div style={{padding:14}}>{day.stops?.map((s,i)=>{const cfg=tc[s.type]||tc.attraction;return <div key={i} style={{display:"flex",gap:12,padding:"10px 0"}}>
                 <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:40,flexShrink:0}}><span style={{fontSize:9,fontFamily:"monospace",color:"#555",marginBottom:4}}>{s.time}</span><div style={{width:30,height:30,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,background:cfg.c+"12",border:"2px solid "+cfg.c+"33"}}>{cfg.i}</div>{i<day.stops.length-1&&<div style={{width:1,flex:1,marginTop:4,background:cfg.c+"20"}}/>}</div>
                 <div style={{flex:1,minWidth:0}}><p style={{fontWeight:700,fontSize:13}}>{s.name}</p><p style={{fontSize:10,color:"#555",marginTop:2}}>⏱ {s.dur}</p>
-                  <div style={{display:"flex",gap:4,marginTop:6,flexWrap:"wrap"}}><button className="nav-btn" onClick={()=>openNav(s.name,s.address,plan.gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa",fontSize:9}}><Ico d={I.compass} s={10} c="#60a5fa"/>導航</button>{s.lat&&apiKey&&<button className="nav-btn" onClick={()=>openSV(s.lat,s.lng)} style={{background:"rgba(168,85,247,.1)",color:"#a855f7",fontSize:9}}><Ico d={I.sv} s={10} c="#a855f7"/>街景</button>}{s.mapsUrl&&<button className="nav-btn" onClick={()=>openM(s.mapsUrl)} style={{background:"rgba(255,255,255,.04)",color:"#888",fontSize:9}}><Ico d={I.ext} s={10} c="#888"/>地圖</button>}</div>
+                  <div style={{display:"flex",gap:4,marginTop:6,flexWrap:"wrap"}}><button className="nav-btn" onClick={()=>openNav(s.name,s.address,plan.gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa",fontSize:9}}><Ico d={I.compass} s={10} c="#60a5fa"/>導航</button>{s.lat&&<button className="nav-btn" onClick={()=>openSV(s.lat,s.lng)} style={{background:"rgba(168,85,247,.1)",color:"#a855f7",fontSize:9}}><Ico d={I.sv} s={10} c="#a855f7"/>街景</button>}{s.mapsUrl&&<button className="nav-btn" onClick={()=>openM(s.mapsUrl)} style={{background:"rgba(255,255,255,.04)",color:"#888",fontSize:9}}><Ico d={I.ext} s={10} c="#888"/>地圖</button>}</div>
                   {s.transport&&<p style={{fontSize:10,color:"#444",marginTop:6,padding:"4px 8px",background:"rgba(255,255,255,.02)",borderRadius:6,display:"inline-block"}}>{s.transport}</p>}
                 </div>
               </div>})}</div>
