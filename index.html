@@ -57,18 +57,25 @@ const matchRegion=(components)=>{
 const cache=new Map();
 const HDRS_BASE={'Content-Type':'application/json','X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.photos,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.priceLevel'};
 const parseP=(p,catId)=>({id:p.id,n:p.displayName?.text||'',a:p.formattedAddress||'',r:p.rating||0,rc:p.userRatingCount||0,lat:p.location?.latitude,lng:p.location?.longitude,d:p.editorialSummary?.text||'',photos:p.photos||[],hours:p.currentOpeningHours?.weekdayDescriptions||[],isOpen:p.currentOpeningHours?.openNow,mapsUrl:p.googleMapsUri||'',category:catId});
+const haversineDist=(lat1,lng1,lat2,lng2)=>{const R=6371,toR=x=>x*Math.PI/180,dLat=toR(lat2-lat1),dLng=toR(lng2-lng1),a=Math.sin(dLat/2)**2+Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))};
 
-async function fetchP(key,cLat,cLng,radius,regionName,catId,onProgress){
-  const ck=cLat.toFixed(3)+','+cLng.toFixed(3)+'-'+catId;
+async function fetchP(key,cLat,cLng,radius,regionName,catId,isGeo,onProgress){
+  const ck=cLat.toFixed(3)+','+cLng.toFixed(3)+'-'+catId+(isGeo?'-geo':'');
   if(cache.has(ck))return cache.get(ck);
   const cat=CATS.find(c=>c.id===catId);
   const hdrs={...HDRS_BASE,'X-Goog-Api-Key':key};
   const loc={circle:{center:{latitude:cLat,longitude:cLng},radius}};
   const seen=new Set();const all=[];
-  /* Fire all sub-queries in parallel */
-  const batches=await Promise.all(cat.queries.map(async q=>{
+  /* GPS模式: 不帶區域名，用純關鍵字+座標搜附近；手動模式: 帶區域名搜全區 */
+  const queries=isGeo
+    ?cat.queries.map(q=>q).concat(cat.queries.slice(0,3).map(q=>regionName+' '+q))
+    :cat.queries.map(q=>regionName+' '+q);
+  const batches=await Promise.all(queries.map(async q=>{
     try{
-      const res=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:regionName+' '+q,maxResultCount:20,languageCode:'zh-TW',locationBias:loc})});
+      const body={textQuery:q,maxResultCount:20,languageCode:'zh-TW',locationBias:loc};
+      /* GPS模式用 locationRestriction 嚴格限制範圍 */
+      if(isGeo){delete body.locationBias;body.locationBias=loc}
+      const res=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify(body)});
       if(!res.ok)return[];
       const data=await res.json();
       return(data.places||[]).map(p=>parseP(p,catId));
@@ -78,7 +85,8 @@ async function fetchP(key,cLat,cLng,radius,regionName,catId,onProgress){
     for(const p of batch){if(!seen.has(p.id)){seen.add(p.id);all.push(p)}}
     if(onProgress)onProgress(all.length);
   }
-  all.sort((a,b)=>(b.r*Math.log10(b.rc+1))-(a.r*Math.log10(a.rc+1)));
+  /* 永遠計算距離，讓前端可以切換排序 */
+  all.forEach(p=>{p._dist=(p.lat&&p.lng)?haversineDist(cLat,cLng,p.lat,p.lng):9999});
   cache.set(ck,all);return all;
 }
 
@@ -123,7 +131,7 @@ function Card({p,catId,onAdd,added,apiKey,gm}){
     </div>
     <div style={{padding:"8px 14px 14px",display:"flex",flexDirection:"column",gap:7}}>
       {p.d&&<p style={{fontSize:12,color:"#9ca3af",lineHeight:1.7,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{p.d}</p>}
-      {p.a&&<div style={{display:"flex",alignItems:"flex-start",gap:4,fontSize:10,color:"#6b7280"}}><Ico d={I.pin} s={10} c={c.c}/><span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.a}</span></div>}
+      {p.a&&<div style={{display:"flex",alignItems:"flex-start",gap:4,fontSize:10,color:"#6b7280"}}><Ico d={I.pin} s={10} c={c.c}/><span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.a}</span>{p._dist!=null&&<span style={{flexShrink:0,padding:"1px 6px",borderRadius:8,background:"rgba(16,185,129,.1)",color:"#10b981",fontSize:9,fontWeight:700}}>{p._dist<1?(p._dist*1000).toFixed(0)+'m':p._dist.toFixed(1)+'km'}</span>}</div>}
       {p.hours?.length>0&&<details style={{fontSize:10,color:"#555"}}><summary style={{cursor:"pointer",color:"#777"}}>📅 營業時間</summary><div style={{padding:"6px 0",lineHeight:1.8}}>{p.hours.map((h,i)=><div key={i}>{h}</div>)}</div></details>}
       <div style={{display:"flex",alignItems:"center",gap:6,paddingTop:8,borderTop:"1px solid rgba(255,255,255,.04)",flexWrap:"wrap"}}>
         <button className="nav-btn" onClick={()=>openNav(p.n,p.a,gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa"}}><Ico d={I.compass} s={11} c="#60a5fa"/>導航</button>
@@ -155,6 +163,7 @@ function App(){
   const[geoMsg,setGeoMsg]=useState("");
   const[apiKey]=useState(AK);
   const[userLoc,setUserLoc]=useState(null);
+  const[sortMode,setSortMode]=useState("dist");/* "dist" | "rating" */
 
   useEffect(()=>{
     if(!region||!apiKey)return;
@@ -164,10 +173,10 @@ function App(){
     const cLng=useLoc?userLoc.lng:r.lng;
     const rad=useLoc?15000:(r.rad||15000);
     setLoading(true);setLoadCount(0);
-    fetchP(apiKey,cLat,cLng,rad,region,cat,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)});
+    fetchP(apiKey,cLat,cLng,rad,region,cat,useLoc,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)});
   },[region,cat,apiKey,userLoc]);
 
-  const filtered=search?places.filter(p=>p.n.includes(search)||p.d?.includes(search)||p.a?.includes(search)):places;
+  const filtered=(()=>{const f=search?places.filter(p=>p.n.includes(search)||p.d?.includes(search)||p.a?.includes(search)):[...places];if(sortMode==="dist")f.sort((a,b)=>(a._dist||9999)-(b._dist||9999));else f.sort((a,b)=>{const diff=(b.r*Math.log10(b.rc+1))-(a.r*Math.log10(a.rc+1));return diff!==0?diff:(a._dist||9999)-(b._dist||9999)});return f})();
   const nameSet=new Set(itin.map(i=>i.n));
   const add=(p,c)=>{if(nameSet.has(p.n))return;setItin(prev=>[...prev,{...p,category:c,_region:region,id:Date.now()}])};
   const rm=i=>setItin(p=>p.filter((_,x)=>x!==i));
@@ -184,7 +193,7 @@ function App(){
     for(const k of cache.keys()){if(k.startsWith(prefix))cache.delete(k)}
     const rad=useLoc?15000:(r.rad||15000);
     setLoading(true);setLoadCount(0);
-    fetchP(apiKey,cLat,cLng,rad,region,cat,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)});
+    fetchP(apiKey,cLat,cLng,rad,region,cat,useLoc,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)});
   };
 
   const geolocate=()=>{
@@ -262,7 +271,9 @@ function App(){
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
             {CATS.map(c=>{const a=cat===c.id;return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,background:a?c.c+"18":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"44":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}>{c.n}</button>})}
             <button onClick={refresh} style={{padding:6,borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",display:"flex",alignItems:"center"}}><Ico d={I.reload} s={14}/></button>
-            <span style={{fontSize:9,color:"#444"}}>{loading?'載入中...'+(loadCount>0?' ('+loadCount+'筆)':''):places.length?places.length+' 筆即時資料':""}</span>
+            <div style={{flex:1}}/>
+            {[{id:"dist",label:"📍 最近",ico:I.nav},{id:"rating",label:"⭐ 評分",ico:I.star}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{s.label}</button>)}
+            <span style={{fontSize:9,color:"#444"}}>{loading?'載入中...'+(loadCount>0?' ('+loadCount+'筆)':''):places.length?places.length+' 筆':""}</span>
           </div>
           <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={'搜尋'+locLabel+'...'} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
           {loading?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{[1,2,3,4,5,6].map(i=><Skel key={i}/>)}</div>:filtered.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{filtered.map(p=><Card key={p.id} p={p} catId={cat} onAdd={add} added={nameSet.has(p.n)} apiKey={apiKey} gm={curT.gm}/>)}</div>:<div style={{textAlign:"center",padding:"48px 0",color:"#555"}}>沒有找到結果</div>}
