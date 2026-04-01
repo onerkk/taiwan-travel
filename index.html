@@ -316,10 +316,10 @@ function App(){
         {mapTab==="map"&&<>
           {/* SVG 地圖：根據區域座標自動定位 */}
           {(()=>{const regs=curCountry.regions;const lats=regs.map(r=>r.lat),lngs=regs.map(r=>r.lng);
-            const minLat=Math.min(...lats)-.3,maxLat=Math.max(...lats)+.3,minLng=Math.min(...lngs)-.3,maxLng=Math.max(...lngs)+.3;
+            const minLat=Math.min(...lats)-.15,maxLat=Math.max(...lats)+.15,minLng=Math.min(...lngs)-.15,maxLng=Math.max(...lngs)+.15;
             const cLat=((minLat+maxLat)/2).toFixed(4),cLng=((minLng+maxLng)/2).toFixed(4);
-            const latR=maxLat-minLat,lngR=maxLng-minLng;
-            const zoom=Math.max(3,Math.min(10,Math.round(Math.log2(360/Math.max(latR,lngR))-1)));
+            const latR=maxLat-minLat,lngR=maxLng-minLng,spread=Math.max(latR,lngR);
+            const zoom=Math.max(3,Math.min(14,Math.floor(Math.log2(W*360/(256*spread)))));
             const W=640,H=Math.max(400,Math.min(700,Math.round(W*latR/lngR*1.2)));
             const mapUrl=`https://maps.googleapis.com/maps/api/staticmap?center=${cLat},${cLng}&zoom=${zoom}&size=${W}x${H}&scale=2&maptype=terrain&style=feature:water|color:0x0a1828&style=feature:landscape|color:0x1a3a1a&style=feature:all|element:labels.text.fill|color:0xcccccc&style=feature:all|element:labels.text.stroke|color:0x111111|weight:3&style=feature:road|element:geometry|color:0x2a3a2a&style=feature:administrative|element:geometry.stroke|color:0x2a4a2a&key=${apiKey}`;
             const pct=(lat,lng)=>({left:((lng-minLng)/lngR*100)+'%',top:((maxLat-lat)/latR*100)+'%'});
