@@ -1,0 +1,27 @@
+{
+  "name": "旅遊通 Travel Pass",
+  "short_name": "旅遊通",
+  "description": "台灣・日本・泰國等 11 國旅遊探索、地圖打卡、行程規劃",
+  "start_url": "/taiwan-travel/",
+  "display": "standalone",
+  "background_color": "#080a0f",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["travel", "navigation"],
+  "lang": "zh-TW",
+  "dir": "ltr"
+}
