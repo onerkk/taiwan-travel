@@ -22,14 +22,15 @@ a{color:#10b981;text-decoration:none}a:hover{text-decoration:underline}
 .card{background:#12141a;border:1px solid rgba(255,255,255,.04);border-radius:16px;padding:20px;margin-bottom:12px}
 .card h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:8px}
 .card h3 .num{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#10b981,#0d9488);color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.card p{font-size:13px;color:#9ca3af}
+.card p,.card li{font-size:13px;color:#9ca3af}
+.card ul{padding-left:20px;margin-top:8px}
+.card li{margin-bottom:6px}
 .card code{background:rgba(16,185,129,.08);color:#10b981;padding:2px 8px;border-radius:6px;font-size:12px;font-family:monospace}
 .tag{display:inline-block;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700;margin:4px 2px 0}
 .tag-green{background:rgba(16,185,129,.1);color:#10b981;border:1px solid rgba(16,185,129,.15)}
 .tag-blue{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.15)}
-.tag-yellow{background:rgba(245,158,11,.1);color:#f59e0b;border:1px solid rgba(245,158,11,.15)}
 .tag-purple{background:rgba(168,85,247,.1);color:#a855f7;border:1px solid rgba(168,85,247,.15)}
-.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .feat{padding:16px;border-radius:14px;background:#12141a;border:1px solid rgba(255,255,255,.04);text-align:center}
 .feat .icon{font-size:28px;margin-bottom:6px}
 .feat h4{font-size:13px;font-weight:700;color:#fff;margin-bottom:4px}
@@ -38,181 +39,206 @@ a{color:#10b981;text-decoration:none}a:hover{text-decoration:underline}
 .countries span{padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);font-size:12px}
 .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(16,185,129,.15),transparent);margin:48px 0}
 .cta{text-align:center;padding:40px 20px;background:linear-gradient(180deg,transparent,rgba(16,185,129,.03));border-radius:20px;margin-top:32px}
-.cta a{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:14px;background:linear-gradient(135deg,#10b981,#0d9488);color:#fff;font-weight:700;font-size:16px;text-decoration:none;transition:transform .2s}
-.cta a:hover{transform:translateY(-2px);text-decoration:none}
+.cta a{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:14px;background:linear-gradient(135deg,#10b981,#0d9488);color:#fff;font-weight:700;font-size:16px;text-decoration:none}
 .warn{padding:14px 18px;border-radius:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.12);font-size:12px;color:#f59e0b;margin-top:12px}
 .tip{padding:14px 18px;border-radius:12px;background:rgba(16,185,129,.04);border:1px solid rgba(16,185,129,.1);font-size:12px;color:#10b981;margin-top:12px}
+.sb{background:rgba(16,185,129,.03);border:1px solid rgba(16,185,129,.08);border-radius:12px;padding:14px 18px;margin:10px 0;font-size:13px;color:#ccc}
+.sb strong{color:#10b981}
+.ar{display:block;text-align:center;font-size:20px;color:rgba(16,185,129,.3);margin:4px 0}
 footer{text-align:center;padding:40px 20px;font-size:11px;color:#333}
 @media(max-width:480px){.hero h1{font-size:32px}.feature-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-
-<!-- 返回按鈕 -->
 <div style="position:sticky;top:0;z-index:50;background:rgba(8,10,15,.95);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.04);padding:12px 20px;display:flex;align-items:center;gap:12px">
   <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:13px;font-weight:700;color:#10b981;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.15);text-decoration:none">← 返回旅遊通</a>
   <span style="font-size:13px;color:#555">安裝與使用說明</span>
 </div>
-
 <div class="hero">
-  <img src="icon-512.png" alt="旅遊通">
+  <img src="icon512.png" alt="旅遊通">
   <h1>旅遊通</h1>
   <p>11 國 265 區域旅遊探索 · 地圖打卡 · 行程規劃</p>
-  <div class="badge">📱 可安裝為手機 App</div>
+  <div class="badge">📱 可安裝為手機 App · 完全免費</div>
 </div>
-
 <div class="wrap">
 
-<!-- ===== 安裝說明 ===== -->
 <div class="section">
   <h2><span>📲</span> 安裝到手機</h2>
-
   <div class="card">
     <h3><span class="num">1</span> Android（Chrome）</h3>
-    <p>用 Chrome 打開 <a href="https://onerkk.github.io/taiwan-travel/">onerkk.github.io/taiwan-travel</a></p>
-    <p>→ 網址列右邊出現 <strong>「安裝應用程式」</strong>圖示，或點選選單 ⋮ →「安裝應用程式」</p>
-    <p>→ 桌面就會出現「旅遊通」App 圖示</p>
+    <p>用 <strong>Chrome</strong> 打開：</p>
+    <div class="sb"><strong>https://onerkk.github.io/taiwan-travel/</strong></div>
+    <p>→ 等頁面載入後，看網址列有沒有 📥 安裝圖示</p>
+    <p>→ 或點 <strong>⋮</strong> 選單 →「<strong>安裝應用程式</strong>」→ 桌面出現 App ✅</p>
+    <div class="tip">💡 沒出現安裝？關掉頁面等 5 分鐘再開。Chrome 要造訪 2 次才觸發。</div>
   </div>
-
   <div class="card">
     <h3><span class="num">2</span> iPhone / iPad（Safari）</h3>
-    <p>用 <strong>Safari</strong> 打開網站（不能用 Chrome）</p>
-    <p>→ 點底部「分享」按鈕 <strong>⬆</strong></p>
-    <p>→ 往下找「<strong>加入主畫面</strong>」</p>
-    <p>→ 點「新增」→ 桌面出現 App</p>
+    <p>⚠️ <strong>必須用 Safari</strong>（Chrome 在 iOS 不支援 PWA 安裝）</p>
+    <ul>
+      <li>點底部「<strong>分享</strong>」按鈕 ⬆（方框+箭頭）</li>
+      <li>找「<strong>加入主畫面</strong>」→ 點「<strong>新增</strong>」</li>
+      <li>桌面出現 App ✅</li>
+    </ul>
   </div>
-
-  <div class="tip">💡 安裝後打開就是全螢幕，沒有瀏覽器框，體驗跟原生 App 一樣。</div>
+  <div class="tip">💡 安裝後打開是<strong>全螢幕</strong>，沒有瀏覽器框，跟原生 App 一樣。</div>
 </div>
 
 <div class="divider"></div>
 
-<!-- ===== API Key 設定 ===== -->
 <div class="section">
-  <h2><span>🔑</span> 首次設定 API Key</h2>
+  <h2><span>🔑</span> 申請 Google API Key（完整教學）</h2>
+  <p style="font-size:13px;color:#888;margin-bottom:20px">旅遊通使用 Google API 搜尋景點。Google 每月免費 <strong style="color:#10b981">$200 美元額度</strong>，一般旅遊用完全免費不會收費。</p>
 
   <div class="card">
-    <h3><span class="num">1</span> 建立 Google Cloud 專案</h3>
-    <p>到 <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a>，建立新專案或選擇現有專案。</p>
+    <h3><span class="num">1</span> 註冊 / 登入 Google Cloud</h3>
+    <p>打開 <a href="https://console.cloud.google.com" target="_blank">console.cloud.google.com</a></p>
+    <ul>
+      <li>用 <strong>Gmail 帳號</strong>登入</li>
+      <li>第一次會要求同意服務條款，勾選同意</li>
+      <li>可能要求綁信用卡 — 這是身分驗證，<strong>不會自動扣款</strong></li>
+    </ul>
   </div>
-
+  <div class="ar">↓</div>
   <div class="card">
-    <h3><span class="num">2</span> 啟用必要 API</h3>
-    <p>到「API 和服務」→「程式庫」，搜尋並啟用：</p>
-    <p><span class="tag tag-green">Places API (New)</span> <span class="tag tag-blue">Maps JavaScript API</span> <span class="tag tag-purple">Geocoding API</span></p>
+    <h3><span class="num">2</span> 建立專案</h3>
+    <ul>
+      <li>點左上角「<strong>專案選擇器</strong>」→「<strong>新增專案</strong>」</li>
+      <li>名稱隨意填，例如 <code>my-travel</code></li>
+      <li>點「<strong>建立</strong>」→ 等幾秒自動切換到新專案</li>
+    </ul>
   </div>
-
+  <div class="ar">↓</div>
   <div class="card">
-    <h3><span class="num">3</span> 建立 API 金鑰</h3>
-    <p>到「憑證」→「建立憑證」→「API 金鑰」</p>
-    <p>複製以 <code>AIzaSy...</code> 開頭的金鑰</p>
-  </div>
+    <h3><span class="num">3</span> 啟用 3 個 API（最重要！）</h3>
+    <div class="sb">左邊選單 →「<strong>API 和服務</strong>」→ 點上方「<strong>＋ 啟用 API 和服務</strong>」</div>
+    <p style="margin-top:12px">搜尋並啟用這 <strong>3 個</strong>：</p>
+    
+    <p style="margin-top:12px"><strong>① Places API (New)</strong> — 搜尋景點餐廳住宿</p>
+    <ul>
+      <li>搜尋 <code>Places API</code> → 找 <strong>「Places API (New)」</strong>（有 New 字樣的）</li>
+      <li>點進去 → 點藍色「<strong>啟用</strong>」</li>
+    </ul>
+    <p><span class="tag tag-green">✅ Places API (New)</span></p>
 
+    <p style="margin-top:16px"><strong>② Maps JavaScript API</strong> — 互動地圖</p>
+    <ul>
+      <li>搜尋 <code>Maps JavaScript</code> → 點「<strong>啟用</strong>」</li>
+    </ul>
+    <p><span class="tag tag-blue">✅ Maps JavaScript API</span></p>
+
+    <p style="margin-top:16px"><strong>③ Geocoding API</strong> — 自動定位你的位置</p>
+    <ul>
+      <li>搜尋 <code>Geocoding</code> → 點「<strong>啟用</strong>」</li>
+    </ul>
+    <p><span class="tag tag-purple">✅ Geocoding API</span></p>
+
+    <div class="warn">⚠️ 三個都要啟用！少一個對應功能就不能用。</div>
+  </div>
+  <div class="ar">↓</div>
   <div class="card">
-    <h3><span class="num">4</span> 貼入旅遊通</h3>
-    <p>打開 App → 貼上 API Key → 點「開始旅行」</p>
+    <h3><span class="num">4</span> 建立 API 金鑰</h3>
+    <ul>
+      <li>左邊選單 →「<strong>API 和服務</strong>」→「<strong>憑證</strong>」</li>
+      <li>上方點「<strong>＋ 建立憑證</strong>」→ 選「<strong>API 金鑰</strong>」</li>
+      <li>自動產生一串 <code>AIzaSy...</code> 開頭的金鑰</li>
+      <li>點「<strong>複製</strong>」</li>
+    </ul>
   </div>
-
-  <div class="warn">⚠️ 如果照片無法顯示，請到「憑證」→ 點擊你的 API Key →「API 限制」選「不限制金鑰」。或在「應用程式限制」→「HTTP 參照網址」加入 <code>https://onerkk.github.io/*</code></div>
-
-  <div class="tip">💡 <strong>旅伴同步：</strong>分享同一組 API Key 給旅伴，打卡和位置會自動同步！</div>
+  <div class="ar">↓</div>
+  <div class="card">
+    <h3><span class="num">5</span> 設定金鑰安全限制（建議）</h3>
+    <p>在「憑證」頁面點你的 API 金鑰名稱：</p>
+    <ul>
+      <li>「<strong>應用程式限制</strong>」→ 選「<strong>HTTP 參照網址</strong>」</li>
+      <li>新增：<code>https://onerkk.github.io/*</code></li>
+      <li>「<strong>API 限制</strong>」→ 選「<strong>不限制金鑰</strong>」</li>
+      <li>點「<strong>儲存</strong>」</li>
+    </ul>
+    <div class="warn">⚠️ 如果照片不顯示，把「API 限制」改成「不限制金鑰」通常就解決了。</div>
+  </div>
+  <div class="ar">↓</div>
+  <div class="card">
+    <h3><span class="num">6</span> 貼入旅遊通開始使用</h3>
+    <ul>
+      <li>打開旅遊通 → 貼上金鑰 → 點「<strong>🔑 開始旅行</strong>」</li>
+      <li>驗證成功就進入國家選擇頁 🎉</li>
+    </ul>
+    <div class="tip">💡 <strong>旅伴同步：</strong>把同一組 Key 分享給旅伴 → 打卡、位置自動同步！</div>
+  </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- ===== 功能介紹 ===== -->
 <div class="section">
-  <h2><span>✨</span> 功能介紹</h2>
+  <h2><span>❓</span> 常見問題</h2>
+  <div class="card">
+    <h3>照片沒有顯示？</h3>
+    <ul>
+      <li>確認「<strong>Places API (New)</strong>」已啟用（不是舊版）</li>
+      <li>到「憑證」→ API Key →「API 限制」選「<strong>不限制金鑰</strong>」</li>
+      <li>HTTP 參照網址加上 <code>https://onerkk.github.io/*</code></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>地圖沒出現？</h3>
+    <p>確認「<strong>Maps JavaScript API</strong>」已啟用，等 1-2 分鐘生效。</p>
+  </div>
+  <div class="card">
+    <h3>會被收費嗎？</h3>
+    <p>Google 每月免費 $200（約 5,000 次搜尋），正常旅遊<strong>完全不會超過</strong>。可到「帳單」→「預算與快訊」設花費上限。</p>
+  </div>
+  <div class="card">
+    <h3>打卡按不了？</h3>
+    <p>需要：① 登入 Google 帳號 ② 開啟定位 ③ 在景點 <strong>1km 內</strong></p>
+  </div>
+</div>
 
+<div class="divider"></div>
+
+<div class="section">
+  <h2><span>✨</span> 功能總覽</h2>
   <div class="feature-grid">
-    <div class="feat"><div class="icon">🔍</div><h4>探索</h4><p>景點 · 美食 · 住宿<br>即時評分 · 電話 · 導航</p></div>
-    <div class="feat"><div class="icon">🗺️</div><h4>互動地圖</h4><p>Google 地形圖<br>縮放 · 拖移 · 頭像</p></div>
-    <div class="feat"><div class="icon">📍</div><h4>打卡</h4><p>1km 內打卡<br>照片 · 備註 · 同伴偵測</p></div>
-    <div class="feat"><div class="icon">📋</div><h4>行程規劃</h4><p>選天數 · 自動排程<br>導航 · 一鍵撥打電話</p></div>
-    <div class="feat"><div class="icon">🌤️</div><h4>天氣</h4><p>即時溫度 · 體感<br>濕度 · 風速</p></div>
-    <div class="feat"><div class="icon">👥</div><h4>旅伴同步</h4><p>同 Key 即旅伴<br>即時定位 · 打卡同行</p></div>
+    <div class="feat"><div class="icon">🔍</div><h4>探索</h4><p>景點·美食·住宿<br>評分·電話·街景</p></div>
+    <div class="feat"><div class="icon">🗺️</div><h4>互動地圖</h4><p>Google 地形圖<br>縮放·拖移·打卡點</p></div>
+    <div class="feat"><div class="icon">📍</div><h4>打卡</h4><p>1km 內打卡<br>照片·備註·同伴</p></div>
+    <div class="feat"><div class="icon">⚡</div><h4>AI 行程</h4><p>自動推薦三餐景點<br>含通勤時間</p></div>
+    <div class="feat"><div class="icon">🌤️</div><h4>天氣</h4><p>溫度·體感<br>濕度·風速</p></div>
+    <div class="feat"><div class="icon">👥</div><h4>旅伴同步</h4><p>同Key即旅伴<br>定位·同行偵測</p></div>
   </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- ===== 使用教學 ===== -->
 <div class="section">
   <h2><span>📖</span> 使用教學</h2>
-
   <div class="card">
-    <h3>🔍 探索景點</h3>
-    <p>選擇國家 → 選擇區域 → 切換「景點 / 美食 / 住宿」分類</p>
-    <p>每張卡片顯示：照片、評分、類型、營業狀態、價位、距離、評論</p>
-    <p>按「<strong>導航</strong>」直接開 Google Maps 導航</p>
-    <p>按「<strong>📞 電話</strong>」一鍵撥打</p>
-    <p>按「<strong>街景</strong>」查看 Google 街景</p>
-    <p>按「<strong>+ 加入</strong>」加入行程規劃</p>
+    <h3>⚡ 智慧行程規劃</h3>
+    <p><strong style="color:#f59e0b">自動推薦（推薦！）：</strong>選天數+交通 → 按「⚡ 自動推薦」→ 自動搜尋最佳景點三餐住宿</p>
+    <p><strong style="color:#10b981">手動選點：</strong>在探索頁「＋加入」→ 到行程頁「用已選X點排行程」→ 按距離智慧排序</p>
+    <div class="sb">每天：🌅早餐 → 🏛景點×2 → 🍜午餐 → 🏛景點×2 → 🌙晚餐 → 🏨住宿<br><span style="color:#666">每站間自動計算 🚗 通勤時間</span></div>
   </div>
-
   <div class="card">
-    <h3>📍 打卡</h3>
-    <p>開啟定位後，<strong>1 公里內</strong>的景點卡片上會出現「打卡」按鈕</p>
-    <p>打卡會記錄：景點名稱、照片、地址、時間</p>
-    <p>如果有使用同一組 Key 的旅伴也在附近打過卡，會自動標記「<strong>同伴同行</strong>」🎉</p>
-  </div>
-
-  <div class="card">
-    <h3>🗺️ 地圖</h3>
-    <p>點頂部「<strong>地圖</strong>」分頁 → 顯示 Google 互動地形圖</p>
-    <p>每個區域一個圓點，打卡越多越大越亮</p>
-    <p>你的頭像（黃圈）和旅伴頭像（綠圈）顯示在地圖上</p>
-    <p>手指可以<strong>縮放、拖移</strong>，點圓點跳到該區探索</p>
-    <p>切換「<strong>打卡記錄</strong>」查看完整歷史</p>
-  </div>
-
-  <div class="card">
-    <h3>📋 行程規劃</h3>
-    <p>在探索頁按「+ 加入」把喜歡的地點加入</p>
-    <p>到「<strong>行程</strong>」分頁 → 設定天數（1-7 天）→ 選擇交通方式</p>
-    <p>按「<strong>⚡ 自動排行程</strong>」→ 自動分配每天行程</p>
-    <p>每個景點都有時段、導航按鈕、電話</p>
-  </div>
-
-  <div class="card">
-    <h3>🌍 自動定位</h3>
-    <p>在首頁按「<strong>📍 自動定位</strong>」→ 自動判斷你在哪個國家、哪個區域</p>
-    <p>地圖上會顯示你的即時位置</p>
-    <p>排序切換「📍 最近」可按距離排序景點</p>
+    <h3>📍 打卡 + 🗺️ 地圖</h3>
+    <p>景點 1km 內可打卡，記錄照片地址時間。地圖上打卡越多圓點越大越亮。你和旅伴的頭像即時顯示。</p>
   </div>
 </div>
 
 <div class="divider"></div>
 
-<!-- ===== 支援國家 ===== -->
 <div class="section">
   <h2><span>🌏</span> 支援 11 國 265 區域</h2>
   <div class="countries">
-    <span>🇹🇼 台灣 20</span>
-    <span>🇯🇵 日本 35</span>
-    <span>🇹🇭 泰國 25</span>
-    <span>🇨🇳 中國 35</span>
-    <span>🇰🇷 韓國 25</span>
-    <span>🇭🇰 香港 15</span>
-    <span>🇻🇳 越南 25</span>
-    <span>🇲🇴 澳門 10</span>
-    <span>🇺🇸 美國 35</span>
-    <span>🇸🇬 新加坡 15</span>
-    <span>🇲🇾 馬來西亞 25</span>
+    <span>🇹🇼 台灣 20</span><span>🇯🇵 日本 35</span><span>🇹🇭 泰國 25</span><span>🇨🇳 中國 35</span><span>🇰🇷 韓國 25</span><span>🇭🇰 香港 15</span><span>🇻🇳 越南 25</span><span>🇲🇴 澳門 10</span><span>🇺🇸 美國 35</span><span>🇸🇬 新加坡 15</span><span>🇲🇾 馬來西亞 25</span>
   </div>
 </div>
 
-<!-- CTA -->
 <div class="cta">
   <p style="font-size:13px;color:#555;margin-bottom:16px">準備好了嗎？</p>
-  <a href="https://onerkk.github.io/taiwan-travel/">🚀 開始旅行</a>
+  <a href="index.html">🚀 開始旅行</a>
 </div>
 
 </div>
-
-<footer>
-  旅遊通 Travel Pass &copy; 2025 · 使用 Google Places API · Firebase
-</footer>
-
+<footer>旅遊通 Travel Pass © 2025<br><a href="index.html" style="color:#555">← 返回旅遊通</a></footer>
 </body>
 </html>
