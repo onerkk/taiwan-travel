@@ -2,8 +2,8 @@ const CACHE_NAME = 'travel-pass-v1';
 const PRECACHE = [
   '/taiwan-travel/',
   '/taiwan-travel/index.html',
-  '/taiwan-travel/icon-192.png',
-  '/taiwan-travel/icon-512.png'
+  '/taiwan-travel/icon192.png',
+  '/taiwan-travel/icon512.png'
 ];
 
 self.addEventListener('install', e => {
