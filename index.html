@@ -248,7 +248,9 @@ function App(){
   const changeKey=()=>{localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');setApiKey('');setGroupId('');setReady(false)};
   const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(null);const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
   const[user,setUser]=useState(null);const[online,setOnline]=useState([]);
-  const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckNote,setCkNote]=useState("");const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);
+  const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckNote,setCkNote]=useState("");const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);const[installEvt,setInstallEvt]=useState(null);
+  useEffect(()=>{const h=e=>{e.preventDefault();setInstallEvt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);
+  const doInstall=async()=>{if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice;if(r.outcome==='accepted')setInstallEvt(null)};
   const curCountry=COUNTRIES.find(c=>c.id===country);
   const curRegion=curCountry?.regions.find(r=>r.n===region);
 
@@ -301,6 +303,8 @@ function App(){
     <div style={{position:"absolute",top:12,right:16,display:"flex",gap:6}}>
       {user?<img src={user.photoURL} onClick={signOut} style={{width:28,height:28,borderRadius:"50%",border:"2px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}><Ico d={I.login} s={14}/>登入</button>}
       <button onClick={changeKey} style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>🔑</button>
+      <a href="guide.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#10b981",background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.15)",textDecoration:"none"}}>📖 說明</a>
+      {installEvt&&<button onClick={doInstall} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",animation:"glow 2s ease-in-out infinite"}}>📲 安裝 App</button>}
     </div>
     <div className="fu" style={{textAlign:"center",marginBottom:24}}>
       <h1 style={{fontSize:44,fontWeight:900,letterSpacing:-2,lineHeight:1.1}}><span style={{background:"linear-gradient(135deg,#10b981,#14b8a6,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>旅遊通</span></h1>
