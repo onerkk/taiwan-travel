@@ -104,7 +104,7 @@ function Photo({photos,name,apiKey}){
     if(pC.has(ref))setSrc(pC.get(ref));else{pC.set(ref,url);setSrc(url)}
   },[photos,apiKey]);
   const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
-  return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}><span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{src&&<img src={src} alt={name} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.target.style.display='none'}}/>}</div>
+  return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}><span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{src&&<img src={src} alt={name} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={e=>{e.target.style.display='none'}}/>}</div>
 }
 const getPhotoUri=photos=>photos?.length?pC.get(photos[0].name)||"":"";
 const openNav=(n,a,m)=>window.open('https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(n+' '+a)+'&travelmode='+m,'_blank');
@@ -322,6 +322,28 @@ function App(){
             const mx=Math.max(1,...regs.map(r=>checkins[country+'-'+r.n]||0));
             return <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",maxWidth:420,margin:"0 auto",borderRadius:16,background:"linear-gradient(180deg,#0a1520,#0c1a28)",border:"1px solid rgba(255,255,255,.04)"}}>
               <defs><filter id="glo"><feGaussianBlur stdDeviation="6" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="dg2"><stop offset="0%" stopColor="#10b981" stopOpacity=".25"/><stop offset="100%" stopColor="#10b981" stopOpacity="0"/></radialGradient></defs>
+              {/* 海洋波紋 */}
+              {[{x:W*.1,y:H*.2},{x:W*.9,y:H*.5},{x:W*.1,y:H*.7},{x:W*.85,y:H*.85}].map((w,i)=><text key={"w"+i} x={w.x} y={w.y} fontSize="8" fill="rgba(59,130,246,.06)" textAnchor="middle">〜〜〜</text>)}
+              {/* 台灣特有地形 */}
+              {country==="tw"&&<>
+                {/* 台灣輪廓 */}
+                {(()=>{const tw=[{lat:25.3,lng:121.5},{lat:25.15,lng:121.7},{lat:25.0,lng:121.8},{lat:24.7,lng:121.75},{lat:24.0,lng:121.6},{lat:23.5,lng:121.4},{lat:23.0,lng:121.2},{lat:22.7,lng:121.1},{lat:22.3,lng:120.9},{lat:22.0,lng:120.75},{lat:21.9,lng:120.85},{lat:22.3,lng:120.3},{lat:22.6,lng:120.27},{lat:23.0,lng:120.2},{lat:23.5,lng:120.2},{lat:24.0,lng:120.5},{lat:24.5,lng:120.7},{lat:24.8,lng:120.9},{lat:25.0,lng:121.0},{lat:25.15,lng:121.3},{lat:25.3,lng:121.5}];
+                  const pts=tw.map(p=>px(p.lat,p.lng));
+                  return <polygon points={pts.map(p=>p.x+","+p.y).join(" ")} fill="rgba(26,50,26,.4)" stroke="rgba(16,185,129,.12)" strokeWidth="1.5"/>})()}
+                {/* 中央山脈 */}
+                {(()=>{const mtn=[{lat:24.8,lng:121.3},{lat:24.4,lng:121.2},{lat:24.0,lng:121.15},{lat:23.5,lng:121.0},{lat:23.0,lng:120.9},{lat:22.5,lng:120.8}];
+                  const pts=mtn.map(p=>px(p.lat,p.lng));
+                  return <polyline points={pts.map(p=>p.x+","+p.y).join(" ")} fill="none" stroke="rgba(34,120,34,.3)" strokeWidth="8" strokeLinecap="round"/>})()}
+                {/* 山峰 */}
+                {[{lat:23.47,lng:120.96,n:"玉山",h:"3952m"},{lat:24.38,lng:121.23,n:"雪山",h:"3886m"},{lat:24.14,lng:121.27,n:"合歡山"},{lat:23.47,lng:120.7,n:"阿里山"}].map((pk,i)=>{const p=px(pk.lat,pk.lng);return <g key={"pk"+i}><text x={p.x} y={p.y} fontSize="10" textAnchor="middle">⛰️</text><text x={p.x} y={p.y+10} fontSize="5" fill="rgba(255,255,255,.15)" textAnchor="middle" fontWeight="700">{pk.n}</text></g>})}
+                {/* 海洋標籤 */}
+                <text x={W*.08} y={H*.5} fontSize="9" fill="rgba(59,130,246,.1)" fontWeight="700" textAnchor="middle" transform={`rotate(-90,${W*.08},${H*.5})`}>台灣海峽</text>
+                <text x={W*.95} y={H*.5} fontSize="9" fill="rgba(59,130,246,.1)" fontWeight="700" textAnchor="middle" transform={`rotate(90,${W*.95},${H*.5})`}>太平洋</text>
+              </>}
+              {/* 每區地標 emoji */}
+              {(()=>{const LM={"台北":"🏙️","新北":"🏮","基隆":"⛵","桃園":"✈️","新竹":"💻","苗栗":"🌸","台中":"🎭","彰化":"🙏","南投":"🏞️","雲林":"🤡","嘉義":"🌲","台南":"🏯","高雄":"🚢","屏東":"🏖️","宜蘭":"♨️","花蓮":"🦅","台東":"🎈","澎湖":"🎆","金門":"🏰","馬祖":"🌊","東京":"🗼","大阪":"🏯","京都":"⛩️","札幌":"⛷️","沖繩":"🏝️","首爾":"🏛️","釜山":"🌊","濟州島":"🍊","曼谷":"🛕","清邁":"🐘","普吉島":"🏖️","北京":"🏰","上海":"🌃","成都":"🐼","杭州":"🍵","西安":"🗡️","紐約":"🗽","洛杉磯":"🎬","舊金山":"🌁","夏威夷":"🌺","拉斯維加斯":"🎰","吉隆坡":"🕌","檳城":"🖼️","蘭卡威":"🦅","河內":"🏮","胡志明市":"🛵","中環":"🏢","尖沙咀":"⭐","濱海灣":"🏙️","聖淘沙":"🎢","大三巴":"🏛️","威尼斯人":"🎭"};
+                return regs.map(r=>{const em=LM[r.n];if(!em)return null;const p=px(r.lat,r.lng);
+                  return <text key={"lm"+r.n} x={p.x+12} y={p.y-8} fontSize="14" style={{pointerEvents:"none"}}>{em}</text>})})()}
               {/* 連線 */}
               {regs.slice(0,-1).map((r,i)=>{const a=px(r.lat,r.lng),b=px(regs[i+1].lat,regs[i+1].lng);return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="rgba(16,185,129,.06)" strokeWidth=".5"/>})}
               {/* 區域圓點 */}
