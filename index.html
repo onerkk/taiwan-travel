@@ -196,7 +196,7 @@ function App(){
   const changeKey=()=>{localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');setApiKey('');setGroupId('');setReady(false)};
   const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(null);const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
   const[user,setUser]=useState(null);const[online,setOnline]=useState([]);
-  const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckNote,setCkNote]=useState("");const[mapTab,setMapTab]=useState("map");
+  const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckNote,setCkNote]=useState("");const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);
   const curCountry=COUNTRIES.find(c=>c.id===country);
   const curRegion=curCountry?.regions.find(r=>r.n===region);
 
@@ -316,36 +316,45 @@ function App(){
         {mapTab==="map"&&<>
           {/* SVG 地圖：根據區域座標自動定位 */}
           {(()=>{const regs=curCountry.regions;const lats=regs.map(r=>r.lat),lngs=regs.map(r=>r.lng);
-            const minLat=Math.min(...lats),maxLat=Math.max(...lats),minLng=Math.min(...lngs),maxLng=Math.max(...lngs);
+            const minLat=Math.min(...lats)-.3,maxLat=Math.max(...lats)+.3,minLng=Math.min(...lngs)-.3,maxLng=Math.max(...lngs)+.3;
             const cLat=((minLat+maxLat)/2).toFixed(4),cLng=((minLng+maxLng)/2).toFixed(4);
             const spread=Math.max(maxLat-minLat,maxLng-minLng);
-            const zoom=Math.max(3,Math.min(10,Math.round(Math.log2(300/spread))));
-            const W=640,H=Math.max(360,Math.min(640,Math.round(W*(maxLat-minLat+1)/(maxLng-minLng+1))));
+            const zoom=Math.max(3,Math.min(10,Math.round(Math.log2(360/spread)-1)));
+            const W=640,mercY=l=>Math.log(Math.tan(Math.PI/4+l*Math.PI/360));
+            const mercH=mercY(maxLat)-mercY(minLat),mercW=maxLng-minLng;
+            const H=Math.round(W*mercH/mercW);
             const mapUrl=`https://maps.googleapis.com/maps/api/staticmap?center=${cLat},${cLng}&zoom=${zoom}&size=${W}x${H}&scale=2&maptype=terrain&style=feature:all|element:geometry|color:0x1a2e1a&style=feature:water|color:0x0a1828&style=feature:all|element:labels.text.fill|color:0x4a9a6a&style=feature:all|element:labels.text.stroke|color:0x0a0f14&style=feature:road|visibility:off&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:geometry|color:0x1a3a2a&key=${apiKey}`;
-            const pad=.3;const mW=100,mH=mW*(maxLat-minLat+pad*2)/(maxLng-minLng+pad*2);
-            const pct=(lat,lng)=>({left:((lng-(minLng-pad))/(maxLng-minLng+pad*2)*100)+'%',top:((maxLat+pad-lat)/(maxLat-minLat+pad*2)*100)+'%'});
+            /* 麥卡托投影對齊 */
+            const pct=(lat,lng)=>({left:((lng-minLng)/mercW*100)+'%',top:((mercY(maxLat)-mercY(lat))/mercH*100)+'%'});
             const mx=Math.max(1,...regs.map(r=>checkins[country+'-'+r.n]||0));
-            return <div style={{position:"relative",width:"100%",maxWidth:420,margin:"0 auto",borderRadius:16,overflow:"hidden",border:"1px solid rgba(255,255,255,.06)"}}>
-              {/* Google Maps 地形底圖 */}
-              <img src={mapUrl} style={{width:"100%",display:"block",filter:"brightness(.85) saturate(.8)"}} alt="map" onError={e=>{e.target.style.background="#0a1520";e.target.style.minHeight="300px"}}/>
-              {/* 疊加層：打卡圓點 + 頭像 */}
-              <div style={{position:"absolute",inset:0}}>
-                {regs.map(r=>{const pos=pct(r.lat,r.lng);const rKey=country+'-'+r.n;const cnt=checkins[rKey]||0;const sz=cnt?Math.min(10+cnt*3,28):8;const t=cnt/mx;const isHere=region===r.n;
-                  return <div key={r.n} onClick={()=>{setRegion(r.n);setView("explore")}} style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",cursor:"pointer",textAlign:"center",zIndex:isHere?10:1}}>
-                    {cnt>0&&<div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:sz+20,height:sz+20,borderRadius:"50%",background:`radial-gradient(circle,rgba(16,185,129,${(.15+t*.3).toFixed(2)}),transparent)`,pointerEvents:"none"}}/>}
-                    <div style={{width:sz,height:sz,borderRadius:"50%",margin:"0 auto",background:cnt?`rgba(16,185,129,${(.3+t*.7).toFixed(2)})`:"rgba(255,255,255,.15)",border:`2px solid ${isHere?"#f59e0b":cnt?"#10b981":"rgba(255,255,255,.2)"}`,boxShadow:cnt>3?"0 0 12px rgba(16,185,129,.4)":"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz>16?9:7,fontWeight:900,color:"#fff"}}>{cnt>0?cnt:""}</div>
-                    <div style={{fontSize:8,fontWeight:700,color:isHere?"#f59e0b":"rgba(255,255,255,.5)",marginTop:2,textShadow:"0 1px 3px rgba(0,0,0,.8)",whiteSpace:"nowrap"}}>{r.n}</div>
-                  </div>})}
-                {/* 線上旅伴頭像 */}
-                {online.filter(u=>u.lat&&u.lng).map(u=>{const pos=pct(u.lat,u.lng);return <div key={u.uid} style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",zIndex:20,textAlign:"center"}}>
-                  <div style={{width:24,height:24,borderRadius:"50%",border:"2px solid #10b981",overflow:"hidden",margin:"0 auto",boxShadow:"0 0 8px rgba(16,185,129,.4)",animation:"pulse 2s infinite"}}>{u.photo?<img src={u.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"#1a1d24"}}/>}</div>
-                  <div style={{fontSize:7,color:"#10b981",fontWeight:700,marginTop:1,textShadow:"0 1px 3px #000"}}>{u.name?.slice(0,4)}</div>
-                </div>})}
-                {/* 自己 */}
-                {userLoc&&user&&(()=>{const pos=pct(userLoc.lat,userLoc.lng);return <div style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",zIndex:30,textAlign:"center"}}>
-                  <div style={{width:28,height:28,borderRadius:"50%",border:"2.5px solid #f59e0b",overflow:"hidden",margin:"0 auto",boxShadow:"0 0 12px rgba(245,158,11,.4)",animation:"pulse 2s infinite"}}>{user.photoURL?<img src={user.photoURL} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"#f59e0b"}}/>}</div>
-                  <div style={{fontSize:8,color:"#f59e0b",fontWeight:900,marginTop:1,textShadow:"0 1px 3px #000"}}>我</div>
-                </div>})()}
+            return <div style={{position:"relative"}}>
+              {/* 縮放按鈕 */}
+              <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:8}}>
+                <button onClick={()=>setMapZoom(z=>Math.min(z+.5,4))} style={{padding:"4px 14px",borderRadius:8,fontSize:16,fontWeight:900,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.2)"}}>＋</button>
+                <span style={{padding:"4px 10px",fontSize:11,color:"#666"}}>{Math.round(mapZoom*100)}%</span>
+                <button onClick={()=>setMapZoom(z=>Math.max(z-.5,1))} style={{padding:"4px 14px",borderRadius:8,fontSize:16,fontWeight:900,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>−</button>
+                {mapZoom>1&&<button onClick={()=>setMapZoom(1)} style={{padding:"4px 10px",borderRadius:8,fontSize:10,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>重置</button>}
+              </div>
+              <div style={{overflow:"auto",maxHeight:"65vh",borderRadius:16,border:"1px solid rgba(255,255,255,.06)",WebkitOverflowScrolling:"touch"}}>
+                <div style={{position:"relative",width:mapZoom>1?(mapZoom*100)+'%':"100%",transformOrigin:"top left"}}>
+                  <img src={mapUrl} style={{width:"100%",display:"block"}} alt="map" onError={e=>{e.target.style.background="#0a1520";e.target.style.minHeight="300px"}}/>
+                  <div style={{position:"absolute",inset:0}}>
+                    {regs.map(r=>{const pos=pct(r.lat,r.lng);const rKey=country+'-'+r.n;const cnt=checkins[rKey]||0;const sz=cnt?Math.min(10+cnt*3,28):8;const t=cnt/mx;const isHere=region===r.n;
+                      return <div key={r.n} onClick={()=>{setRegion(r.n);setView("explore")}} style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",cursor:"pointer",textAlign:"center",zIndex:isHere?10:1}}>
+                        {cnt>0&&<div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:sz+20,height:sz+20,borderRadius:"50%",background:`radial-gradient(circle,rgba(16,185,129,${(.15+t*.3).toFixed(2)}),transparent)`,pointerEvents:"none"}}/>}
+                        <div style={{width:sz,height:sz,borderRadius:"50%",margin:"0 auto",background:cnt?`rgba(16,185,129,${(.3+t*.7).toFixed(2)})`:"rgba(255,255,255,.2)",border:`2px solid ${isHere?"#f59e0b":cnt?"#10b981":"rgba(255,255,255,.25)"}`,boxShadow:cnt>3?"0 0 12px rgba(16,185,129,.4)":"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz>16?9:7,fontWeight:900,color:"#fff"}}>{cnt>0?cnt:""}</div>
+                        <div style={{fontSize:mapZoom>1.5?10:8,fontWeight:700,color:isHere?"#f59e0b":"rgba(255,255,255,.6)",marginTop:2,textShadow:"0 1px 4px rgba(0,0,0,.9)",whiteSpace:"nowrap"}}>{r.n}</div>
+                      </div>})}
+                    {online.filter(u=>u.lat&&u.lng).map(u=>{const pos=pct(u.lat,u.lng);return <div key={u.uid} style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",zIndex:20,textAlign:"center"}}>
+                      <div style={{width:24,height:24,borderRadius:"50%",border:"2px solid #10b981",overflow:"hidden",margin:"0 auto",boxShadow:"0 0 8px rgba(16,185,129,.4)",animation:"pulse 2s infinite"}}>{u.photo?<img src={u.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"#1a1d24"}}/>}</div>
+                      <div style={{fontSize:7,color:"#10b981",fontWeight:700,marginTop:1,textShadow:"0 1px 3px #000"}}>{u.name?.slice(0,4)}</div>
+                    </div>})}
+                    {userLoc&&user&&(()=>{const pos=pct(userLoc.lat,userLoc.lng);return <div style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",zIndex:30,textAlign:"center"}}>
+                      <div style={{width:28,height:28,borderRadius:"50%",border:"2.5px solid #f59e0b",overflow:"hidden",margin:"0 auto",boxShadow:"0 0 12px rgba(245,158,11,.4)",animation:"pulse 2s infinite"}}>{user.photoURL?<img src={user.photoURL} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"#f59e0b"}}/>}</div>
+                      <div style={{fontSize:8,color:"#f59e0b",fontWeight:900,marginTop:1,textShadow:"0 1px 3px #000"}}>我</div>
+                    </div>})()}
+                  </div>
+                </div>
               </div>
             </div>})()}
           {/* 圖例 */}
