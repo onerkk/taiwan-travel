@@ -306,7 +306,7 @@ function App(){
       <a href="guide.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#10b981",background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.15)",textDecoration:"none"}}>📖 說明</a>
       {installEvt&&<button onClick={doInstall} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",animation:"glow 2s ease-in-out infinite"}}>📲 安裝 App</button>}
     </div>
-    <div className="fu" style={{textAlign:"center",marginBottom:24}}>
+    <div className="fu" style={{textAlign:"center",marginBottom:24,paddingTop:48}}>
       <h1 style={{fontSize:44,fontWeight:900,letterSpacing:-2,lineHeight:1.1}}><span style={{background:"linear-gradient(135deg,#10b981,#14b8a6,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>旅遊通</span></h1>
       <p style={{color:"#555",fontSize:13,marginTop:8}}>選擇國家開始探索</p>
       {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} 位旅伴在線</p>}
