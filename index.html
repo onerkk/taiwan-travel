@@ -318,14 +318,11 @@ function App(){
           {(()=>{const regs=curCountry.regions;const lats=regs.map(r=>r.lat),lngs=regs.map(r=>r.lng);
             const minLat=Math.min(...lats)-.3,maxLat=Math.max(...lats)+.3,minLng=Math.min(...lngs)-.3,maxLng=Math.max(...lngs)+.3;
             const cLat=((minLat+maxLat)/2).toFixed(4),cLng=((minLng+maxLng)/2).toFixed(4);
-            const spread=Math.max(maxLat-minLat,maxLng-minLng);
-            const zoom=Math.max(3,Math.min(10,Math.round(Math.log2(360/spread)-1)));
-            const W=640,mercY=l=>Math.log(Math.tan(Math.PI/4+l*Math.PI/360));
-            const mercH=mercY(maxLat)-mercY(minLat),mercW=maxLng-minLng;
-            const H=Math.round(W*mercH/mercW);
+            const latR=maxLat-minLat,lngR=maxLng-minLng;
+            const zoom=Math.max(3,Math.min(10,Math.round(Math.log2(360/Math.max(latR,lngR))-1)));
+            const W=640,H=Math.max(400,Math.min(700,Math.round(W*latR/lngR*1.2)));
             const mapUrl=`https://maps.googleapis.com/maps/api/staticmap?center=${cLat},${cLng}&zoom=${zoom}&size=${W}x${H}&scale=2&maptype=terrain&style=feature:all|element:geometry|color:0x1a2e1a&style=feature:water|color:0x0a1828&style=feature:all|element:labels.text.fill|color:0x4a9a6a&style=feature:all|element:labels.text.stroke|color:0x0a0f14&style=feature:road|visibility:off&style=feature:poi|visibility:off&style=feature:transit|visibility:off&style=feature:administrative|element:geometry|color:0x1a3a2a&key=${apiKey}`;
-            /* 麥卡托投影對齊 */
-            const pct=(lat,lng)=>({left:((lng-minLng)/mercW*100)+'%',top:((mercY(maxLat)-mercY(lat))/mercH*100)+'%'});
+            const pct=(lat,lng)=>({left:((lng-minLng)/lngR*100)+'%',top:((maxLat-lat)/latR*100)+'%'});
             const mx=Math.max(1,...regs.map(r=>checkins[country+'-'+r.n]||0));
             return <div style={{position:"relative"}}>
               {/* 縮放按鈕 */}
