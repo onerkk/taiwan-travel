@@ -111,11 +111,33 @@ function Card({p,catId,onAdd,added,apiKey,gm,onCk,user,ckDist}){
   </div>
 }
 
-/* ======= 台灣地圖 ======= */
-const TW_PATH="M354,42 L422,74 L406,130 L380,230 L360,306 L320,400 L280,480 L260,550 L216,630 L210,720 L180,700 L100,600 L94,574 L80,500 L84,440 L90,380 L120,320 L150,270 L170,210 L200,150 L230,110 L280,80 L330,60 Z";
-const proj=(lat,lng)=>({x:(lng-119.8)*200,y:(25.5-lat)*200});
-const islandXY={澎湖:{x:22,y:420},金門:{x:22,y:300},馬祖:{x:22,y:120}};
+/* ======= 台灣地圖（精緻版）======= */
+/* 更精確的台灣輪廓 */
+const TW_MAIN="M530,60 L560,75 L575,95 L580,130 L570,170 L555,220 L535,280 L520,320 L500,370 L480,410 L455,460 L430,510 L405,555 L385,590 L365,625 L345,660 L325,695 L310,730 L295,760 L280,790 L270,820 L265,850 L255,880 L240,900 L225,870 L210,830 L195,790 L175,740 L160,690 L150,650 L140,600 L135,560 L140,510 L148,470 L160,430 L175,390 L195,350 L220,310 L250,270 L280,235 L310,200 L340,170 L370,145 L400,120 L430,100 L460,85 L495,70 Z";
+/* 中央山脈 */
+const MTN_PATH="M510,150 L480,230 L455,320 L430,410 L400,500 L370,590 L340,670 L310,750 L285,820";
+/* 雪山山脈 */
+const SNOW_MTN="M520,140 L490,200 L460,270 L435,330";
+/* 海岸山脈 */
+const COAST_MTN="M540,280 L520,370 L495,460 L470,550 L440,640";
+/* 阿里山山脈 */
+const ALI_MTN="M350,530 L330,580 L310,640";
+const proj=(lat,lng)=>({x:(lng-119.3)*220,y:(25.6-lat)*220});
+const islandXY={澎湖:{x:45,y:470},金門:{x:45,y:340},馬祖:{x:70,y:85}};
 const mapXY=r=>islandXY[r.n]||proj(r.lat,r.lng);
+/* 各縣市地標 emoji + 偏移（避免重疊）*/
+const LANDMARKS={
+  台北:{e:"🏙️",lbl:"101",ox:-22,oy:-18},新北:{e:"🏮",lbl:"九份",ox:18,oy:-12},
+  基隆:{e:"⛵",lbl:"港口",ox:12,oy:-16},桃園:{e:"✈️",lbl:"機場",ox:-20,oy:-14},
+  新竹:{e:"💻",lbl:"科技城",ox:-18,oy:14},苗栗:{e:"🌸",lbl:"桐花",ox:-22,oy:10},
+  台中:{e:"🎭",lbl:"歌劇院",ox:-24,oy:12},彰化:{e:"🙏",lbl:"大佛",ox:-24,oy:0},
+  南投:{e:"🏞️",lbl:"日月潭",ox:14,oy:12},雲林:{e:"🤡",lbl:"布袋戲",ox:-22,oy:10},
+  嘉義:{e:"🌲",lbl:"阿里山",ox:-18,oy:14},台南:{e:"🏯",lbl:"古都",ox:-18,oy:14},
+  高雄:{e:"🚢",lbl:"港灣",ox:-10,oy:16},屏東:{e:"🏖️",lbl:"墾丁",ox:12,oy:14},
+  宜蘭:{e:"♨️",lbl:"溫泉",ox:14,oy:12},花蓮:{e:"⛰️",lbl:"太魯閣",ox:16,oy:10},
+  台東:{e:"🎈",lbl:"熱氣球",ox:16,oy:10},澎湖:{e:"🎆",lbl:"花火",ox:0,oy:16},
+  金門:{e:"🏰",lbl:"戰地",ox:0,oy:16},馬祖:{e:"🌊",lbl:"藍眼淚",ox:0,oy:16}
+};
 
 function TaiwanMap({ck,online,me,geo,history}){
   const mx=Math.max(1,...Object.values(ck||{}));
@@ -123,17 +145,60 @@ function TaiwanMap({ck,online,me,geo,history}){
   const color=cnt=>{if(!cnt)return"rgba(255,255,255,.06)";return`rgba(16,185,129,${(.2+Math.min(cnt/mx,1)*.8).toFixed(2)})`};
   const selHist=sel?history.filter(h=>h.region===sel):[];
   return <div className="fi" style={{display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
-    <svg viewBox="0 20 460 720" style={{width:"100%",maxWidth:380}}>
-      <defs><filter id="gl"><feGaussianBlur stdDeviation="4" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter><radialGradient id="dg"><stop offset="0%" stopColor="#10b981" stopOpacity=".3"/><stop offset="100%" stopColor="#10b981" stopOpacity="0"/></radialGradient></defs>
-      <path d={TW_PATH} fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.06)" strokeWidth="1.5"/>
-      {["澎湖","金門","馬祖"].map(n=>{const p=islandXY[n];return <rect key={n} x={p.x-16} y={p.y-16} width={32} height={32} rx={8} fill="rgba(255,255,255,.02)" stroke="rgba(255,255,255,.05)" strokeWidth=".5"/>})}
+    <svg viewBox="0 0 660 960" style={{width:"100%",maxWidth:400}}>
+      <defs>
+        <filter id="gl"><feGaussianBlur stdDeviation="4" result="c"/><feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <radialGradient id="dg"><stop offset="0%" stopColor="#10b981" stopOpacity=".3"/><stop offset="100%" stopColor="#10b981" stopOpacity="0"/></radialGradient>
+        <linearGradient id="sea" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#0c1929"/><stop offset="100%" stopColor="#0a1420"/></linearGradient>
+        <linearGradient id="land" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1a2a1a"/><stop offset="40%" stopColor="#162016"/><stop offset="100%" stopColor="#1a1e1a"/></linearGradient>
+        <linearGradient id="mtn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgba(34,80,34,.4)"/><stop offset="100%" stopColor="rgba(20,50,20,.2)"/></linearGradient>
+        <filter id="mtnShadow"><feDropShadow dx="2" dy="2" stdDeviation="3" floodColor="rgba(0,0,0,.3)"/></filter>
+      </defs>
+      {/* 海洋背景 */}
+      <rect width="660" height="960" fill="url(#sea)" rx="16"/>
+      {/* 海洋波紋裝飾 */}
+      {[{x:80,y:200},{x:600,y:400},{x:90,y:600},{x:580,y:750},{x:50,y:830}].map((w,i)=><text key={i} x={w.x} y={w.y} fontSize="8" fill="rgba(59,130,246,.08)" textAnchor="middle">〜〜〜</text>)}
+      {/* 海洋標籤 */}
+      <text x="85" y="550" fontSize="11" fill="rgba(59,130,246,.12)" fontWeight="700" textAnchor="middle" transform="rotate(-90,85,550)">台 灣 海 峽</text>
+      <text x="590" y="500" fontSize="11" fill="rgba(59,130,246,.12)" fontWeight="700" textAnchor="middle" transform="rotate(90,590,500)">太 平 洋</text>
+      {/* 台灣本島 */}
+      <path d={TW_MAIN} fill="url(#land)" stroke="rgba(16,185,129,.15)" strokeWidth="1.5" filter="url(#mtnShadow)"/>
+      {/* 山脈 - 中央山脈 */}
+      <path d={MTN_PATH} fill="none" stroke="rgba(34,120,34,.25)" strokeWidth="12" strokeLinecap="round" opacity=".6"/>
+      <path d={MTN_PATH} fill="none" stroke="rgba(34,120,34,.15)" strokeWidth="6" strokeLinecap="round"/>
+      {/* 雪山山脈 */}
+      <path d={SNOW_MTN} fill="none" stroke="rgba(34,100,34,.2)" strokeWidth="8" strokeLinecap="round" opacity=".5"/>
+      {/* 海岸山脈 */}
+      <path d={COAST_MTN} fill="none" stroke="rgba(34,90,34,.15)" strokeWidth="6" strokeLinecap="round" opacity=".4"/>
+      {/* 阿里山 */}
+      <path d={ALI_MTN} fill="none" stroke="rgba(34,100,34,.2)" strokeWidth="7" strokeLinecap="round" opacity=".5"/>
+      {/* 山峰三角標記 */}
+      {[{x:460,y:300,n:"雪山",h:"3886m"},{x:420,y:440,n:"玉山",h:"3952m"},{x:380,y:560,n:"北大武",h:"3092m"},{x:440,y:360,n:"合歡山",h:"3422m"},{x:350,y:570,n:"阿里山",h:"2216m"}].map((pk,i)=><g key={i}>
+        <polygon points={`${pk.x-4},${pk.y+3} ${pk.x},${pk.y-5} ${pk.x+4},${pk.y+3}`} fill="rgba(34,120,34,.35)" stroke="rgba(16,185,129,.2)" strokeWidth=".5"/>
+        <text x={pk.x} y={pk.y+13} textAnchor="middle" fontSize="6" fill="rgba(255,255,255,.12)" fontWeight="700">{pk.n}</text>
+      </g>)}
+      {/* 離島 */}
+      {[{n:"澎湖",p:islandXY["澎湖"],w:28,h:22},{n:"金門",p:islandXY["金門"],w:24,h:16},{n:"馬祖",p:islandXY["馬祖"],w:18,h:14}].map(isl=><g key={isl.n}>
+        <ellipse cx={isl.p.x} cy={isl.p.y} rx={isl.w/2} ry={isl.h/2} fill="url(#land)" stroke="rgba(16,185,129,.12)" strokeWidth=".8"/>
+      </g>)}
+      {/* 河流 */}
+      <path d="M430,350 Q400,380 370,395 Q340,410 300,415" fill="none" stroke="rgba(59,130,246,.08)" strokeWidth="1.5" strokeDasharray="4,3"/>
+      <path d="M380,520 Q350,540 320,560 Q290,580 260,590" fill="none" stroke="rgba(59,130,246,.08)" strokeWidth="1.5" strokeDasharray="4,3"/>
+      {/* 地標 emoji */}
+      {REGIONS.map(r=>{const p=mapXY(r);const lm=LANDMARKS[r.n];if(!lm)return null;return <g key={"lm-"+r.n} style={{pointerEvents:"none"}}>
+        <text x={p.x+lm.ox} y={p.y+lm.oy} fontSize="16" textAnchor="middle" dominantBaseline="central">{lm.e}</text>
+        <text x={p.x+lm.ox} y={p.y+lm.oy+13} fontSize="6" fill="rgba(255,255,255,.15)" textAnchor="middle" fontWeight="700">{lm.lbl}</text>
+      </g>})}
+      {/* 打卡圓點 */}
       {REGIONS.map(r=>{const p=mapXY(r);const cnt=ck?.[r.n]||0;const sz=cnt?Math.min(8+cnt*1.5,22):7;const isSel=sel===r.n;return <g key={r.n} className="map-dot" onClick={()=>setSel(isSel?null:r.n)}>
         {cnt>0&&<circle cx={p.x} cy={p.y} r={sz+10} fill="url(#dg)" opacity={Math.min(cnt/mx,1)}/>}
         <circle cx={p.x} cy={p.y} r={sz} fill={color(cnt)} stroke={isSel?"#f59e0b":cnt?"#10b981":"rgba(255,255,255,.1)"} strokeWidth={isSel?2.5:cnt?1.5:.5} filter={cnt>3?"url(#gl)":"none"}/>
         {cnt>0&&<text x={p.x} y={p.y+1} textAnchor="middle" dominantBaseline="central" fill="#fff" fontSize={sz>12?10:7} fontWeight="900">{cnt}</text>}
-        <text x={p.x} y={p.y+sz+11} textAnchor="middle" fill={isSel?"#f59e0b":"rgba(255,255,255,.25)"} fontSize="9" fontWeight="700">{r.n}</text>
+        <text x={p.x} y={p.y+sz+11} textAnchor="middle" fill={isSel?"#f59e0b":"rgba(255,255,255,.3)"} fontSize="9" fontWeight="700">{r.n}</text>
       </g>})}
+      {/* 線上用戶頭像 */}
       {(online||[]).filter(u=>u.lat&&u.lng).map(u=>{const p=proj(u.lat,u.lng);return <g key={u.uid}><circle cx={p.x} cy={p.y} r={13} fill="none" stroke="#10b981" strokeWidth="1.5" opacity=".5" style={{animation:"pulse 2s ease-in-out infinite"}}/><clipPath id={"a"+u.uid}><circle cx={p.x} cy={p.y} r={10}/></clipPath>{u.photo?<image href={u.photo} x={p.x-10} y={p.y-10} width={20} height={20} clipPath={"url(#a"+u.uid+")"}/>:<circle cx={p.x} cy={p.y} r={10} fill="#1a1d24"/>}<text x={p.x} y={p.y+20} textAnchor="middle" fill="#10b981" fontSize="7" fontWeight="700">{(u.name||"").slice(0,4)}</text></g>})}
+      {/* 自己的位置 */}
       {geo&&me&&(()=>{const p=proj(geo.lat,geo.lng);return <g><circle cx={p.x} cy={p.y} r={15} fill="none" stroke="#f59e0b" strokeWidth="2" style={{animation:"pulse 2s ease-in-out infinite"}}/><clipPath id="mav"><circle cx={p.x} cy={p.y} r={11}/></clipPath>{me.photoURL?<image href={me.photoURL} x={p.x-11} y={p.y-11} width={22} height={22} clipPath="url(#mav)"/>:<circle cx={p.x} cy={p.y} r={11} fill="#f59e0b"/>}<text x={p.x} y={p.y+22} textAnchor="middle" fill="#f59e0b" fontSize="8" fontWeight="900">我</text></g>})()}
     </svg>
     {/* 選中區域 → 展開造訪紀錄 */}
