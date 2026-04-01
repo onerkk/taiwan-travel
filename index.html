@@ -189,7 +189,52 @@ function Setup({onDone}){
   </div>
 }
 
-/* ======= 主應用 ======= */
+/* ======= Google Maps 互動地圖 ======= */
+function GMap({apiKey,regions,checkins,country,region,online,userLoc,user,onSelect}){
+  const ref=useRef(null);const mapRef=useRef(null);const mkRef=useRef([]);
+  useEffect(()=>{
+    if(!ref.current||!apiKey)return;
+    const init=()=>{
+      if(!window.google?.maps)return;const gm=window.google.maps;
+      /* 清除舊 markers */
+      mkRef.current.forEach(m=>m.setMap(null));mkRef.current=[];
+      /* 建立地圖 */
+      const bounds=new gm.LatLngBounds();
+      regions.forEach(r=>bounds.extend({lat:r.lat,lng:r.lng}));
+      if(!mapRef.current){
+        mapRef.current=new gm.Map(ref.current,{mapTypeId:'terrain',disableDefaultUI:true,zoomControl:true,gestureHandling:'greedy',
+          styles:[{featureType:'water',stylers:[{color:'#0a1828'}]},{featureType:'landscape',stylers:[{color:'#1a3a1a'}]},{elementType:'labels.text.fill',stylers:[{color:'#cccccc'}]},{elementType:'labels.text.stroke',stylers:[{color:'#111111'},{weight:3}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#2a3a2a'}]},{featureType:'poi',stylers:[{visibility:'off'}]}]});
+      }
+      mapRef.current.fitBounds(bounds,{top:20,bottom:20,left:20,right:20});
+      /* 區域 markers */
+      const mx=Math.max(1,...regions.map(r=>checkins[country+'-'+r.n]||0));
+      regions.forEach(r=>{const rKey=country+'-'+r.n;const cnt=checkins[rKey]||0;const isHere=region===r.n;
+        const mk=new gm.Marker({position:{lat:r.lat,lng:r.lng},map:mapRef.current,
+          label:{text:r.n+(cnt?' ('+cnt+')':''),color:isHere?'#f59e0b':'#fff',fontSize:'11px',fontWeight:'700'},
+          icon:{path:gm.SymbolPath.CIRCLE,scale:cnt?8+Math.min(cnt*2,16):6,
+            fillColor:cnt?'#10b981':'#555',fillOpacity:cnt?.7:.3,
+            strokeColor:isHere?'#f59e0b':cnt?'#10b981':'#888',strokeWeight:isHere?3:1.5}});
+        mk.addListener('click',()=>onSelect(r.n));mkRef.current.push(mk)});
+      /* 線上旅伴 */
+      online.filter(u=>u.lat&&u.lng).forEach(u=>{
+        const mk=new gm.Marker({position:{lat:u.lat,lng:u.lng},map:mapRef.current,title:u.name,
+          icon:u.photo?{url:u.photo,scaledSize:new gm.Size(28,28),anchor:new gm.Point(14,14)}:
+            {path:gm.SymbolPath.CIRCLE,scale:10,fillColor:'#10b981',fillOpacity:.8,strokeColor:'#10b981',strokeWeight:2}});
+        mkRef.current.push(mk)});
+      /* 自己 */
+      if(userLoc&&user){
+        const mk=new gm.Marker({position:{lat:userLoc.lat,lng:userLoc.lng},map:mapRef.current,title:'我',zIndex:999,
+          icon:user.photoURL?{url:user.photoURL,scaledSize:new gm.Size(36,36),anchor:new gm.Point(18,18)}:
+            {path:gm.SymbolPath.CIRCLE,scale:14,fillColor:'#f59e0b',fillOpacity:1,strokeColor:'#f59e0b',strokeWeight:3}});
+        mkRef.current.push(mk)}
+    };
+    if(window.google?.maps){init()}
+    else if(!document.getElementById('gmjs')){const s=document.createElement('script');s.id='gmjs';s.src='https://maps.googleapis.com/maps/api/js?key='+apiKey;s.onload=init;document.head.appendChild(s)}
+    else{const t=setInterval(()=>{if(window.google?.maps){clearInterval(t);init()}},200)}
+  },[apiKey,regions,checkins,country,region,online,userLoc,user]);
+  return <div ref={ref} style={{width:'100%',height:'55vh',minHeight:350,borderRadius:16,overflow:'hidden',border:'1px solid rgba(255,255,255,.06)'}}/>
+}
+
 function App(){
   const[apiKey,setApiKey]=useState(getK());const[groupId,setGroupId]=useState(getG());const[ready,setReady]=useState(!!apiKey&&!!groupId);
   const onSetup=useCallback((k,g)=>{setApiKey(k);setGroupId(g);setReady(true)},[]);
@@ -314,50 +359,9 @@ function App(){
         </div>
         <div style={{display:"flex",gap:6,justifyContent:"center"}}>{[{id:"map",l:"🗺️ 地圖"},{id:"log",l:"📋 打卡記錄"}].map(t=><button key={t.id} onClick={()=>setMapTab(t.id)} style={{padding:"6px 16px",borderRadius:8,fontSize:12,fontWeight:700,background:mapTab===t.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(mapTab===t.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:mapTab===t.id?"#10b981":"#666"}}>{t.l}</button>)}</div>
         {mapTab==="map"&&<>
-          {/* SVG 地圖：根據區域座標自動定位 */}
-          {(()=>{const regs=curCountry.regions;const lats=regs.map(r=>r.lat),lngs=regs.map(r=>r.lng);
-            const minLat=Math.min(...lats)-.15,maxLat=Math.max(...lats)+.15,minLng=Math.min(...lngs)-.15,maxLng=Math.max(...lngs)+.15;
-            const cLat=((minLat+maxLat)/2).toFixed(4),cLng=((minLng+maxLng)/2).toFixed(4);
-            const latR=maxLat-minLat,lngR=maxLng-minLng,spread=Math.max(latR,lngR);
-            const zoom=Math.max(3,Math.min(14,Math.floor(Math.log2(W*360/(256*spread)))));
-            const W=640,H=Math.max(400,Math.min(700,Math.round(W*latR/lngR*1.2)));
-            const mapUrl=`https://maps.googleapis.com/maps/api/staticmap?center=${cLat},${cLng}&zoom=${zoom}&size=${W}x${H}&scale=2&maptype=terrain&style=feature:water|color:0x0a1828&style=feature:landscape|color:0x1a3a1a&style=feature:all|element:labels.text.fill|color:0xcccccc&style=feature:all|element:labels.text.stroke|color:0x111111|weight:3&style=feature:road|element:geometry|color:0x2a3a2a&style=feature:administrative|element:geometry.stroke|color:0x2a4a2a&key=${apiKey}`;
-            const pct=(lat,lng)=>({left:((lng-minLng)/lngR*100)+'%',top:((maxLat-lat)/latR*100)+'%'});
-            const mx=Math.max(1,...regs.map(r=>checkins[country+'-'+r.n]||0));
-            return <div style={{position:"relative"}}>
-              {/* 縮放按鈕 */}
-              <div style={{display:"flex",justifyContent:"center",gap:8,marginBottom:8}}>
-                <button onClick={()=>setMapZoom(z=>Math.min(z+.5,4))} style={{padding:"4px 14px",borderRadius:8,fontSize:16,fontWeight:900,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.2)"}}>＋</button>
-                <span style={{padding:"4px 10px",fontSize:11,color:"#666"}}>{Math.round(mapZoom*100)}%</span>
-                <button onClick={()=>setMapZoom(z=>Math.max(z-.5,1))} style={{padding:"4px 14px",borderRadius:8,fontSize:16,fontWeight:900,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>−</button>
-                {mapZoom>1&&<button onClick={()=>setMapZoom(1)} style={{padding:"4px 10px",borderRadius:8,fontSize:10,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>重置</button>}
-              </div>
-              <div style={{overflow:"auto",maxHeight:"65vh",borderRadius:16,border:"1px solid rgba(255,255,255,.06)",WebkitOverflowScrolling:"touch"}}>
-                <div style={{position:"relative",width:mapZoom>1?(mapZoom*100)+'%':"100%",transformOrigin:"top left"}}>
-                  <img src={mapUrl} style={{width:"100%",display:"block"}} alt="map" onError={e=>{e.target.style.background="#0a1520";e.target.style.minHeight="300px"}}/>
-                  <div style={{position:"absolute",inset:0}}>
-                    {regs.map(r=>{const pos=pct(r.lat,r.lng);const rKey=country+'-'+r.n;const cnt=checkins[rKey]||0;const sz=cnt?Math.min(10+cnt*3,28):8;const t=cnt/mx;const isHere=region===r.n;
-                      return <div key={r.n} onClick={()=>{setRegion(r.n);setView("explore")}} style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",cursor:"pointer",textAlign:"center",zIndex:isHere?10:1}}>
-                        {cnt>0&&<div style={{position:"absolute",left:"50%",top:"50%",transform:"translate(-50%,-50%)",width:sz+20,height:sz+20,borderRadius:"50%",background:`radial-gradient(circle,rgba(16,185,129,${(.15+t*.3).toFixed(2)}),transparent)`,pointerEvents:"none"}}/>}
-                        <div style={{width:sz,height:sz,borderRadius:"50%",margin:"0 auto",background:cnt?`rgba(16,185,129,${(.3+t*.7).toFixed(2)})`:"rgba(255,255,255,.2)",border:`2px solid ${isHere?"#f59e0b":cnt?"#10b981":"rgba(255,255,255,.25)"}`,boxShadow:cnt>3?"0 0 12px rgba(16,185,129,.4)":"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:sz>16?9:7,fontWeight:900,color:"#fff"}}>{cnt>0?cnt:""}</div>
-                        <div style={{fontSize:mapZoom>1.5?10:8,fontWeight:700,color:isHere?"#f59e0b":"rgba(255,255,255,.6)",marginTop:2,textShadow:"0 1px 4px rgba(0,0,0,.9)",whiteSpace:"nowrap"}}>{r.n}</div>
-                      </div>})}
-                    {online.filter(u=>u.lat&&u.lng).map(u=>{const pos=pct(u.lat,u.lng);return <div key={u.uid} style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",zIndex:20,textAlign:"center"}}>
-                      <div style={{width:24,height:24,borderRadius:"50%",border:"2px solid #10b981",overflow:"hidden",margin:"0 auto",boxShadow:"0 0 8px rgba(16,185,129,.4)",animation:"pulse 2s infinite"}}>{u.photo?<img src={u.photo} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"#1a1d24"}}/>}</div>
-                      <div style={{fontSize:7,color:"#10b981",fontWeight:700,marginTop:1,textShadow:"0 1px 3px #000"}}>{u.name?.slice(0,4)}</div>
-                    </div>})}
-                    {userLoc&&user&&(()=>{const pos=pct(userLoc.lat,userLoc.lng);return <div style={{position:"absolute",...pos,transform:"translate(-50%,-50%)",zIndex:30,textAlign:"center"}}>
-                      <div style={{width:28,height:28,borderRadius:"50%",border:"2.5px solid #f59e0b",overflow:"hidden",margin:"0 auto",boxShadow:"0 0 12px rgba(245,158,11,.4)",animation:"pulse 2s infinite"}}>{user.photoURL?<img src={user.photoURL} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",background:"#f59e0b"}}/>}</div>
-                      <div style={{fontSize:8,color:"#f59e0b",fontWeight:900,marginTop:1,textShadow:"0 1px 3px #000"}}>我</div>
-                    </div>})()}
-                  </div>
-                </div>
-              </div>
-            </div>})()}
-          {/* 圖例 */}
-          <div style={{display:"flex",justifyContent:"center",gap:12,fontSize:9,color:"#555"}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.08)",border:"1px solid rgba(255,255,255,.12)"}}/>未到訪</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.5)"}}/>去過</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>常去</span></div>
-          {/* 天氣 */}
-          {wx&&<div style={{padding:14,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+          <GMap apiKey={apiKey} regions={curCountry.regions} checkins={checkins} country={country} region={region} online={online} userLoc={userLoc} user={user} onSelect={n=>{setRegion(n);setView("explore")}}/>
+          <div style={{display:"flex",justifyContent:"center",gap:12,fontSize:9,color:"#555",marginTop:8}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.15)",border:"1px solid #888"}}/>未到訪</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.5)"}}/>去過</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>常去</span></div>
+          {wx&&<div style={{padding:14,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)",marginTop:8}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:32}}>{WX_ICON[wx.icon]||"🌤️"}</span><div><p style={{fontSize:20,fontWeight:900}}>{wx.temp}°C</p><p style={{fontSize:11,color:"#888"}}>{wx.desc}</p></div><div style={{marginLeft:"auto",fontSize:10,color:"#666",textAlign:"right"}}><p>體感 {wx.feel}°</p><p>濕度 {wx.humidity}%</p><p>風速 {wx.wind}km/h</p></div></div>
           </div>}
         </>}
