@@ -45,7 +45,7 @@ img.ph{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center"><div style="width:32px;height:32px;border:3px solid rgba(16,185,129,.2);border-top-color:#10b981;border-radius:50%;animation:spin 1s linear infinite"></div></div></div>
 <script type="text/babel">
 const{useState,useEffect,useRef,useCallback}=React;
 const Ico=({d,s=16,c="currentColor",f="none"})=><svg width={s} height={s} viewBox="0 0 24 24" fill={f} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d.split('|').map((p,i)=><path key={i} d={p}/>)}</svg>;
@@ -66,15 +66,15 @@ const getLang=()=>localStorage.getItem('tw_lang')||'zh';
 const I18N={
 zh:{
   explore:"探索",map:"地圖",plan:"行程",attraction:"景點",food:"美食",hotel:"住宿",fishing:"釣魚",camping:"露營",
-  nearest:t("nearest"),rating:t("rating"),search:"搜尋",loading:"載入中...",noResult:"沒有找到結果",items:"筆",
+  nearest:"📍 最近",rating:"⭐ 評分",search:"搜尋",loading:"載入中...",noResult:"沒有找到結果",items:"筆",
   nav:"導航",streetView:"街景",checkin:"打卡",collapse:"收起",addPlan:"加入",added:"已加入",
   open:"營業中",closed:"已休息",reviews:"📝 旅客評價",website:"官網",seeMore:"看更多 ▼",seeLess:"收起 ▲",
-  parking:"🅿️ 停車",freePk:t("freePk"),paidPk:t("paidPk"),streetPk:t("streetPk"),hasPk:t("hasPk"),nearbyPk:"🅿️ 附近停車場",
-  planTitle:"行程規劃",days:t("days"),autoRec:"⚡ 自動推薦",autoRecN:"日行程",autoRecDesc:"依地區自動搜尋景點、三餐、住宿並安排",
+  parking:"🅿️ 停車",freePk:"免費停車場",paidPk:"付費停車場",streetPk:"路邊停車",hasPk:"有停車位",nearbyPk:"🅿️ 附近停車場",
+  planTitle:"行程規劃",days:"天數",autoRec:"⚡ 自動推薦",autoRecN:"日行程",autoRecDesc:"依地區自動搜尋景點、三餐、住宿並安排",
   manualPlan:"用已選",manualPlanSuffix:"點排行程",manualDesc:"智慧排序：按距離分組、餐廳穿插景點間、住宿排最後",
   replan:"重新規劃",aiAuto:"⚡ AI 自動推薦行程",day:"Day",
   car:"自駕",walk:"徒步",bus:"公車",train:"火車",
-  travelMap:"旅遊地圖",mapTab:t("mapTab"),logTab:t("logTab"),unvisited:"未到訪",visited:"去過",frequent:"常去",
+  travelMap:"旅遊地圖",mapTab:"🗺️ 地圖",logTab:"📋 打卡記錄",unvisited:"未到訪",visited:"去過",frequent:"常去",
   weather:"天氣",feelsLike:"體感",humidity:"濕度",wind:"風速",
   ckTitle:"📍 打卡",ckNearby:"👥 附近旅伴",ckPhoto:"📷 拍照 / 選擇照片",ckRemove:"✕ 移除",ckNote:"寫下感想...",ckConfirm:"📍 確認打卡",ckAuto:"時間 · 地點 · 旅伴自動記錄",ckAlone:"獨自打卡",ckSuccess:"打卡成功！",ckDeleted:"🗑️ 已刪除打卡記錄",ckDelete:"刪除",ckConfirmDel:"確定刪除這筆打卡？",ckPrompt:"到「探索」找景點，1km 內打卡",
   login:"登入",logout:"登出",loginFail:"登入失敗，請再試一次",
@@ -126,7 +126,7 @@ const COUNTRIES=[
 ];
 const CATS=[{id:"attraction",nk:"attraction",c:"#10b981",qs:["熱門景點","觀光景點","公園步道","博物館","寺廟古蹟"]},{id:"food",nk:"food",c:"#f59e0b",qs:["必吃餐廳","小吃","咖啡甜點","早午餐","海鮮料理"]},{id:"hotel",nk:"hotel",c:"#6366f1",qs:["飯店","民宿","度假村","青年旅館","溫泉旅館"]},{id:"fishing",nk:"fishing",c:"#06b6d4",qs:["磯釣點","堤防釣魚","漁港釣魚","溪流釣魚","海釣熱門釣點","野釣秘境","水庫釣魚","防波堤釣魚","釣魚場","河口釣點"]},{id:"camping",nk:"camping",c:"#84cc16",qs:["露營區","露營場","豪華露營","野營地","營地推薦","露營區營地"]}];
 const TRANS=[{id:"car",nk:"car",e:"🚗",gm:"driving"},{id:"walk",nk:"walk",e:"🚶",gm:"walking"},{id:"bus",nk:"bus",e:"🚌",gm:"transit"},{id:"train",nk:"train",e:"🚄",gm:"transit"}];
-const PRICE=["",(t("price1")),(t("price2")),(t("price3")),(t("price4"))];
+const PRICE=()=>["",t("price1"),t("price2"),t("price3"),t("price4")];
 const hDist=(a,b,c,d)=>{const R=6371,t=x=>x*Math.PI/180,dL=t(c-a),dN=t(d-b),s=Math.sin(dL/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))};
 const fmtDate=ts=>{if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 
@@ -248,7 +248,7 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
     <div style={{padding:"8px 14px 14px",display:"flex",flexDirection:"column",gap:6}}>
       {/* 價位 + 距離 */}
       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-        {p.price>0&&<span style={{fontSize:10,color:"#f59e0b",fontWeight:700}}>{PRICE[p.price]}</span>}
+        {p.price>0&&<span style={{fontSize:10,color:"#f59e0b",fontWeight:700}}>{PRICE()[p.price]}</span>}
         {p.a&&<span style={{fontSize:10,color:"#6b7280",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{p.a}</span>}
         {p._dist!=null&&p._dist<9999&&<span style={{flexShrink:0,padding:"2px 8px",borderRadius:8,background:"rgba(16,185,129,.12)",color:"#10b981",fontSize:10,fontWeight:700}}>{p._dist<1?(p._dist*1000).toFixed(0)+'m':p._dist.toFixed(1)+'km'}</span>}
       </div>
@@ -812,7 +812,7 @@ function App(){
                 </div>
                 {/* 停車資訊 */}
                 {s.parking?.any?<div style={{display:"flex",alignItems:"center",gap:4,marginTop:6,padding:"5px 10px",borderRadius:8,background:"rgba(59,130,246,.06)",border:"1px solid rgba(59,130,246,.12)"}}>
-                  <span style={{fontSize:13}}>🅿️</span><span style={{fontSize:11,color:"#60a5fa",fontWeight:600}}>{s.parking.free?"免費停車場":s.parking.paid?"付費停車場":s.parking.garage?t("hasPk"):s.parking.street?"路邊停車":"有停車位"}</span>
+                  <span style={{fontSize:13}}>🅿️</span><span style={{fontSize:11,color:"#60a5fa",fontWeight:600}}>{s.parking.free?t("freePk"):s.parking.paid?t("paidPk"):s.parking.garage?t("hasPk"):s.parking.street?t("streetPk"):t("hasPk")}</span>
                 </div>
                 :s.nearbyPk?.length>0?<div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(245,158,11,.04)",border:"1px solid rgba(245,158,11,.1)"}}>
                   <p style={{fontSize:10,color:"#f59e0b",fontWeight:700,marginBottom:4}}>{t("nearbyPk")}</p>
