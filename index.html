@@ -243,7 +243,7 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
 }
 
 /* ======= 照片壓縮 ======= */
-const compressImg=(file,maxPx=400,q=0.6)=>new Promise(res=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');let w=img.width,h=img.height;if(w>h){h=h*maxPx/w;w=maxPx}else{w=w*maxPx/h;h=maxPx}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',q))};img.src=e.target.result};r.readAsDataURL(file)});
+const compressImg=(file,maxPx=1000,q=0.85)=>new Promise(res=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');let w=img.width,h=img.height;if(w>h){h=h*maxPx/w;w=maxPx}else{w=w*maxPx/h;h=maxPx}c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);res(c.toDataURL('image/jpeg',q))};img.src=e.target.result};r.readAsDataURL(file)});
 
 /* ======= 打卡彈窗 ======= */
 function CkModal({place,onConfirm,onClose,online}){
@@ -467,12 +467,14 @@ function GMap({apiKey,regions,checkins,country,region,online,userLoc,user,onSele
         mk.addListener('click',()=>onSelect(r.n));mkRef.current.push(mk)});
       /* 打卡記錄 markers */
       (history||[]).filter(h=>h.country===country&&h.lat&&h.lng).forEach(h=>{
-        const mk=new gm.Marker({position:{lat:h.lat,lng:h.lng},map:mapRef.current,title:h.placeName,zIndex:10,
-          icon:{path:gm.SymbolPath.BACKWARD_CLOSED_ARROW,scale:5,fillColor:'#f59e0b',fillOpacity:.9,strokeColor:'#fff',strokeWeight:1.5}});
-        const info=new gm.InfoWindow({content:'<div style="color:#333;font-size:13px;font-weight:700;max-width:200px">'+
-          '<b>'+h.placeName+'</b><br><span style="font-size:11px;color:#666">'+(h.note||'')+'</span>'+
-          (h.companions?.length?'<br><span style="font-size:10px;color:#f59e0b">👥 '+h.companions.map(c=>c.name).join('、')+'</span>':'')+
-          '<br><span style="font-size:10px;color:#999">'+fmtDate(h.ts)+'</span></div>'});
+        const mk=new gm.Marker({position:{lat:h.lat,lng:h.lng},map:mapRef.current,title:h.placeName,zIndex:50,
+          label:{text:'📍',fontSize:'18px'},
+          icon:{path:gm.SymbolPath.CIRCLE,scale:14,fillColor:'#f59e0b',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2.5}});
+        const info=new gm.InfoWindow({content:'<div style="color:#333;font-size:14px;font-weight:700;max-width:220px;padding:4px">'+
+          '<div style="font-size:15px;margin-bottom:4px">📍 '+h.placeName+'</div>'+
+          (h.note?'<div style="font-size:12px;color:#666;margin-bottom:4px">'+h.note+'</div>':'')+
+          (h.companions?.length?'<div style="font-size:11px;color:#d97706">👥 '+h.companions.map(c=>c.name).join('、')+'</div>':'')+
+          '<div style="font-size:11px;color:#999;margin-top:2px">'+fmtDate(h.ts)+'</div></div>'});
         mk.addListener('click',()=>info.open(mapRef.current,mk));mkRef.current.push(mk)});
       /* 線上旅伴 */
       online.filter(u=>u.lat&&u.lng).forEach(u=>{
@@ -539,6 +541,18 @@ function App(){
     else setCkMsg("✅ "+place.n+" 打卡成功！");
     try{const ref=await db.collection("history").add(rec);setHistory(prev=>[{id:ref.id,...rec,ts:new Date()},...prev])}catch{}
     setTimeout(()=>setCkMsg(""),4000);
+  };
+  const deleteCheckin=async(h)=>{
+    if(!user||!db||!h.id)return;
+    /* 從 Firestore 刪除 */
+    try{await db.collection("history").doc(h.id).delete()}catch{}
+    /* 更新本地 history */
+    setHistory(prev=>prev.filter(x=>x.id!==h.id));
+    /* 更新區域打卡數 */
+    const rKey=(h.country||country)+'-'+(h.region||region);
+    const nc=Math.max(0,(checkins[rKey]||1)-1);const nck={...checkins,[rKey]:nc};setCheckins(nck);
+    try{await db.collection("checkins").doc(user.uid).set({regions:nck},{merge:true})}catch{}
+    setCkMsg("🗑️ 已刪除打卡記錄");setTimeout(()=>setCkMsg(""),3000);
   };
   const totalCk=Object.values(checkins).reduce((a,b)=>a+b,0);
   const visitedRegions=Object.entries(checkins).filter(([k,v])=>k.startsWith((country||'')+'−')&&v>0).length;
@@ -648,6 +662,9 @@ function App(){
             </div>
             {h.userImg&&<img src={h.userImg} style={{width:"100%",borderRadius:10,maxHeight:200,objectFit:"cover",marginTop:8}}/>}
             {h.note&&<p style={{fontSize:13,color:"#aaa",marginTop:6,lineHeight:1.6}}>📝 {h.note}</p>}
+            <div style={{display:"flex",justifyContent:"flex-end",marginTop:6}}>
+              <button onClick={()=>{if(confirm("確定刪除這筆打卡？"))deleteCheckin(h)}} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:600,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)"}}><Ico d={I.trash} s={11} c="#ef4444"/>刪除</button>
+            </div>
           </div>)}
         </div>}
       </div>}
