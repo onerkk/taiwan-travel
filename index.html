@@ -23,6 +23,7 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;-webkit-tap-highlight-color:transparent}
 body{background:#080a0f;color:#fff;overflow-x:hidden}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.06);border-radius:2px}
+.no-sb::-webkit-scrollbar{display:none}.no-sb{scrollbar-width:none}
 button{cursor:pointer;border:none;outline:none;font-family:inherit}input{font-family:inherit}
 a{color:#60a5fa;text-decoration:none}
 img.ph{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:0;transition:opacity .6s}img.ph.loaded{opacity:1}
@@ -74,7 +75,7 @@ const COUNTRIES=[
 {id:"sg",n:"新加坡",f:"🇸🇬",regions:[{n:"濱海灣",lat:1.282,lng:103.864,d:"金沙・魚尾獅"},{n:"聖淘沙",lat:1.249,lng:103.830,d:"環球影城・海灘"},{n:"烏節路",lat:1.304,lng:103.832,d:"購物大道"},{n:"牛車水",lat:1.283,lng:103.844,d:"中華美食・佛牙寺"},{n:"小印度",lat:1.307,lng:103.852,d:"花環・竹腳市場"},{n:"克拉碼頭",lat:1.290,lng:103.846,d:"河畔酒吧・遊船"},{n:"武吉士",lat:1.300,lng:103.856,d:"蘇丹回教堂"},{n:"荷蘭村",lat:1.311,lng:103.796,d:"異國餐廳"},{n:"東海岸",lat:1.301,lng:103.912,d:"海鮮中心"},{n:"樟宜",lat:1.350,lng:103.990,d:"星耀樟宜・瀑布"},{n:"夜間動物園",lat:1.404,lng:103.789,d:"全球首座"},{n:"植物園",lat:1.314,lng:103.816,d:"世界遺產"},{n:"麥里芝",lat:1.345,lng:103.833,d:"樹冠步道"},{n:"甘榜格南",lat:1.302,lng:103.859,d:"哈芝巷壁畫"},{n:"裕廊",lat:1.333,lng:103.740,d:"飛禽公園・科學館"}]},
 {id:"my",n:"馬來西亞",f:"🇲🇾",regions:[{n:"吉隆坡",lat:3.139,lng:101.687,d:"雙子塔・茨廠街"},{n:"檳城",lat:5.416,lng:100.333,d:"壁畫・美食天堂"},{n:"蘭卡威",lat:6.350,lng:99.800,d:"天空之橋・免稅"},{n:"馬六甲",lat:2.189,lng:102.250,d:"荷蘭紅屋・雞場街"},{n:"沙巴",lat:5.980,lng:116.073,d:"神山・仙本那"},{n:"砂拉越",lat:1.557,lng:110.345,d:"古晉貓城"},{n:"怡保",lat:4.597,lng:101.090,d:"白咖啡・芽菜雞"},{n:"新山",lat:1.493,lng:103.741,d:"樂高樂園"},{n:"金馬倫",lat:4.472,lng:101.389,d:"茶園・草莓"},{n:"熱浪島",lat:5.763,lng:103.008,d:"清澈海水"},{n:"刁曼島",lat:2.790,lng:104.170,d:"珊瑚礁・免稅"},{n:"太平",lat:4.852,lng:100.736,d:"太平湖・雨城"},{n:"關丹",lat:3.807,lng:103.326,d:"珍拉丁・螢火蟲"},{n:"亞庇",lat:5.976,lng:116.073,d:"丹絨亞路日落"},{n:"詩巴丹",lat:4.115,lng:118.628,d:"世界頂級潛點"},{n:"雪蘭莪",lat:3.073,lng:101.518,d:"黑風洞・i-City"},{n:"雲頂高原",lat:3.423,lng:101.793,d:"雲頂賭場・遊樂園"},{n:"波德申",lat:2.442,lng:101.855,d:"海灘・老鷹廣場"},{n:"登嘉樓",lat:5.311,lng:103.132,d:"棉花島・水晶清真寺"},{n:"柔佛",lat:1.855,lng:103.756,d:"迪沙魯・笨珍龜島"},{n:"玻璃市",lat:6.443,lng:100.198,d:"暗窿洞・最小州"},{n:"吉蘭丹",lat:6.125,lng:102.238,d:"回教文化・蠟染"},{n:"霹靂",lat:4.750,lng:100.980,d:"凱利古堡"},{n:"森美蘭",lat:2.726,lng:101.938,d:"波德申・燒包"},{n:"彭亨",lat:3.812,lng:103.326,d:"國家公園・瀑布"}]}
 ];
-const CATS=[{id:"attraction",n:"景點",c:"#10b981",qs:["熱門景點","觀光景點","公園步道","博物館","寺廟古蹟"]},{id:"food",n:"美食",c:"#f59e0b",qs:["必吃餐廳","小吃","咖啡甜點","早午餐","海鮮料理"]},{id:"hotel",n:"住宿",c:"#6366f1",qs:["飯店","民宿","度假村","青年旅館","溫泉旅館"]}];
+const CATS=[{id:"attraction",n:"景點",c:"#10b981",qs:["熱門景點","觀光景點","公園步道","博物館","寺廟古蹟"]},{id:"food",n:"美食",c:"#f59e0b",qs:["必吃餐廳","小吃","咖啡甜點","早午餐","海鮮料理"]},{id:"hotel",n:"住宿",c:"#6366f1",qs:["飯店","民宿","度假村","青年旅館","溫泉旅館"]},{id:"fishing",n:"釣魚",c:"#06b6d4",qs:["釣魚場","釣蝦場","海釣","溪釣","磯釣釣點","釣魚休閒"]},{id:"camping",n:"露營",c:"#84cc16",qs:["露營區","露營場","豪華露營","野營地","營地推薦","露營區營地"]}];
 const TRANS=[{id:"car",n:"自駕",e:"🚗",gm:"driving"},{id:"walk",n:"徒步",e:"🚶",gm:"walking"},{id:"bus",n:"公車",e:"🚌",gm:"transit"},{id:"train",n:"火車",e:"🚄",gm:"transit"}];
 const PRICE=["","💲 平價","💲💲 中等","💲💲💲 偏高","💲💲💲💲 高檔"];
 const hDist=(a,b,c,d)=>{const R=6371,t=x=>x*Math.PI/180,dL=t(c-a),dN=t(d-b),s=Math.sin(dL/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))};
@@ -496,12 +497,14 @@ function App(){
     <div style={{flex:1,maxWidth:1200,margin:"0 auto",width:"100%",padding:"12px 12px 40px"}}>
 
       {/* ===== 探索 ===== */}
-      {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-          {CATS.map(c=>{const a=cat===c.id;return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,background:a?c.c+"18":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"44":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}>{c.n}</button>})}
-          <button onClick={refresh} style={{padding:6,borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555"}}><Ico d={I.reload} s={14}/></button>
-          <div style={{flex:1}}/>
+      {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div className="no-sb" style={{display:"flex",gap:6,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:2}}>
+          {CATS.map(c=>{const a=cat===c.id;return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,background:a?c.c+"18":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"44":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280",whiteSpace:"nowrap",flexShrink:0}}>{c.n}</button>})}
+          <button onClick={refresh} style={{padding:6,borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",flexShrink:0}}><Ico d={I.reload} s={14}/></button>
+        </div>
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
           {[{id:"dist",l:"📍 最近"},{id:"rating",l:"⭐ 評分"}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{s.l}</button>)}
+          <div style={{flex:1}}/>
           <span style={{fontSize:9,color:"#444"}}>{loading?'載入中...'+(loadCount>0?' ('+loadCount+')':''):places.length?places.length+'筆':""}</span>
         </div>
         <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={'搜尋 '+region+'...'} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
