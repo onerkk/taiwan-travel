@@ -179,6 +179,8 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
 function Setup({onDone}){
   const[user,setUser]=useState(null);const[authLoading,setAuthLoading]=useState(true);
   const[key,setKey]=useState('');const[busy,setBusy]=useState(false);const[err,setErr]=useState("");const[loadingKey,setLoadingKey]=useState(false);
+  const[bgIdx,setBgIdx]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setBgIdx(i=>(i+1)%3),6000);return()=>clearInterval(t)},[]);
   /* 監聽登入狀態 */
   useEffect(()=>{if(!fbOK){setAuthLoading(false);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthLoading(false);
     /* 登入後從 Firestore 讀取已存的 key */
@@ -199,13 +201,14 @@ function Setup({onDone}){
   /* Loading */
   if(authLoading||loadingKey)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><div className="hero-bg"/><span style={{width:32,height:32,border:"3px solid rgba(16,185,129,.2)",borderTopColor:"#10b981",borderRadius:"50%",animation:"spin 1s linear infinite"}}/><p style={{color:"#555",fontSize:12,marginTop:12}}>載入中...</p></div>;
   /* 未登入：顯示登入頁 */
-  if(!user)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",padding:"0 20px 60px",position:"relative",overflow:"hidden"}}>
-    {/* 背景圖 + 動畫層 */}
+  if(!user){const bgs=['bg1.jpg','bg2.jpg','bg3.jpg'];
+  return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-end",padding:"0 20px 60px",position:"relative",overflow:"hidden"}}>
+    {/* 三張背景輪播 */}
     <div style={{position:"absolute",inset:0,zIndex:0}}>
-      <img src="bg.jpg" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",animation:"bgZoom 20s ease-in-out infinite"}}/>
+      {bgs.map((b,i)=><img key={b} src={b} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:"center top",animation:"bgZoom 20s ease-in-out infinite",transition:"opacity 2s ease-in-out",opacity:bgIdx===i?1:0}}/>)}
       <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,transparent 30%,rgba(8,10,15,.6) 60%,rgba(8,10,15,.95) 85%,#080a0f 100%)"}}/>
-      {/* 浮動光點 - 更大更亮 */}
-      {[...Array(12)].map((_,i)=><div key={i} style={{position:"absolute",width:2+i%4*2,height:2+i%4*2,borderRadius:"50%",background:i%3===0?"rgba(245,200,80,.6)":i%3===1?"rgba(16,185,129,.5)":"rgba(100,200,255,.4)",left:(5+i*8)%95+"%",top:(10+i*7)%80+"%",animation:`floatGlow ${2.5+i%5*0.8}s ease-in-out infinite`,animationDelay:i*0.4+"s",filter:"blur("+(i%2)+"px)",boxShadow:"0 0 "+(4+i%3*4)+"px "+( i%3===0?"rgba(245,200,80,.4)":"rgba(16,185,129,.3)")}}/>)}
+      {/* 浮動光點 */}
+      {[...Array(12)].map((_,i)=><div key={i} style={{position:"absolute",width:2+i%4*2,height:2+i%4*2,borderRadius:"50%",background:i%3===0?"rgba(245,200,80,.6)":i%3===1?"rgba(16,185,129,.5)":"rgba(100,200,255,.4)",left:(5+i*8)%95+"%",top:(10+i*7)%80+"%",animation:`floatGlow ${2.5+i%5*0.8}s ease-in-out infinite`,animationDelay:i*0.4+"s",filter:"blur("+(i%2)+"px)",boxShadow:"0 0 "+(4+i%3*4)+"px "+(i%3===0?"rgba(245,200,80,.4)":"rgba(16,185,129,.3)")}}/>)}
     </div>
     {/* 內容 */}
     <div style={{position:"relative",zIndex:1,textAlign:"center",width:"100%",maxWidth:380}}>
@@ -221,8 +224,10 @@ function Setup({onDone}){
         <a href="guide.html" style={{padding:"8px 18px",borderRadius:12,fontSize:11,color:"rgba(255,255,255,.4)",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)",textDecoration:"none",backdropFilter:"blur(10px)"}}>📖 使用說明</a>
       </div>
       <p className="fu" style={{animationDelay:".5s",color:"rgba(255,255,255,.2)",fontSize:10,marginTop:16}}>登入即可使用全部功能</p>
+      {/* 輪播指示點 */}
+      <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:12}}>{bgs.map((_,i)=><div key={i} style={{width:bgIdx===i?16:6,height:6,borderRadius:3,background:bgIdx===i?"rgba(245,200,80,.6)":"rgba(255,255,255,.15)",transition:"all .5s"}}/>)}</div>
     </div>
-  </div>;
+  </div>}
   /* 已登入但沒有 API Key */
   return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",position:"relative"}}><div className="hero-bg"/>
     <div style={{position:"absolute",top:16,right:16,display:"flex",alignItems:"center",gap:8,zIndex:10}}>
