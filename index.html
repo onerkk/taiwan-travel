@@ -343,43 +343,40 @@ function Setup({onDone}){
   /* 監聯登入狀態 */
   useEffect(()=>{if(!fbOK){setAuthLoading(false);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthLoading(false);
     if(u&&db){setLoadingKey(true);
-      /* 存基本資料 */
+      /* 8 秒 timeout 保護 */
+      const timeout=setTimeout(()=>{console.warn("Key check timeout");setLoadingKey(false)},8000);
+      const done=(k,g)=>{clearTimeout(timeout);onDone(k,g)};
+      const fail=()=>{clearTimeout(timeout);setLoadingKey(false)};
+      /* 存基本資料 + 自動註冊白名單 */
       db.collection("users").doc(u.uid).set({email:u.email||"",name:u.displayName||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-      /* 自動註冊白名單（如果不存在就建立，預設 enabled） */
       db.collection("whitelist").doc(u.uid).get().then(wDoc=>{
         if(!wDoc.exists)db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
       }).catch(()=>{});
-      /* 查後台：共享 Key 是否啟用 + 此用戶是否有權限 */
+      /* 查後台共享 Key */
       Promise.all([
-        db.collection("admin").doc("config").get(),
-        db.collection("whitelist").doc(u.uid).get()
-      ]).then(([cfgDoc,wDoc])=>{
-        const cfg=cfgDoc.exists?cfgDoc.data():{};
-        const wData=wDoc.exists?wDoc.data():{};
-        /* 條件：後台啟用 + 有共享 Key + 此用戶白名單啟用 */
+        db.collection("admin").doc("config").get().catch(()=>null),
+        db.collection("whitelist").doc(u.uid).get().catch(()=>null)
+      ]).then(([cfgSnap,wSnap])=>{
+        const cfg=cfgSnap?.exists?cfgSnap.data():{};
+        const wData=wSnap?.exists?wSnap.data():{};
         if(cfg.active&&cfg.sharedKey&&wData.enabled!==false){
           const k=cfg.sharedKey;setKey(k);
-          hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)});return;
+          hashKey(k).then(g=>{saveK(k);saveG(g);done(k,g)}).catch(fail);return;
         }
-        /* 不符合 → 清掉可能殘留的共享 Key，改查個人 Key */
+        /* 不符合 → 查個人 Key */
         const lk=getK();
-        /* 如果本地存的是共享 Key 但權限被關了，清掉 */
         if(cfg.sharedKey&&lk===cfg.sharedKey&&(wData.enabled===false||!cfg.active)){
-          localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');
-          setLoadingKey(false);return;
+          localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');fail();return;
         }
-        /* 查個人 Firestore Key */
         db.collection("users").doc(u.uid).get().then(d=>{
-          if(d.exists&&d.data().apiKey&&d.data().apiKey!==cfg.sharedKey){
-            const k=d.data().apiKey;setKey(k);hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)})}
-          else if(lk&&lk!==cfg.sharedKey){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);
-            db.collection("users").doc(u.uid).set({apiKey:lk},{merge:true}).catch(()=>{});onDone(lk,g)})}
-          else setLoadingKey(false)
-        }).catch(()=>setLoadingKey(false));
+          if(d.exists&&d.data().apiKey&&d.data().apiKey!==(cfg.sharedKey||'')){
+            const k=d.data().apiKey;setKey(k);hashKey(k).then(g=>{saveK(k);saveG(g);done(k,g)}).catch(fail)}
+          else if(lk&&lk!==(cfg.sharedKey||'')){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);
+            db.collection("users").doc(u.uid).set({apiKey:lk},{merge:true}).catch(()=>{});done(lk,g)}).catch(fail)}
+          else fail()
+        }).catch(fail);
       }).catch(()=>{
-        /* Firestore 失敗 fallback：用本地 Key */
-        const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)})}
-        else setLoadingKey(false);
+        const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);done(lk,g)}).catch(fail)}else fail();
       });
     }
   })},[]);
