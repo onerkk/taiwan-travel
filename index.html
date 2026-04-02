@@ -108,10 +108,17 @@ const WX_ICON={"113":"☀️","116":"⛅","119":"☁️","122":"☁️","143":"�
 /* ======= Photo（街景 fallback）======= */
 const pC=new Map();
 function Photo({photos,name,apiKey,lat,lng}){
-  const[src,setSrc]=useState(null);const tried=useRef(false);
-  useEffect(()=>{if(tried.current||!apiKey)return;tried.current=true;
-    if(photos?.length){const ref=photos[0].name;const url='https://places.googleapis.com/v1/'+ref+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey;if(pC.has(ref))setSrc(pC.get(ref));else{pC.set(ref,url);setSrc(url)}}
-    else if(lat&&lng){setSrc('https://maps.googleapis.com/maps/api/streetview?size=640x400&location='+lat+','+lng+'&fov=100&key='+apiKey)}
+  const[src,setSrc]=useState(null);const loadedRef=useRef(null);
+  useEffect(()=>{if(!apiKey)return;
+    const photoRef=photos?.length?photos[0].name:null;
+    if(photoRef){
+      if(loadedRef.current===photoRef)return;loadedRef.current=photoRef;
+      const url='https://places.googleapis.com/v1/'+photoRef+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey;
+      if(pC.has(photoRef))setSrc(pC.get(photoRef));else{pC.set(photoRef,url);setSrc(url)}
+    }else if(lat&&lng){
+      const svKey='sv_'+lat+'_'+lng;if(loadedRef.current===svKey)return;loadedRef.current=svKey;
+      setSrc('https://maps.googleapis.com/maps/api/streetview?size=640x400&location='+lat+','+lng+'&fov=100&key='+apiKey)
+    }
   },[photos,apiKey,lat,lng]);
   const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
   return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}><span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{src&&<img src={src} alt={name} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" referrerPolicy="no-referrer" onError={e=>{e.target.style.display='none'}}/>}</div>
@@ -498,9 +505,9 @@ function App(){
 
       {/* ===== 探索 ===== */}
       {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div className="no-sb" style={{display:"flex",gap:6,overflowX:"auto",WebkitOverflowScrolling:"touch",paddingBottom:2}}>
-          {CATS.map(c=>{const a=cat===c.id;return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{display:"flex",alignItems:"center",gap:5,padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:700,background:a?c.c+"18":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"44":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280",whiteSpace:"nowrap",flexShrink:0}}>{c.n}</button>})}
-          <button onClick={refresh} style={{padding:6,borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",flexShrink:0}}><Ico d={I.reload} s={14}/></button>
+        <div style={{display:"flex",gap:4,alignItems:"center"}}>
+          {CATS.map(c=>{const a=cat===c.id;const icons={attraction:"🏛",food:"🍜",hotel:"🏨",fishing:"🎣",camping:"⛺"};return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,padding:"8px 4px",borderRadius:10,fontSize:11,fontWeight:700,background:a?c.c+"22":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"55":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}><span style={{fontSize:13}}>{icons[c.id]||""}</span>{c.n}</button>})}
+          <button onClick={refresh} style={{padding:"8px 6px",borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",flexShrink:0}}><Ico d={I.reload} s={14}/></button>
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center"}}>
           {[{id:"dist",l:"📍 最近"},{id:"rating",l:"⭐ 評分"}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{s.l}</button>)}
