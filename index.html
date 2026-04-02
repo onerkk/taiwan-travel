@@ -98,20 +98,52 @@ async function fetchP(key,cLat,cLng,rad,rName,catId,isGeo,onP){
 /* ======= 停車場搜尋 ======= */
 const pkCache=new Map();
 async function findParking(key,lat,lng){
-  const ck=lat.toFixed(3)+','+lng.toFixed(3);if(pkCache.has(ck))return pkCache.get(ck);
+  if(!lat||!lng)return[];
+  const ck=lat.toFixed(2)+','+lng.toFixed(2);if(pkCache.has(ck))return pkCache.get(ck);
   try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',
     headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.location,places.googleMapsUri'},
-    body:JSON.stringify({textQuery:'停車場 parking',maxResultCount:3,languageCode:'zh-TW',locationBias:{circle:{center:{latitude:lat,longitude:lng},radius:2000}}})});
-    if(!r.ok)return[];const d=await r.json();
-    const res=(d.places||[]).map(p=>({n:p.displayName?.text||'',a:p.formattedAddress||'',lat:p.location?.latitude,lng:p.location?.longitude,url:p.googleMapsUri||'',dist:hDist(lat,lng,p.location?.latitude,p.location?.longitude)})).sort((a,b)=>a.dist-b.dist).slice(0,2);
-    pkCache.set(ck,res);return res}catch{return[]}
+    body:JSON.stringify({textQuery:'停車場',maxResultCount:5,languageCode:'zh-TW',locationBias:{circle:{center:{latitude:lat,longitude:lng},radius:5000}}})});
+    if(!r.ok){pkCache.set(ck,[]);return[]}const d=await r.json();
+    const res=(d.places||[]).map(p=>({n:p.displayName?.text||'',a:p.formattedAddress||'',lat:p.location?.latitude,lng:p.location?.longitude,url:p.googleMapsUri||'',dist:hDist(lat,lng,p.location?.latitude||0,p.location?.longitude||0)})).sort((a,b)=>a.dist-b.dist).slice(0,2);
+    pkCache.set(ck,res);return res}catch{pkCache.set(ck,[]);return[]}
 }
 async function addParkingToPlan(key,plan){
   if(!plan?.days)return plan;const tasks=[];
   for(const day of plan.days){for(const s of day.stops){
-    if(s.parking?.any)continue;
+    if(s.parking?.any)continue;if(!s.lat)continue;
     tasks.push(findParking(key,s.lat,s.lng).then(r=>{s.nearbyPk=r}))}}
-  await Promise.all(tasks);return plan;
+  await Promise.all(tasks);
+  /* 深拷貝讓 React 偵測到變化 */
+  return JSON.parse(JSON.stringify(plan));
+}
+
+/* ======= Routes API 真實通勤時間 ======= */
+const rtCache=new Map();
+async function getRouteMin(key,lat1,lng1,lat2,lng2,transId){
+  if(!lat1||!lat2)return null;
+  const mode={car:'DRIVE',walk:'WALK',bus:'TRANSIT',train:'TRANSIT'}[transId]||'DRIVE';
+  const ck=lat1.toFixed(3)+','+lng1.toFixed(3)+'→'+lat2.toFixed(3)+','+lng2.toFixed(3)+':'+mode;
+  if(rtCache.has(ck))return rtCache.get(ck);
+  try{const r=await fetch('https://routes.googleapis.com/directions/v2:computeRoutes',{method:'POST',
+    headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'routes.duration'},
+    body:JSON.stringify({origin:{location:{latLng:{latitude:lat1,longitude:lng1}}},destination:{location:{latLng:{latitude:lat2,longitude:lng2}}},travelMode:mode})});
+    if(!r.ok){rtCache.set(ck,null);return null}const d=await r.json();const dur=d.routes?.[0]?.duration;
+    if(!dur){rtCache.set(ck,null);return null}
+    const min=Math.max(1,Math.round(parseInt(dur.replace('s',''))/60));rtCache.set(ck,min);return min
+  }catch{rtCache.set(ck,null);return null}
+}
+const STOP_DUR={'🌅 早餐':45,'🍜 午餐':60,'🌙 晚餐':75,'🏨 住宿':0,'🏛 景點':75,'🏛 額外':60};
+const addMinF=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
+async function addRealTimesToPlan(key,plan,transId){
+  if(!plan?.days)return plan;
+  /* 收集所有相鄰站對，平行查 Routes API */
+  const pairs=[];
+  for(const day of plan.days)for(let i=1;i<day.stops.length;i++)pairs.push({a:day.stops[i-1],b:day.stops[i]});
+  await Promise.all(pairs.map(async({a,b})=>{const min=await getRouteMin(key,a.lat,a.lng,b.lat,b.lng,transId);if(min!=null)b.commute=min}));
+  /* 用真實通勤重算所有到達時間 */
+  for(const day of plan.days){let t='08:00';for(let i=0;i<day.stops.length;i++){const s=day.stops[i];if(i>0)t=addMinF(t,s.commute||5);s.time=t;t=addMinF(t,STOP_DUR[s.label]||60)}}
+  plan.transId=transId;
+  return JSON.parse(JSON.stringify(plan));
 }
 
 /* ======= 天氣（wttr.in 免費）======= */
@@ -341,8 +373,8 @@ function smartPlan(items,days,transId){
   const usedA=new Set(),usedF=new Set(),usedH=new Set();
   /* 找最近的未用項目 */
   const nearest=(list,used,lat,lng)=>{let best=null,bd=1e9;list.forEach((p,i)=>{if(used.has(i))return;const d=p.lat&&lat?hDist(lat,lng,p.lat,p.lng):9999;if(d<bd){bd=d;best=i}});return best};
-  /* 通勤時間（分鐘）*/
-  const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 15;const d=hDist(a.lat,a.lng,b.lat,b.lng);return Math.max(5,Math.round(d/speed*60))};
+  /* 通勤時間（分鐘）- 路程≈直線×1.4 + 紅綠燈 */
+  const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
   const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
   const mkStop=(p,time,label)=>({time,name:p.n,address:p.a||'',type:p.category,tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,parking:p.parking||null});
   for(let d=0;d<days;d++){
@@ -386,7 +418,7 @@ async function autoRecommend(apiKey,cLat,cLng,regionName,days,transId){
   /* 依評分排序 */
   const byR=a=>[...a].sort((x,y)=>(y.r*Math.log10(y.rc+1))-(x.r*Math.log10(x.rc+1)));
   const sAtts=byR(atts),sBf=byR(breakfasts),sLn=byR(lunches),sDn=byR(dinners),sHt=byR(hotels);
-  const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 15;return Math.max(5,Math.round(hDist(a.lat,a.lng,b.lat,b.lng)/speed*60))};
+  const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
   const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
   const mkS=(p,time,label)=>({time,name:p.n,address:p.a||'',type:label.includes('景點')?'attraction':'food',tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,rating:p.r,rc:p.rc,parking:p.parking||null});
   const result=[];let aIdx=0;
@@ -468,7 +500,7 @@ function App(){
   const ready=!!apiKey&&!!groupId&&!!user&&authChecked;
   const onSetup=useCallback((k,g)=>{setApiKey(k);setGroupId(g)},[]);
   const changeKey=()=>{localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');if(user&&db)db.collection("users").doc(user.uid).update({apiKey:firebase.firestore.FieldValue.delete()}).catch(()=>{});setApiKey('');setGroupId('')};
-  const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(null);const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
+  const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(()=>{try{const s=localStorage.getItem('tw_plan');return s?JSON.parse(s):null}catch{return null}});const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
   const[online,setOnline]=useState([]);
   const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckModal,setCkModal]=useState(null);const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);const[installEvt,setInstallEvt]=useState(null);const[autoLoading,setAutoLoading]=useState(false);
   useEffect(()=>{const h=e=>{e.preventDefault();setInstallEvt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);
@@ -641,14 +673,14 @@ function App(){
           {/* 兩個按鈕 */}
           <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
             {/* 自動推薦 */}
-            <button disabled={autoLoading} onClick={async()=>{if(!curRegion||!apiKey)return;setAutoLoading(true);try{const ds=await autoRecommend(apiKey,curRegion.lat,curRegion.lng,region,days,transport);const p={title:curCountry.f+' '+region+' '+days+'日遊',days:ds,gm:curT.gm,auto:true};await addParkingToPlan(apiKey,p);setPlan(p)}catch(e){console.error(e)}setAutoLoading(false)}} style={{padding:"14px 32px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",display:"inline-flex",alignItems:"center",gap:8,width:"100%",maxWidth:320,justifyContent:"center"}}>
+            <button disabled={autoLoading} onClick={async()=>{if(!curRegion||!apiKey)return;setAutoLoading(true);try{const ds=await autoRecommend(apiKey,curRegion.lat,curRegion.lng,region,days,transport);let p={title:curCountry.f+' '+region+' '+days+'日遊',days:ds,gm:curT.gm,auto:true};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}}catch(e){console.error(e)}setAutoLoading(false)}} style={{padding:"14px 32px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",display:"inline-flex",alignItems:"center",gap:8,width:"100%",maxWidth:320,justifyContent:"center"}}>
               {autoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.zap} s={16} f="white" c="white"/>}{autoLoading?"AI 規劃中...":"⚡ 自動推薦 "+days+" 日行程"}
             </button>
             <p style={{fontSize:10,color:"#555",textAlign:"center"}}>依 {region} 自動搜尋景點、三餐、住宿並安排</p>
             {/* 手動排程 */}
             {itin.length>0&&<>
               <div style={{width:"100%",maxWidth:320,height:1,background:"rgba(255,255,255,.06)",margin:"8px 0"}}/>
-              <button onClick={async()=>{setAutoLoading(true);const ds=smartPlan(itin,days,transport);const p={title:curCountry.f+' '+days+'日遊',days:ds,gm:curT.gm};await addParkingToPlan(apiKey,p);setPlan(p);setAutoLoading(false)}} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}><Ico d={I.zap} s={14} f="white" c="white"/>用已選 {itin.length} 點排行程</button>
+              <button onClick={async()=>{setAutoLoading(true);const ds=smartPlan(itin,days,transport);let p={title:curCountry.f+' '+days+'日遊',days:ds,gm:curT.gm};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}setAutoLoading(false)}} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}><Ico d={I.zap} s={14} f="white" c="white"/>用已選 {itin.length} 點排行程</button>
               <p style={{fontSize:10,color:"#555",textAlign:"center"}}>智慧排序：按距離分組、餐廳穿插景點間、住宿排最後</p>
             </>}
           </div>
@@ -660,7 +692,7 @@ function App(){
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:52,flexShrink:0}}>
                 <span style={{fontSize:14,fontFamily:"monospace",color:"#10b981",fontWeight:800}}>{s.time}</span>
                 <div style={{width:34,height:34,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,background:s.label?.includes("早餐")?"rgba(245,158,11,.15)":s.label?.includes("午餐")?"rgba(59,130,246,.15)":s.label?.includes("晚餐")?"rgba(168,85,247,.15)":s.label?.includes("住宿")?"rgba(99,102,241,.15)":"rgba(16,185,129,.1)",border:"2px solid "+(s.label?.includes("餐")?"rgba(245,158,11,.3)":s.label?.includes("住宿")?"rgba(99,102,241,.3)":"rgba(16,185,129,.2)"),marginTop:4}}>{s.label?.includes("早餐")?"🌅":s.label?.includes("午餐")?"🍜":s.label?.includes("晚餐")?"🌙":s.label?.includes("住宿")?"🏨":"🏛"}</div>
-                {s.commute>0&&<div style={{fontSize:10,color:"#555",marginTop:4,display:"flex",alignItems:"center",gap:2}}>🚗 {s.commute}分</div>}
+                {s.commute>0&&<div style={{fontSize:10,color:"#555",marginTop:4,display:"flex",alignItems:"center",gap:2}}>{({car:"🚗",walk:"🚶",bus:"🚌",train:"🚄"})[plan.transId||"car"]||"🚗"} {s.commute}分</div>}
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><p style={{fontWeight:800,fontSize:16}}>{s.name}</p>{s.label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,.05)",color:"#888",fontWeight:600}}>{s.label}</span>}</div>
@@ -685,7 +717,7 @@ function App(){
               </div>
             </div>)}</div>
           </div>)}
-          <div style={{display:"flex",justifyContent:"center",gap:8}}><button onClick={()=>setPlan(null)} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:10,fontSize:12,fontWeight:700,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}><Ico d={I.rotate} s={12}/>重新規劃</button></div>
+          <div style={{display:"flex",justifyContent:"center",gap:8}}><button onClick={()=>{setPlan(null);localStorage.removeItem('tw_plan')}} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:10,fontSize:12,fontWeight:700,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}><Ico d={I.rotate} s={12}/>重新規劃</button></div>
         </>}
       </div>}
     </div>
