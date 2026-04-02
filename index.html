@@ -105,21 +105,19 @@ async function fetchWx(lat,lng){
 }
 const WX_ICON={"113":"☀️","116":"⛅","119":"☁️","122":"☁️","143":"🌫️","176":"🌦️","179":"🌨️","182":"🌨️","185":"🌨️","200":"⛈️","227":"🌨️","230":"🌨️","248":"🌫️","260":"🌫️","263":"🌦️","266":"🌧️","281":"🌨️","284":"🌨️","293":"🌦️","296":"🌧️","299":"🌧️","302":"🌧️","305":"🌧️","308":"🌧️","311":"🌨️","314":"🌨️","317":"🌨️","320":"🌨️","323":"🌨️","326":"🌨️","329":"🌨️","332":"🌨️","335":"🌨️","338":"🌨️","350":"🌨️","353":"🌦️","356":"🌧️","359":"🌧️","362":"🌨️","365":"🌨️","368":"🌨️","371":"🌨️","374":"🌨️","377":"🌨️","386":"⛈️","389":"⛈️","392":"⛈️","395":"🌨️"};
 
-/* ======= Photo（街景 fallback）======= */
+/* ======= Photo（fetch 取得真實 URL + 街景 fallback）======= */
 const pC=new Map();
 function Photo({photos,name,apiKey,lat,lng}){
-  const[src,setSrc]=useState(null);const loadedRef=useRef(null);
-  useEffect(()=>{if(!apiKey)return;
-    const photoRef=photos?.length?photos[0].name:null;
-    if(photoRef){
-      if(loadedRef.current===photoRef)return;loadedRef.current=photoRef;
-      const url='https://places.googleapis.com/v1/'+photoRef+'/media?maxHeightPx=400&maxWidthPx=640&key='+apiKey;
-      if(pC.has(photoRef))setSrc(pC.get(photoRef));else{pC.set(photoRef,url);setSrc(url)}
-    }else if(lat&&lng){
-      const svKey='sv_'+lat+'_'+lng;if(loadedRef.current===svKey)return;loadedRef.current=svKey;
-      setSrc('https://maps.googleapis.com/maps/api/streetview?size=640x400&location='+lat+','+lng+'&fov=100&key='+apiKey)
-    }
-  },[photos,apiKey,lat,lng]);
+  const[src,setSrc]=useState(null);const tried=useRef(false);
+  useEffect(()=>{if(tried.current||!apiKey)return;tried.current=true;
+    if(photos?.length){const ref=photos[0].name;
+      if(pC.has(ref)){setSrc(pC.get(ref));return}
+      fetch('https://places.googleapis.com/v1/'+ref+'/media?maxHeightPx=400&maxWidthPx=640&skipHttpRedirect=true&key='+apiKey)
+        .then(r=>r.ok?r.json():Promise.reject()).then(d=>{if(d.photoUri){pC.set(ref,d.photoUri);setSrc(d.photoUri)}
+          else if(lat&&lng)setSrc('https://maps.googleapis.com/maps/api/streetview?size=640x400&location='+lat+','+lng+'&fov=100&key='+apiKey)})
+        .catch(()=>{if(lat&&lng)setSrc('https://maps.googleapis.com/maps/api/streetview?size=640x400&location='+lat+','+lng+'&fov=100&key='+apiKey)})
+    }else if(lat&&lng){setSrc('https://maps.googleapis.com/maps/api/streetview?size=640x400&location='+lat+','+lng+'&fov=100&key='+apiKey)}
+  },[photos,apiKey]);
   const h=(name||"").split("").reduce((a,c)=>a+c.charCodeAt(0),0);const g=["linear-gradient(135deg,#0c4a6e,#155e75)","linear-gradient(135deg,#7c2d12,#92400e)","linear-gradient(135deg,#3730a3,#4338ca)","linear-gradient(135deg,#166534,#15803d)","linear-gradient(135deg,#831843,#9d174d)"];
   return <div style={{position:"relative",width:"100%",height:"100%",background:g[h%g.length],display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden"}}><span style={{fontSize:"1.4rem",fontWeight:900,color:"rgba(255,255,255,.06)"}}>{(name||"").slice(0,4)}</span>{src&&<img src={src} alt={name} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} loading="lazy" onError={e=>{e.target.style.display='none'}}/>}</div>
 }
