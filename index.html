@@ -172,31 +172,47 @@ async function addParkingToPlan(key,plan){
   return JSON.parse(JSON.stringify(plan));
 }
 
-/* ======= Routes API 真實通勤時間 ======= */
+/* ======= Routes API 真實通勤時間 + 轉乘資訊 ======= */
 const rtCache=new Map();
-async function getRouteMin(key,lat1,lng1,lat2,lng2,transId){
-  if(!lat1||!lat2)return null;
+async function getRouteInfo(key,lat1,lng1,lat2,lng2,transId){
+  if(!lat1||!lat2)return{min:null,steps:[]};
   const mode={car:'DRIVE',walk:'WALK',bus:'TRANSIT',train:'TRANSIT'}[transId]||'DRIVE';
   const ck=lat1.toFixed(3)+','+lng1.toFixed(3)+'→'+lat2.toFixed(3)+','+lng2.toFixed(3)+':'+mode;
   if(rtCache.has(ck))return rtCache.get(ck);
+  const fields=mode==='TRANSIT'?'routes.duration,routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.transitDetails':'routes.duration';
   try{const r=await fetch('https://routes.googleapis.com/directions/v2:computeRoutes',{method:'POST',
-    headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'routes.duration'},
+    headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':fields},
     body:JSON.stringify({origin:{location:{latLng:{latitude:lat1,longitude:lng1}}},destination:{location:{latLng:{latitude:lat2,longitude:lng2}}},travelMode:mode})});
-    if(!r.ok){rtCache.set(ck,null);return null}const d=await r.json();const dur=d.routes?.[0]?.duration;
-    if(!dur){rtCache.set(ck,null);return null}
-    const min=Math.max(1,Math.round(parseInt(dur.replace('s',''))/60));rtCache.set(ck,min);return min
-  }catch{rtCache.set(ck,null);return null}
+    if(!r.ok){const res={min:null,steps:[]};rtCache.set(ck,res);return res}
+    const d=await r.json();const dur=d.routes?.[0]?.duration;
+    const min=dur?Math.max(1,Math.round(parseInt(dur.replace('s',''))/60)):null;
+    /* 解析轉乘步驟 */
+    const steps=[];
+    if(mode==='TRANSIT'){const legs=d.routes?.[0]?.legs||[];
+      for(const leg of legs){for(const step of(leg.steps||[])){
+        const td=step.transitDetails;const sm=step.travelMode;
+        const stepMin=step.staticDuration?Math.round(parseInt(step.staticDuration.replace('s',''))/60):0;
+        if(sm==='WALK'&&stepMin>1){steps.push({mode:'walk',min:stepMin})}
+        else if(sm==='TRANSIT'&&td){
+          const vt=td.transitLine?.vehicle?.type||'';
+          const icon=vt.includes('BUS')?'🚌':vt.includes('SUBWAY')||vt.includes('METRO')?'🚇':vt.includes('RAIL')||vt.includes('TRAIN')?'🚆':vt.includes('TRAM')?'🚊':'🚍';
+          steps.push({mode:'transit',icon,line:td.transitLine?.nameShort||td.transitLine?.name||'',from:td.stopDetails?.departureStop?.name||'',to:td.stopDetails?.arrivalStop?.name||'',min:stepMin,vehicle:vt})}}}}
+    const res={min,steps};rtCache.set(ck,res);return res
+  }catch{const res={min:null,steps:[]};rtCache.set(ck,res);return res}
 }
 const STOP_DUR={'🌅 早餐':45,'🍜 午餐':60,'🌙 晚餐':75,'🏨 住宿':0,'🏛 景點':75,'🏛 額外':60};
+const MEAL_TIMES={'🌅 早餐':'07:30','🍜 午餐':'12:00','🌙 晚餐':'18:00','🏨 住宿':'19:30'};
 const addMinF=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
 async function addRealTimesToPlan(key,plan,transId){
   if(!plan?.days)return plan;
-  /* 收集所有相鄰站對，平行查 Routes API */
   const pairs=[];
   for(const day of plan.days)for(let i=1;i<day.stops.length;i++)pairs.push({a:day.stops[i-1],b:day.stops[i]});
-  await Promise.all(pairs.map(async({a,b})=>{const min=await getRouteMin(key,a.lat,a.lng,b.lat,b.lng,transId);if(min!=null)b.commute=min}));
-  /* 用真實通勤重算所有到達時間 */
-  for(const day of plan.days){let t='08:00';for(let i=0;i<day.stops.length;i++){const s=day.stops[i];if(i>0)t=addMinF(t,s.commute||5);s.time=t;t=addMinF(t,STOP_DUR[s.label]||60)}}
+  await Promise.all(pairs.map(async({a,b})=>{const info=await getRouteInfo(key,a.lat,a.lng,b.lat,b.lng,transId);if(info.min!=null)b.commute=info.min;if(info.steps.length)b.transitSteps=info.steps}));
+  /* 用固定餐點時間為錨點，景點時間在餐點之間用通勤累加 */
+  for(const day of plan.days){let t='07:30';
+    for(let i=0;i<day.stops.length;i++){const s=day.stops[i];
+      if(MEAL_TIMES[s.label]){t=MEAL_TIMES[s.label];s.time=t;t=addMinF(t,STOP_DUR[s.label]||60)}
+      else{if(i>0)t=addMinF(t,s.commute||5);s.time=t;t=addMinF(t,STOP_DUR[s.label]||60)}}}
   plan.transId=transId;
   return JSON.parse(JSON.stringify(plan));
 }
@@ -458,36 +474,39 @@ function smartPlan(items,days,transId){
   const atts=items.filter(i=>i.category==='attraction');
   const foods=items.filter(i=>i.category==='food');
   const hotels=items.filter(i=>i.category==='hotel');
-  /* 每天框架: 早餐(07:30)→景點→午餐(11:30)→景點→晚餐(17:30)→住宿 */
+  /* 每天固定時段: 早餐07:30 → 景點 → 午餐12:00 → 景點 → 晚餐18:00 → 住宿19:30 */
   const result=[];
   const usedA=new Set(),usedF=new Set(),usedH=new Set();
   const nearest=(list,used,lat,lng)=>{let best=null,bd=1e9;list.forEach((p,i)=>{if(used.has(i))return;const d=p.lat&&lat?hDist(lat,lng,p.lat,p.lng):9999;if(d<bd){bd=d;best=i}});return best};
   const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
-  const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
-  const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+  const addMin=(ti,m)=>{const[h,mn]=ti.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
+  const toMin=ti=>{const[h,m]=ti.split(':').map(Number);return h*60+m};
   const mkStop=(p,time,label)=>({time,name:p.n,address:p.a||'',type:p.category,tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,parking:p.parking||null});
-  const addSpots=(stops,lastP,t,until)=>{let lp=lastP,ct=t;while(toMin(ct)<until){const idx=nearest(atts,usedA,lp?.lat,lp?.lng);if(idx==null)break;const p=atts[idx];usedA.add(idx);const cm=lp?commute(lp,p):0;const s=mkStop(p,ct,'🏛 景點');s.commute=cm;stops.push(s);lp=p;ct=addMin(ct,75+cm);if(toMin(ct)>=until)break}return{lastP:lp,t:ct}};
+  const fillSpots=(stops,lastP,startT,deadline)=>{let lp=lastP,ct=startT;
+    while(toMin(ct)+75<deadline){const idx=nearest(atts,usedA,lp?.lat,lp?.lng);if(idx==null)break;
+      const p=atts[idx];const cm=lp?commute(lp,p):0;
+      if(toMin(ct)+cm+75>deadline)break;
+      usedA.add(idx);const s=mkStop(p,ct,'🏛 景點');s.commute=cm;stops.push(s);lp=p;ct=addMin(ct,75+cm)}
+    return{lastP:lp,t:ct}};
   for(let d=0;d<days;d++){
-    const stops=[];let t='07:30',lastP=null;
-    /* 早餐 07:30 */
-    const bf=nearest(foods,usedF,lastP?.lat||items[0]?.lat,lastP?.lng||items[0]?.lng);
-    if(bf!=null){const p=foods[bf];usedF.add(bf);const s=mkStop(p,t,'🌅 早餐');if(lastP)s.commute=commute(lastP,p);stops.push(s);lastP=p;t=addMin(t,45+(lastP?s.commute:0))}
-    /* 上午景點（到 11:30 前） */
-    const am=addSpots(stops,lastP,t,11*60+30);lastP=am.lastP;t=am.t;
-    /* 午餐 11:30（若時間未到就等到 11:30） */
-    if(toMin(t)<11*60+30)t='11:30';
+    const stops=[];let lastP=null;
+    /* 早餐 固定 07:30 */
+    const bf=nearest(foods,usedF,items[0]?.lat,items[0]?.lng);
+    if(bf!=null){const p=foods[bf];usedF.add(bf);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,'07:30','🌅 早餐');s.commute=cm;stops.push(s);lastP=p}
+    /* 上午景點 08:15~11:30 */
+    const am=fillSpots(stops,lastP,'08:15',11*60+30);lastP=am.lastP;
+    /* 午餐 固定 12:00 */
     const ln=nearest(foods,usedF,lastP?.lat,lastP?.lng);
-    if(ln!=null){const p=foods[ln];usedF.add(ln);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🍜 午餐');s.commute=cm;stops.push(s);lastP=p;t=addMin(t,60+cm)}
-    /* 下午景點（到 17:30 前） */
-    const pm=addSpots(stops,lastP,t,17*60+30);lastP=pm.lastP;t=pm.t;
-    /* 晚餐 17:30（若時間未到就等到 17:30） */
-    if(toMin(t)<17*60+30)t='17:30';
+    if(ln!=null){const p=foods[ln];usedF.add(ln);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,'12:00','🍜 午餐');s.commute=cm;stops.push(s);lastP=p}
+    /* 下午景點 13:00~17:30 */
+    const pm=fillSpots(stops,lastP,'13:00',17*60+30);lastP=pm.lastP;
+    /* 晚餐 固定 18:00 */
     const dn=nearest(foods,usedF,lastP?.lat,lastP?.lng);
-    if(dn!=null){const p=foods[dn];usedF.add(dn);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🌙 晚餐');s.commute=cm;stops.push(s);lastP=p;t=addMin(t,75+cm)}
-    /* 住宿 */
+    if(dn!=null){const p=foods[dn];usedF.add(dn);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,'18:00','🌙 晚餐');s.commute=cm;stops.push(s);lastP=p}
+    /* 住宿 固定 19:30 */
     const ht=nearest(hotels,usedH,lastP?.lat,lastP?.lng);
-    if(ht!=null){const p=hotels[ht];usedH.add(ht);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🏨 住宿');s.commute=cm;stops.push(s);lastP=p}
-    if(d===days-1){[...usedA].length;atts.forEach((p,i)=>{if(!usedA.has(i)){usedA.add(i);t=addMin(t,60);stops.push(mkStop(p,t,'🏛 額外'))}})}
+    if(ht!=null){const p=hotels[ht];usedH.add(ht);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,'19:30','🏨 住宿');s.commute=cm;stops.push(s);lastP=p}
+    if(d===days-1){atts.forEach((p,i)=>{if(!usedA.has(i)){usedA.add(i);stops.push(mkStop(p,'','🏛 額外'))}})}
     result.push({day:d+1,stops});
   }
   return result;
@@ -512,24 +531,28 @@ async function autoRecommend(apiKey,cLat,cLng,regionName,days,transId){
   const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
   const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
   const mkS=(p,time,label)=>({time,name:p.n,address:p.a||'',type:label.includes('景點')?'attraction':'food',tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,rating:p.r,rc:p.rc,parking:p.parking||null});
-  const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+  const toMin=ti=>{const[h,m]=ti.split(':').map(Number);return h*60+m};
   const result=[];let aIdx=0;
   for(let d=0;d<days;d++){
-    const stops=[];let t='07:30',last=null;
-    /* 早餐 07:30 */
-    if(sBf[d]){const p=sBf[d],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🌅 早餐'),commute:cm});last=p;t=addMin(t,45+cm)}
-    /* 上午景點（到 11:30 前） */
-    while(toMin(t)<11*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏛 景點'),commute:cm});last=p;t=addMin(t,75+cm);aIdx++}
-    /* 午餐 11:30 */
-    if(toMin(t)<11*60+30)t='11:30';
-    if(sLn[d]){const p=sLn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🍜 午餐'),commute:cm});last=p;t=addMin(t,60+cm)}
-    /* 下午景點（到 17:30 前） */
-    while(toMin(t)<17*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏛 景點'),commute:cm});last=p;t=addMin(t,75+cm);aIdx++}
-    /* 晚餐 17:30 */
-    if(toMin(t)<17*60+30)t='17:30';
-    if(sDn[d]){const p=sDn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🌙 晚餐'),commute:cm});last=p;t=addMin(t,75+cm)}
-    /* 住宿 */
-    if(sHt[d%sHt.length]){const p=sHt[d%sHt.length],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏨 住宿'),commute:cm});last=p}
+    const stops=[];let last=null;
+    /* 早餐 固定 07:30 */
+    if(sBf[d]){const p=sBf[d],cm=last?commute(last,p):0;stops.push({...mkS(p,'07:30','🌅 早餐'),commute:cm});last=p}
+    /* 上午景點 08:15~11:30（先算能不能塞進去再加） */
+    let ct='08:15';
+    while(toMin(ct)+75<11*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;
+      if(toMin(ct)+cm+75>11*60+30)break;
+      stops.push({...mkS(p,ct,'🏛 景點'),commute:cm});last=p;ct=addMin(ct,75+cm);aIdx++}
+    /* 午餐 固定 12:00 */
+    if(sLn[d]){const p=sLn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,'12:00','🍜 午餐'),commute:cm});last=p}
+    /* 下午景點 13:00~17:30 */
+    ct='13:00';
+    while(toMin(ct)+75<17*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;
+      if(toMin(ct)+cm+75>17*60+30)break;
+      stops.push({...mkS(p,ct,'🏛 景點'),commute:cm});last=p;ct=addMin(ct,75+cm);aIdx++}
+    /* 晚餐 固定 18:00 */
+    if(sDn[d]){const p=sDn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,'18:00','🌙 晚餐'),commute:cm});last=p}
+    /* 住宿 固定 19:30 */
+    if(sHt[d%sHt.length]){const p=sHt[d%sHt.length],cm=last?commute(last,p):0;stops.push({...mkS(p,'19:30','🏨 住宿'),commute:cm});last=p}
     result.push({day:d+1,stops});
   }
   return result;
@@ -849,7 +872,13 @@ function App(){
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",width:52,flexShrink:0}}>
                 <span style={{fontSize:14,fontFamily:"monospace",color:"#10b981",fontWeight:800}}>{s.time}</span>
                 <div style={{width:34,height:34,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,background:s.label?.includes("早餐")?"rgba(245,158,11,.15)":s.label?.includes("午餐")?"rgba(59,130,246,.15)":s.label?.includes("晚餐")?"rgba(168,85,247,.15)":s.label?.includes("住宿")?"rgba(99,102,241,.15)":"rgba(16,185,129,.1)",border:"2px solid "+(s.label?.includes("餐")?"rgba(245,158,11,.3)":s.label?.includes("住宿")?"rgba(99,102,241,.3)":"rgba(16,185,129,.2)"),marginTop:4}}>{s.label?.includes("早餐")?"🌅":s.label?.includes("午餐")?"🍜":s.label?.includes("晚餐")?"🌙":s.label?.includes("住宿")?"🏨":"🏛"}</div>
-                {s.commute>0&&<div style={{fontSize:10,color:"#555",marginTop:4,display:"flex",alignItems:"center",gap:2}}>{({car:"🚗",walk:"🚶",bus:"🚌",train:"🚄"})[plan.transId||"car"]||"🚗"} {s.commute}分</div>}
+                {s.commute>0&&<div style={{fontSize:10,color:"#555",marginTop:4,display:"flex",flexDirection:"column",gap:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:2}}>{({car:"🚗",walk:"🚶",bus:"🚌",train:"🚄"})[plan.transId||"car"]||"🚗"} {s.commute}分</div>
+                  {(plan.transId==='bus'||plan.transId==='train')&&s.commute>5&&<div style={{fontSize:9,color:"#f59e0b"}}>⏰ 出發 {addMinF(s.time,-(s.commute))}</div>}
+                </div>}
+                {s.transitSteps?.length>0&&<div style={{marginTop:2,display:"flex",flexDirection:"column",gap:1}}>{s.transitSteps.map((st,j)=><div key={j} style={{fontSize:9,color:st.mode==='walk'?"#888":"#06b6d4",display:"flex",alignItems:"center",gap:2,lineHeight:1.3}}>
+                  {st.mode==='walk'?<span>🚶 步行{st.min}分</span>:<span>{st.icon} {st.line}{st.from?' '+st.from:''}→{st.to} {st.min}分</span>}
+                </div>)}</div>}
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><p style={{fontWeight:800,fontSize:16}}>{s.name}</p>{s.label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,.05)",color:"#888",fontWeight:600}}>{s.label}</span>}</div>
