@@ -1,4 +1,4 @@
-const CACHE_NAME = 'travel-pass-v1';
+const CACHE_NAME = 'travel-pass-v2';
 const PRECACHE = [
   '/taiwan-travel/',
   '/taiwan-travel/index.html',
@@ -24,7 +24,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  // Network first for API calls, cache first for static
+  if (e.request.url.includes('/admin/')) return;
   if (e.request.url.includes('googleapis.com') || e.request.url.includes('wttr.in') || e.request.url.includes('firestore')) {
     e.respondWith(
       fetch(e.request).catch(() => caches.match(e.request))
