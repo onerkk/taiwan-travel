@@ -731,7 +731,7 @@ function App(){
 
       {/* ===== 探索 ===== */}
       {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{position:"sticky",top:0,zIndex:20,background:"#080a0f",paddingTop:4,paddingBottom:8,display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{position:"sticky",top:44,zIndex:20,background:"#080a0f",paddingTop:6,paddingBottom:8,display:"flex",flexDirection:"column",gap:8}}>
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             {CATS.map(c=>{const a=cat===c.id;const icons={attraction:"🏛",food:"🍜",hotel:"🏨",fishing:"🎣",camping:"⛺"};return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,padding:"8px 4px",borderRadius:10,fontSize:11,fontWeight:700,background:a?c.c+"22":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"55":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}><span style={{fontSize:13}}>{icons[c.id]||""}</span>{tr(c.nk)}</button>})}
             <button onClick={refresh} style={{padding:"8px 6px",borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",flexShrink:0}}><Ico d={I.reload} s={14}/></button>
