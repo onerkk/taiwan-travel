@@ -559,16 +559,32 @@ function GMap({apiKey,regions,checkins,country,region,online,userLoc,user,onSele
             fillColor:cnt?'#10b981':'#555',fillOpacity:cnt?.7:.3,
             strokeColor:isHere?'#f59e0b':cnt?'#10b981':'#888',strokeWeight:isHere?3:1.5}});
         mk.addListener('click',()=>onSelect(r.n));mkRef.current.push(mk)});
-      /* 打卡記錄 markers */
+      /* 打卡記錄 markers - 按地點合併 */
+      const ckByPlace={};
       (history||[]).filter(h=>h.country===country&&h.lat&&h.lng).forEach(h=>{
-        const mk=new gm.Marker({position:{lat:h.lat,lng:h.lng},map:mapRef.current,title:h.placeName,zIndex:50,
+        const key=h.placeName||Math.round(h.lat*1000)+','+Math.round(h.lng*1000);
+        if(!ckByPlace[key])ckByPlace[key]={name:h.placeName,lat:h.lat,lng:h.lng,records:[]};
+        ckByPlace[key].records.push(h)});
+      Object.values(ckByPlace).forEach(place=>{
+        const mk=new gm.Marker({position:{lat:place.lat,lng:place.lng},map:mapRef.current,title:place.name,zIndex:50,
           label:{text:'📍',fontSize:'18px'},
           icon:{path:gm.SymbolPath.CIRCLE,scale:14,fillColor:'#f59e0b',fillOpacity:.95,strokeColor:'#fff',strokeWeight:2.5}});
-        const info=new gm.InfoWindow({content:'<div style="color:#333;font-size:14px;font-weight:700;max-width:220px;padding:4px">'+
-          '<div style="font-size:15px;margin-bottom:4px">📍 '+h.placeName+'</div>'+
-          (h.note?'<div style="font-size:12px;color:#666;margin-bottom:4px">'+h.note+'</div>':'')+
-          (h.companions?.length?'<div style="font-size:11px;color:#d97706">👥 '+h.companions.map(c=>c.name).join('、')+'</div>':'')+
-          '<div style="font-size:11px;color:#999;margin-top:2px">'+fmtDate(h.ts)+'</div></div>'});
+        const photos=place.records.filter(r=>r.placePhoto||r.userImg).slice(0,4);
+        const photoHtml=photos.length?'<div style="display:flex;gap:4px;margin:6px 0;overflow-x:auto">'+photos.map(r=>{
+          const src=r.userImg||r.placePhoto;
+          return '<img src="'+src+'" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0"/>'}).join('')+'</div>':'';
+        const recordsHtml=place.records.slice(0,5).map(r=>
+          '<div style="padding:4px 0;border-bottom:1px solid #eee;font-size:11px">'+
+          '<span style="color:#333;font-weight:600">'+fmtDate(r.ts)+'</span>'+
+          (r.note?' <span style="color:#888">'+r.note.substring(0,30)+'</span>':'')+
+          (r.companions?.length?' <span style="color:#d97706">👥'+r.companions.length+'</span>':'')+
+          '</div>').join('');
+        const info=new gm.InfoWindow({content:'<div style="color:#333;max-width:260px;padding:4px">'+
+          '<div style="font-size:16px;font-weight:800;margin-bottom:2px">📍 '+place.name+'</div>'+
+          '<div style="font-size:12px;color:#10b981;font-weight:700;margin-bottom:4px">'+place.records.length+' 次打卡</div>'+
+          photoHtml+recordsHtml+
+          (place.records.length>5?'<div style="font-size:10px;color:#aaa;margin-top:4px">還有 '+(place.records.length-5)+' 筆...</div>':'')+
+          '</div>'});
         mk.addListener('click',()=>info.open(mapRef.current,mk));mkRef.current.push(mk)});
       /* 線上旅伴 */
       online.filter(u=>u.lat&&u.lng).forEach(u=>{
