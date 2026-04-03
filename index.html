@@ -177,10 +177,10 @@ const rtCache=new Map();
 async function getRouteInfo(key,lat1,lng1,lat2,lng2,transId,depTime){
   if(!lat1||!lat2)return{min:null,steps:[]};
   const mode={car:'DRIVE',walk:'WALK',bus:'TRANSIT',train:'TRANSIT'}[transId]||'DRIVE';
-  const ck=lat1.toFixed(3)+','+lng1.toFixed(3)+'→'+lat2.toFixed(3)+','+lng2.toFixed(3)+':'+mode+':'+(depTime||'');
+  const ck=lat1.toFixed(3)+','+lng1.toFixed(3)+'→'+lat2.toFixed(3)+','+lng2.toFixed(3)+':'+mode+':'+_lang+':'+(depTime||'');
   if(rtCache.has(ck))return rtCache.get(ck);
   const fields=mode==='TRANSIT'?'routes.duration,routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.transitDetails':'routes.duration';
-  const body={origin:{location:{latLng:{latitude:lat1,longitude:lng1}}},destination:{location:{latLng:{latitude:lat2,longitude:lng2}}},travelMode:mode};
+  const body={origin:{location:{latLng:{latitude:lat1,longitude:lng1}}},destination:{location:{latLng:{latitude:lat2,longitude:lng2}}},travelMode:mode,languageCode:_lang==='id'?'id':'zh-TW'};
   if(mode==='TRANSIT'&&depTime)body.departureTime=depTime;
   if(mode==='DRIVE'){body.routingPreference='TRAFFIC_AWARE';if(depTime)body.departureTime=depTime}
   try{const r=await fetch('https://routes.googleapis.com/directions/v2:computeRoutes',{method:'POST',
@@ -644,7 +644,7 @@ function GMap({apiKey,regions,checkins,country,region,online,userLoc,user,onSele
 
 function App(){
   const[lang,setLangState]=useState(getLang());
-  const setLang=l=>{_lang=l;localStorage.setItem('tw_lang',l);setLangState(l);cache.clear();pkCache.clear()};
+  const setLang=l=>{_lang=l;localStorage.setItem('tw_lang',l);setLangState(l);cache.clear();pkCache.clear();rtCache.clear()};
   const[apiKey,setApiKey]=useState(getK());const[groupId,setGroupId]=useState(getG());
   const[user,setUser]=useState(null);const[authChecked,setAuthChecked]=useState(false);
   const ready=!!apiKey&&!!groupId&&!!user&&authChecked;
