@@ -70,15 +70,15 @@ const getLang=()=>localStorage.getItem('tw_lang')||'zh';
 const I18N={
 zh:{
   explore:"探索",map:"地圖",plan:"行程",attraction:"景點",food:"美食",hotel:"住宿",fishing:"釣魚",camping:"露營",
-  nearest:t("nearest"),rating:t("rating"),search:"搜尋",loading:"載入中...",noResult:"沒有找到結果",items:"筆",
+  nearest:tr("nearest"),rating:tr("rating"),search:"搜尋",loading:"載入中...",noResult:"沒有找到結果",items:"筆",
   nav:"導航",streetView:"街景",checkin:"打卡",collapse:"收起",addPlan:"加入",added:"已加入",
   open:"營業中",closed:"已休息",reviews:"📝 旅客評價",website:"官網",seeMore:"看更多 ▼",seeLess:"收起 ▲",
-  parking:"🅿️ 停車",freePk:t("freePk"),paidPk:t("paidPk"),streetPk:t("streetPk"),hasPk:t("hasPk"),nearbyPk:"🅿️ 附近停車場",
-  planTitle:"行程規劃",days:t("days"),autoRec:"⚡ 自動推薦",autoRecN:"日行程",autoRecDesc:"依地區自動搜尋景點、三餐、住宿並安排",
+  parking:"🅿️ 停車",freePk:tr("freePk"),paidPk:tr("paidPk"),streetPk:tr("streetPk"),hasPk:tr("hasPk"),nearbyPk:"🅿️ 附近停車場",
+  planTitle:"行程規劃",days:tr("days"),autoRec:"⚡ 自動推薦",autoRecN:"日行程",autoRecDesc:"依地區自動搜尋景點、三餐、住宿並安排",
   manualPlan:"用已選",manualPlanSuffix:"點排行程",manualDesc:"智慧排序：按距離分組、餐廳穿插景點間、住宿排最後",
   replan:"重新規劃",aiAuto:"⚡ AI 自動推薦行程",day:"Day",
   car:"自駕",walk:"徒步",bus:"公車",train:"火車",
-  travelMap:"旅遊地圖",mapTab:t("mapTab"),logTab:t("logTab"),unvisited:"未到訪",visited:"去過",frequent:"常去",
+  travelMap:"旅遊地圖",mapTab:tr("mapTab"),logTab:tr("logTab"),unvisited:"未到訪",visited:"去過",frequent:"常去",
   weather:"天氣",feelsLike:"體感",humidity:"濕度",wind:"風速",
   ckTitle:"📍 打卡",ckNearby:"👥 附近旅伴",ckPhoto:"📷 拍照 / 選擇照片",ckRemove:"✕ 移除",ckNote:"寫下感想...",ckConfirm:"📍 確認打卡",ckAuto:"時間 · 地點 · 旅伴自動記錄",ckAlone:"獨自打卡",ckSuccess:"打卡成功！",ckDeleted:"🗑️ 已刪除打卡記錄",ckDelete:"刪除",ckConfirmDel:"確定刪除這筆打卡？",ckPrompt:"到「探索」找景點，1km 內打卡",
   login:"登入",logout:"登出",loginFail:"登入失敗，請再試一次",
@@ -112,7 +112,9 @@ id:{
   breakfast:"🌅 Sarapan",lunch:"🍜 Makan Siang",dinner:"🌙 Makan Malam",hotelLabel:"🏨 Penginapan",spot:"🏛 Wisata",extra:"🏛 Ekstra",
   min:"mnt",km:"km",m:"m",
 }};
-let _lang=getLang();const t=k=>I18N[_lang]?.[k]||I18N.zh[k]||k;
+let _lang=getLang();const tr=k=>I18N[_lang]?.[k]||I18N.zh[k]||k;
+const CNAME={tw:{zh:"台灣",id:"Taiwan"},jp:{zh:"日本",id:"Jepang"},th:{zh:"泰國",id:"Thailand"},cn:{zh:"中國",id:"Tiongkok"},kr:{zh:"韓國",id:"Korea Selatan"},hk:{zh:"香港",id:"Hong Kong"},vn:{zh:"越南",id:"Vietnam"},mo:{zh:"澳門",id:"Makau"},us:{zh:"美國",id:"Amerika"},sg:{zh:"新加坡",id:"Singapura"},my:{zh:"馬來西亞",id:"Malaysia"}};
+const cn=c=>CNAME[c.id]?.[_lang]||c.n;
 
 /* ======= 11 國區域資料 ======= */
 const COUNTRIES=[
@@ -130,7 +132,7 @@ const COUNTRIES=[
 ];
 const CATS=[{id:"attraction",nk:"attraction",c:"#10b981",qs:["熱門景點","觀光景點","公園步道","博物館","寺廟古蹟"]},{id:"food",nk:"food",c:"#f59e0b",qs:["必吃餐廳","小吃","咖啡甜點","早午餐","海鮮料理"]},{id:"hotel",nk:"hotel",c:"#6366f1",qs:["飯店","民宿","度假村","青年旅館","溫泉旅館"]},{id:"fishing",nk:"fishing",c:"#06b6d4",qs:["磯釣點","堤防釣魚","漁港釣魚","溪流釣魚","海釣熱門釣點","野釣秘境","水庫釣魚","防波堤釣魚","釣魚場","河口釣點"]},{id:"camping",nk:"camping",c:"#84cc16",qs:["露營區","露營場","豪華露營","野營地","營地推薦","露營區營地"]}];
 const TRANS=[{id:"car",nk:"car",e:"🚗",gm:"driving"},{id:"walk",nk:"walk",e:"🚶",gm:"walking"},{id:"bus",nk:"bus",e:"🚌",gm:"transit"},{id:"train",nk:"train",e:"🚄",gm:"transit"}];
-const PRICE=["",(t("price1")),(t("price2")),(t("price3")),(t("price4"))];
+const PRICE=["",(tr("price1")),(tr("price2")),(tr("price3")),(tr("price4"))];
 const hDist=(a,b,c,d)=>{const R=6371,t=x=>x*Math.PI/180,dL=t(c-a),dN=t(d-b),s=Math.sin(dL/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))};
 const fmtDate=ts=>{if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 
@@ -143,7 +145,7 @@ async function fetchP(key,cLat,cLng,rad,rName,catId,isGeo,onP){
   const cat=CATS.find(c=>c.id===catId);const hdrs={'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':FM};
   const loc={circle:{center:{latitude:cLat,longitude:cLng},radius:rad}};const seen=new Set();const all=[];
   const qs=isGeo?cat.qs.map(q=>q).concat(cat.qs.slice(0,2).map(q=>rName+' '+q)):cat.qs.map(q=>rName+' '+q);
-  const batches=await Promise.all(qs.map(async q=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:20,languageCode:'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,catId))}catch{return[]}}));
+  const batches=await Promise.all(qs.map(async q=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:20,languageCode:_lang==='id'?'id':'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,catId))}catch{return[]}}));
   for(const b of batches){for(const p of b){if(!seen.has(p.id)){seen.add(p.id);all.push(p)}}if(onP)onP(all.length)}
   all.forEach(p=>{p._dist=(p.lat&&p.lng)?hDist(cLat,cLng,p.lat,p.lng):9999});
   cache.set(ck,all);return all;
@@ -155,7 +157,7 @@ async function findParking(key,lat,lng){
   const ck=lat.toFixed(2)+','+lng.toFixed(2);if(pkCache.has(ck))return pkCache.get(ck);
   try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',
     headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.location,places.googleMapsUri'},
-    body:JSON.stringify({textQuery:'停車場',maxResultCount:5,languageCode:'zh-TW',locationBias:{circle:{center:{latitude:lat,longitude:lng},radius:5000}}})});
+    body:JSON.stringify({textQuery:'停車場',maxResultCount:5,languageCode:_lang==='id'?'id':'zh-TW',locationBias:{circle:{center:{latitude:lat,longitude:lng},radius:5000}}})});
     if(!r.ok){pkCache.set(ck,[]);return[]}const d=await r.json();
     const res=(d.places||[]).map(p=>({n:p.displayName?.text||'',a:p.formattedAddress||'',lat:p.location?.latitude,lng:p.location?.longitude,url:p.googleMapsUri||'',dist:hDist(lat,lng,p.location?.latitude||0,p.location?.longitude||0)})).sort((a,b)=>a.dist-b.dist).slice(0,2);
     pkCache.set(ck,res);return res}catch{pkCache.set(ck,[]);return[]}
@@ -244,7 +246,7 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
       <div style={{position:"absolute",top:10,left:10,display:"flex",gap:5,flexWrap:"wrap"}}>
         <span style={{padding:"4px 12px",borderRadius:20,background:c.c,fontSize:11,fontWeight:800,color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{t(c.nk)}</span>
         {p.typeName&&<span style={{padding:"4px 10px",borderRadius:20,background:"rgba(0,0,0,.6)",backdropFilter:"blur(6px)",fontSize:10,fontWeight:700,color:"#ddd"}}>{p.typeName}</span>}
-        {p.isOpen!=null&&<span style={{padding:"4px 10px",borderRadius:20,background:p.isOpen?"rgba(16,185,129,.85)":"rgba(239,68,68,.85)",fontSize:10,fontWeight:800,color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{p.isOpen?t("open"):t("closed")}</span>}
+        {p.isOpen!=null&&<span style={{padding:"4px 10px",borderRadius:20,background:p.isOpen?"rgba(16,185,129,.85)":"rgba(239,68,68,.85)",fontSize:10,fontWeight:800,color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{p.isOpen?tr("open"):tr("closed")}</span>}
       </div>
       {wx&&<div style={{position:"absolute",bottom:10,right:10,display:"flex",alignItems:"center",gap:3,padding:"4px 10px",borderRadius:12,background:"rgba(0,0,0,.6)",backdropFilter:"blur(6px)",fontSize:11}}><span>{WX_ICON[wx.icon]||"🌤️"}</span><span style={{fontWeight:700}}>{wx.temp}°</span></div>}
       <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 14px 10px"}}><h3 style={{fontSize:18,fontWeight:900,textShadow:"0 2px 12px rgba(0,0,0,.9),0 1px 3px rgba(0,0,0,.7)"}}>{p.n}</h3></div>
@@ -270,25 +272,25 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
       {/* 介紹 */}
       {(p.d||p.reviews?.[0]?.t)&&<>
         <p onClick={()=>setExp(!exp)} style={{fontSize:12,color:"#9ca3af",lineHeight:1.7,cursor:"pointer",...(!exp?{display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}:{})}}>{p.d||p.reviews[0].t}</p>
-        <button onClick={()=>setExp(!exp)} style={{fontSize:10,color:"#555",background:"none",border:"none",padding:0,textAlign:"left"}}>{exp?t("seeLess"):t("seeMore")}</button>
+        <button onClick={()=>setExp(!exp)} style={{fontSize:10,color:"#555",background:"none",border:"none",padding:0,textAlign:"left"}}>{exp?tr("seeLess"):tr("seeMore")}</button>
       </>}
       {/* 展開：評論 */}
       {exp&&p.reviews?.length>0&&<div className="fi" style={{borderTop:"1px solid rgba(255,255,255,.04)",paddingTop:8}}>
-        <p style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:6}}>{t("reviews")}</p>
+        <p style={{fontSize:10,fontWeight:700,color:"#666",marginBottom:6}}>{tr("reviews")}</p>
         {p.reviews.map((rv,i)=><div key={i} style={{padding:"6px 8px",borderRadius:8,background:"rgba(255,255,255,.02)",marginBottom:3,border:"1px solid rgba(255,255,255,.03)"}}>
           <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}><span style={{fontSize:10,fontWeight:700,color:"#aaa"}}>{rv.a}</span>{rv.s>0&&<span style={{fontSize:9,color:"#f59e0b"}}>{"★".repeat(rv.s)}</span>}</div>
           <p style={{fontSize:11,color:"#888",lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:3,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{rv.t}</p>
         </div>)}
-        {p.web&&<a href={p.web} target="_blank" style={{fontSize:10,display:"inline-flex",alignItems:"center",gap:3,marginTop:4}}><Ico d={I.ext} s={10} c="#60a5fa"/>{t("website")}</a>}
+        {p.web&&<a href={p.web} target="_blank" style={{fontSize:10,display:"inline-flex",alignItems:"center",gap:3,marginTop:4}}><Ico d={I.ext} s={10} c="#60a5fa"/>{tr("website")}</a>}
       </div>}
       {/* 按鈕列 */}
       <div style={{display:"flex",alignItems:"center",gap:5,paddingTop:6,borderTop:"1px solid rgba(255,255,255,.04)",flexWrap:"wrap"}}>
-        <button className="nb" onClick={()=>openNav(p.n,p.a,gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa"}}><Ico d={I.compass} s={11} c="#60a5fa"/>{t("nav")}</button>
+        <button className="nb" onClick={()=>openNav(p.n,p.a,gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa"}}><Ico d={I.compass} s={11} c="#60a5fa"/>{tr("nav")}</button>
         {p.tel&&<a href={"tel:"+p.tel} className="nb" style={{background:"rgba(16,185,129,.12)",color:"#10b981",textDecoration:"none"}}><Ico d={I.phone} s={11} c="#10b981"/>{p.tel}</a>}
-        {p.lat&&apiKey&&<button className="nb" onClick={()=>setSv(!sv)} style={{background:"rgba(168,85,247,.1)",color:"#a855f7"}}><Ico d={I.ext} s={10} c="#a855f7"/>{sv?t("collapse"):t("streetView")}</button>}
+        {p.lat&&apiKey&&<button className="nb" onClick={()=>setSv(!sv)} style={{background:"rgba(168,85,247,.1)",color:"#a855f7"}}><Ico d={I.ext} s={10} c="#a855f7"/>{sv?tr("collapse"):tr("streetView")}</button>}
         {onCk&&<button onClick={()=>canCk&&onCk(p)} disabled={!canCk} className="nb" style={{background:canCk?"rgba(245,158,11,.15)":"rgba(255,255,255,.02)",color:canCk?"#f59e0b":"#444",border:canCk?"1px solid rgba(245,158,11,.3)":"none"}}><Ico d={I.flag} s={11} c={canCk?"#f59e0b":"#444"}/>{canCk?"打卡":p._dist!=null&&p._dist<9999?(p._dist).toFixed(1)+"km":"登入"}</button>}
         <div style={{flex:1}}/>
-        <button onClick={()=>onAdd(p,catId)} disabled={added} style={{display:"flex",alignItems:"center",gap:4,padding:"7px 12px",borderRadius:10,fontSize:11,fontWeight:700,background:added?"rgba(255,255,255,.04)":c.c,color:added?"#555":"#fff"}}>{added?<><Ico d={I.check} s={10}/>{t("added")}</>:<><Ico d={I.plus} s={10}/>{t("addPlan")}</>}</button>
+        <button onClick={()=>onAdd(p,catId)} disabled={added} style={{display:"flex",alignItems:"center",gap:4,padding:"7px 12px",borderRadius:10,fontSize:11,fontWeight:700,background:added?"rgba(255,255,255,.04)":c.c,color:added?"#555":"#fff"}}>{added?<><Ico d={I.check} s={10}/>{tr("added")}</>:<><Ico d={I.plus} s={10}/>{tr("addPlan")}</>}</button>
       </div>
       {sv&&p.lat&&<div style={{position:"relative",width:"100%",paddingTop:"50%",borderRadius:12,overflow:"hidden",background:"#111",marginTop:6}}><img src={'https://maps.googleapis.com/maps/api/streetview?size=640x300&location='+p.lat+','+p.lng+'&fov=90&key='+apiKey} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}} referrerPolicy="no-referrer" onError={e=>{e.target.parentElement.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#555">無街景</div>'}}/></div>}
     </div>
@@ -307,7 +309,7 @@ function CkModal({place,onConfirm,onClose,online}){
     <div style={{position:'absolute',inset:0,background:'rgba(0,0,0,.7)'}} onClick={onClose}/>
     <div className="fu" style={{position:'relative',width:'100%',maxWidth:420,maxHeight:'85vh',overflowY:'auto',background:'#12141a',borderRadius:'20px 20px 0 0',padding:20,zIndex:1}}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}>
-        <h3 style={{fontSize:18,fontWeight:800}}>{t("ckTitle")}</h3>
+        <h3 style={{fontSize:18,fontWeight:800}}>{tr("ckTitle")}</h3>
         <button onClick={onClose} style={{color:'#555',background:'none',border:'none',padding:4}}><Ico d={I.x} s={20}/></button>
       </div>
       <div style={{padding:12,borderRadius:12,background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.04)',marginBottom:12}}>
@@ -319,7 +321,7 @@ function CkModal({place,onConfirm,onClose,online}){
         </div>
       </div>
       {pals.length>0&&<div style={{padding:10,borderRadius:10,background:'rgba(245,158,11,.06)',border:'1px solid rgba(245,158,11,.15)',marginBottom:12}}>
-        <p style={{fontSize:12,fontWeight:700,color:'#f59e0b',marginBottom:6}}>{t("ckNearby")}</p>
+        <p style={{fontSize:12,fontWeight:700,color:'#f59e0b',marginBottom:6}}>{tr("ckNearby")}</p>
         <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>{pals.map((p,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:4}}>
           {p.photo?<img src={p.photo} style={{width:24,height:24,borderRadius:'50%'}} referrerPolicy="no-referrer"/>:<span style={{width:24,height:24,borderRadius:'50%',background:'rgba(16,185,129,.3)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10}}>👤</span>}
           <span style={{fontSize:12,color:'#ddd'}}>{p.name}</span>
@@ -330,10 +332,10 @@ function CkModal({place,onConfirm,onClose,online}){
         <img src={photo} style={{width:'100%',borderRadius:12,maxHeight:200,objectFit:'cover'}}/>
         <button onClick={()=>setPhoto(null)} style={{position:'absolute',top:8,right:8,padding:'4px 10px',borderRadius:8,background:'rgba(0,0,0,.7)',color:'#fff',fontSize:11,fontWeight:700,border:'none'}}>✕ 移除</button>
       </div>
-      :<button onClick={()=>fRef.current?.click()} style={{width:'100%',padding:18,borderRadius:12,border:'2px dashed rgba(255,255,255,.08)',background:'rgba(255,255,255,.02)',color:'#666',fontSize:13,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:12}}>{t("ckPhoto")}</button>}
-      <textarea placeholder={t('ckNote')} value={note} onChange={e=>setNote(e.target.value)} rows={2} style={{width:'100%',padding:12,borderRadius:10,fontSize:14,color:'#fff',background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',outline:'none',resize:'none',marginBottom:14,fontFamily:'inherit'}}/>
-      <button onClick={()=>onConfirm(place,note,photo,pals)} style={{width:'100%',padding:14,borderRadius:14,fontSize:16,fontWeight:800,color:'#fff',background:'linear-gradient(135deg,#f59e0b,#d97706)',border:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>{t("ckConfirm")}</button>
-      <p style={{textAlign:'center',fontSize:10,color:'#444',marginTop:8}}>{t("ckAuto")}</p>
+      :<button onClick={()=>fRef.current?.click()} style={{width:'100%',padding:18,borderRadius:12,border:'2px dashed rgba(255,255,255,.08)',background:'rgba(255,255,255,.02)',color:'#666',fontSize:13,fontWeight:600,display:'flex',alignItems:'center',justifyContent:'center',gap:6,marginBottom:12}}>{tr("ckPhoto")}</button>}
+      <textarea placeholder={tr('ckNote')} value={note} onChange={e=>setNote(e.target.value)} rows={2} style={{width:'100%',padding:12,borderRadius:10,fontSize:14,color:'#fff',background:'rgba(255,255,255,.03)',border:'1px solid rgba(255,255,255,.06)',outline:'none',resize:'none',marginBottom:14,fontFamily:'inherit'}}/>
+      <button onClick={()=>onConfirm(place,note,photo,pals)} style={{width:'100%',padding:14,borderRadius:14,fontSize:16,fontWeight:800,color:'#fff',background:'linear-gradient(135deg,#f59e0b,#d97706)',border:'none',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>{tr("ckConfirm")}</button>
+      <p style={{textAlign:'center',fontSize:10,color:'#444',marginTop:8}}>{tr("ckAuto")}</p>
     </div>
   </div>
 }
@@ -440,7 +442,7 @@ function Setup({onDone}){
       <input type="text" placeholder="AIzaSy..." value={key} onChange={e=>setKey(e.target.value)} style={{width:"100%",padding:"14px 16px",borderRadius:12,fontSize:15,color:"#fff",background:"rgba(255,255,255,.04)",border:"1.5px solid rgba(255,255,255,.08)",outline:"none"}} onKeyDown={e=>e.key==="Enter"&&go()}/>
       <button onClick={go} disabled={busy} style={{padding:"14px",borderRadius:12,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",display:"flex",alignItems:"center",justifyContent:"center",gap:8,border:"none"}}>{busy?<span style={{width:18,height:18,border:"2.5px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:"🔑"}{busy?"驗證中...":"開始旅行"}</button>
       {err&&<p style={{fontSize:12,color:"#ef4444",textAlign:"center"}}>{err}</p>}
-      <a href="guide.html" style={{textAlign:"center",fontSize:12,color:"#10b981",marginTop:8}}>{t("keyGuide")}</a>
+      <a href="guide.html" style={{textAlign:"center",fontSize:12,color:"#10b981",marginTop:8}}>{tr("keyGuide")}</a>
       <details style={{marginTop:4}}><summary style={{fontSize:11,color:"#555",cursor:"pointer"}}>快速教學</summary>
         <div style={{padding:"10px 0",fontSize:11,color:"#666",lineHeight:1.8}}>1. <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a> 建立專案<br/>2. 啟用「Places API (New)」+「Maps JavaScript API」+「Geocoding API」<br/>3. 憑證 → 建立 API 金鑰<br/>4. 複製貼上到上面<br/><br/>💡 分享同一組 Key 給旅伴 → 打卡同步！</div>
       </details>
@@ -494,7 +496,7 @@ async function autoRecommend(apiKey,cLat,cLng,regionName,days,transId){
   const speed=SPEED[transId]||30;
   const hdrs={'Content-Type':'application/json','X-Goog-Api-Key':apiKey,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.nationalPhoneNumber,places.internationalPhoneNumber,places.photos,places.parkingOptions'};
   const loc={circle:{center:{latitude:cLat,longitude:cLng},radius:15000}};
-  const doSearch=async(q)=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:10,languageCode:'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,'auto'))}catch{return[]}};
+  const doSearch=async(q)=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:10,languageCode:_lang==='id'?'id':'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,'auto'))}catch{return[]}};
   /* 平行搜尋 */
   const[atts,breakfasts,lunches,dinners,hotels]=await Promise.all([
     doSearch(regionName+' 熱門景點 必去'),
@@ -586,14 +588,15 @@ function GMap({apiKey,regions,checkins,country,region,online,userLoc,user,onSele
 
 function App(){
   const[lang,setLangState]=useState(getLang());
-  const setLang=l=>{_lang=l;localStorage.setItem('tw_lang',l);setLangState(l)};
+  const setLang=l=>{_lang=l;localStorage.setItem('tw_lang',l);setLangState(l);cache.clear();pkCache.clear()};
   const[apiKey,setApiKey]=useState(getK());const[groupId,setGroupId]=useState(getG());
   const[user,setUser]=useState(null);const[authChecked,setAuthChecked]=useState(false);
   const ready=!!apiKey&&!!groupId&&!!user&&authChecked;
   const onSetup=useCallback((k,g)=>{setApiKey(k);setGroupId(g)},[]);
   const changeKey=()=>{localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');if(user&&db)db.collection("users").doc(user.uid).update({apiKey:firebase.firestore.FieldValue.delete()}).catch(()=>{});setApiKey('');setGroupId('')};
   const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(()=>{try{const s=localStorage.getItem('tw_plan');if(!s)return null;const p=JSON.parse(s);if(p._v!==2){localStorage.removeItem('tw_plan');return null}return p}catch{return null}});const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
-  const[online,setOnline]=useState([]);
+  const[online,setOnline]=useState([]);const[isAdmin,setIsAdmin]=useState(false);const[adminTab,setAdminTab]=useState('key');const[adSharedKey,setAdSharedKey]=useState('');const[adKeyActive,setAdKeyActive]=useState(false);const[adNewKey,setAdNewKey]=useState('');const[adSaving,setAdSaving]=useState(false);const[adWl,setAdWl]=useState([]);const[adMsg,setAdMsg]=useState('');const[sharePos,setSharePos]=useState(()=>{const v=localStorage.getItem('tw_share_pos');return v===null?true:v==='1'});
+  const toggleShare=()=>{const nv=!sharePos;setSharePos(nv);localStorage.setItem('tw_share_pos',nv?'1':'0');if(!nv&&user&&db)db.collection("online").doc(user.uid).delete().catch(()=>{})};
   const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckModal,setCkModal]=useState(null);const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);const[installEvt,setInstallEvt]=useState(null);const[autoLoading,setAutoLoading]=useState(false);
   useEffect(()=>{const h=e=>{e.preventDefault();setInstallEvt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);
   const doInstall=async()=>{if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice;if(r.outcome==='accepted')setInstallEvt(null)};
@@ -604,8 +607,21 @@ function App(){
   useEffect(()=>{if(!fbOK){setAuthChecked(true);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthChecked(true);if(u&&db){db.collection("checkins").doc(u.uid).get().then(d=>{if(d.exists)setCheckins(d.data().regions||{})});db.collection("history").where("uid","==",u.uid).where("gid","==",groupId).orderBy("ts","desc").limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{db.collection("history").where("uid","==",u.uid).limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{})})}})},[groupId]);
 
   /* Online presence */
-  useEffect(()=>{if(!fbOK||!user||!db||!groupId||!ready)return;const ref=db.collection("online").doc(user.uid);ref.set({uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,gid:groupId,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});return()=>{ref.delete().catch(()=>{})}},[user,groupId,ready]);
-  useEffect(()=>{if(!fbOK||!db||!groupId||!ready)return;const unsub=db.collection("online").where("gid","==",groupId).onSnapshot(snap=>{const u=[];snap.forEach(d=>{const x=d.data();if(!user||x.uid!==user?.uid)u.push(x)});setOnline(u)});return()=>unsub()},[user,groupId,ready]);
+  useEffect(()=>{if(!fbOK||!user||!db||!groupId||!ready)return;const ref=db.collection("online").doc(user.uid);if(sharePos){ref.set({uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,gid:groupId,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}else{ref.delete().catch(()=>{})}return()=>{ref.delete().catch(()=>{})}},[user,groupId,ready,sharePos,userLoc]);
+  useEffect(()=>{if(!fbOK||!db||!groupId||!ready||!sharePos){setOnline([]);return}const unsub=db.collection("online").where("gid","==",groupId).onSnapshot(snap=>{const u=[];snap.forEach(d=>{const x=d.data();if(!user||x.uid!==user?.uid)u.push(x)});setOnline(u)});return()=>unsub()},[user,groupId,ready,sharePos]);
+
+  /* Admin */
+  useEffect(()=>{if(!user||!db||!fbOK)return;(async()=>{try{
+    let cfg=await db.collection("admin").doc("config").get();
+    if(!cfg.exists){await db.collection("admin").doc("config").set({admins:[user.uid],sharedKey:'',active:false});cfg=await db.collection("admin").doc("config").get()}
+    if(cfg.exists){const d=cfg.data();if((d.admins||[]).includes(user.uid)){setIsAdmin(true);setAdSharedKey(d.sharedKey||'');setAdNewKey(d.sharedKey||'');setAdKeyActive(!!d.active);
+      const snap=await db.collection("whitelist").orderBy("addedAt","desc").get().catch(()=>({docs:[]}));setAdWl(snap.docs.map(x=>({uid:x.id,...x.data()})))}}
+  }catch(e){console.log("admin err",e)}})()},[user]);
+  const adFlash=m=>{setAdMsg(m);setTimeout(()=>setAdMsg(''),3500)};
+  const adSaveKey=async()=>{if(!adNewKey.trim()||!adNewKey.startsWith("AIza"))return adFlash("❌ Key 需以 AIza 開頭");setAdSaving(true);try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':adNewKey.trim(),'X-Goog-FieldMask':'places.id'},body:JSON.stringify({textQuery:"test",maxResultCount:1})});if(!r.ok){adFlash("❌ Key 無效");setAdSaving(false);return}await db.collection("admin").doc("config").set({sharedKey:adNewKey.trim()},{merge:true});setAdSharedKey(adNewKey.trim());adFlash("✅ 已儲存")}catch{adFlash("❌ 失敗")}setAdSaving(false)};
+  const adToggleActive=async()=>{if(!adKeyActive&&!adSharedKey)return adFlash("❌ 請先設定 Key");await db.collection("admin").doc("config").set({active:!adKeyActive},{merge:true});setAdKeyActive(!adKeyActive);adFlash(adKeyActive?"⛔ 已停用":"✅ 已啟用")};
+  const adToggleUser=async(uid,en)=>{await db.collection("whitelist").doc(uid).update({enabled:!en});setAdWl(p=>p.map(w=>w.uid===uid?{...w,enabled:!en}:w));adFlash(en?"⛔ 已停用":"✅ 已啟用")};
+  const adKickUser=async(uid,name)=>{if(!confirm("確定踢出 "+(name||"")+"？"))return;await db.collection("whitelist").doc(uid).delete();setAdWl(p=>p.filter(w=>w.uid!==uid));adFlash("🗑️ 已踢出")};
   /* Fetch places */
   useEffect(()=>{if(!region||!curRegion||!apiKey||!ready)return;const uL=userLoc&&userLoc.region===region;const cLat=uL?userLoc.lat:curRegion.lat;const cLng=uL?userLoc.lng:curRegion.lng;
     setLoading(true);setLoadCount(0);
@@ -628,7 +644,7 @@ function App(){
     const companions=(pals||[]).map(p=>({uid:p.uid||'',name:p.name}));
     const rec={uid:user.uid,userName:user.displayName||"",userPhoto:user.photoURL||"",country,region,placeName:place.n,placePhoto:photoUri,placeAddress:place.a||"",lat:place.lat,lng:place.lng,gid:groupId,note:note||"",userImg:userImg||"",ts:firebase.firestore.FieldValue.serverTimestamp(),companions};
     if(companions.length)setCkMsg("🎉 "+place.n+" 打卡！與 "+companions.map(p=>p.name).join("、")+" 同行！");
-    else setCkMsg("✅ "+place.n+" "+t("ckSuccess"));
+    else setCkMsg("✅ "+place.n+" "+tr("ckSuccess"));
     try{const ref=await db.collection("history").add(rec);setHistory(prev=>[{id:ref.id,...rec,ts:new Date()},...prev])}catch{}
     setTimeout(()=>setCkMsg(""),4000);
   };
@@ -658,21 +674,22 @@ function App(){
   /* ========== 選國家 ========== */
   if(!country)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}}><div className="hero-bg"/><div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",position:"relative",zIndex:1}}>
     <div style={{position:"absolute",top:16,right:16,display:"flex",gap:6,zIndex:10}}>
-      <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.15)"}}>{lang==='zh'?'🇮🇩 ID':'🇹🇼 中文'}</button>
-      {user?<img src={user.photoURL} onClick={signOut} style={{width:28,height:28,borderRadius:"50%",border:"2px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}><Ico d={I.login} s={14}/>{t("login")}</button>}
+      <div style={{display:"flex",borderRadius:20,overflow:"hidden",border:"1.5px solid rgba(255,255,255,.1)",background:"rgba(255,255,255,.03)"}}>
+        <button onClick={()=>setLang('zh')} style={{padding:"6px 14px",fontSize:11,fontWeight:700,border:"none",display:"flex",alignItems:"center",gap:4,background:lang==='zh'?"linear-gradient(135deg,#10b981,#0d9488)":"transparent",color:lang==='zh'?"#fff":"#555"}}>🇹🇼 中文</button>
+        <button onClick={()=>setLang('id')} style={{padding:"6px 14px",fontSize:11,fontWeight:700,border:"none",display:"flex",alignItems:"center",gap:4,background:lang==='id'?"linear-gradient(135deg,#10b981,#0d9488)":"transparent",color:lang==='id'?"#fff":"#555"}}>🇮🇩 ID</button>
+      </div>
+      {user?<img src={user.photoURL} onClick={signOut} style={{width:28,height:28,borderRadius:"50%",border:"2px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}><Ico d={I.login} s={14}/>{tr("login")}</button>}
       <button onClick={changeKey} style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>🔑</button>
-      <a href="guide.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#10b981",background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.15)",textDecoration:"none"}}>{t("guide")}</a>
-      <a href="admin.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#f59e0b",background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.15)",textDecoration:"none"}}>{t("admin")}</a>
-      {installEvt&&<button onClick={doInstall} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",animation:"glow 2s ease-in-out infinite"}}>{t("install")}</button>}
+      <a href="guide.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#10b981",background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.15)",textDecoration:"none"}}>{tr("guide")}</a>      {installEvt&&<button onClick={doInstall} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",animation:"glow 2s ease-in-out infinite"}}>{tr("install")}</button>}
     </div>
     <div className="fu" style={{textAlign:"center",marginBottom:24,paddingTop:64}}>
       <h1 style={{fontSize:44,fontWeight:900,letterSpacing:-2,lineHeight:1.1}}><span style={{background:"linear-gradient(135deg,#10b981,#14b8a6,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>旅遊通</span></h1>
-      <p style={{color:"#555",fontSize:13,marginTop:8}}>{t("selectCountry")}</p>
-      {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {t('onlinePals')}</p>}
+      <p style={{color:"#555",fontSize:13,marginTop:8}}>{tr("selectCountry")}</p>
+      {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {tr('onlinePals')}</p>}
     </div>
-    <button className="fu" onClick={geolocate} disabled={geoLoading} style={{animationDelay:".1s",display:"flex",alignItems:"center",gap:8,padding:"12px 24px",borderRadius:14,background:"linear-gradient(135deg,#10b981,#0d9488)",color:"#fff",fontSize:14,fontWeight:700,marginBottom:6,animation:"glow 3s ease-in-out infinite"}}>{geoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.nav} s={16} f="white" c="white"/>}{geoLoading?t("geoLocating"):"📍 GPS"}</button>
+    <button className="fu" onClick={geolocate} disabled={geoLoading} style={{animationDelay:".1s",display:"flex",alignItems:"center",gap:8,padding:"12px 24px",borderRadius:14,background:"linear-gradient(135deg,#10b981,#0d9488)",color:"#fff",fontSize:14,fontWeight:700,marginBottom:6,animation:"glow 3s ease-in-out infinite"}}>{geoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.nav} s={16} f="white" c="white"/>}{geoLoading?tr("geoLocating"):(lang==='id'?"Lokasi Otomatis":"自動定位")}</button>
     {geoMsg&&<p className="fi" style={{fontSize:11,color:"#10b981",marginBottom:8}}>{geoMsg}</p>}
-    <div className="fu" style={{animationDelay:".15s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:400,width:"100%",marginTop:16}}>{COUNTRIES.map(c=><button key={c.id} onClick={()=>setCountry(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"16px 8px",borderRadius:16,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:32}}>{c.f}</span><span style={{fontSize:13,fontWeight:700}}>{c.n}</span><span style={{fontSize:9,color:"#555"}}>{c.regions.length}</span></button>)}</div>
+    <div className="fu" style={{animationDelay:".15s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:400,width:"100%",marginTop:16}}>{COUNTRIES.map(c=><button key={c.id} onClick={()=>setCountry(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"16px 8px",borderRadius:16,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:32}}>{c.f}</span><span style={{fontSize:13,fontWeight:700}}>{cn(c)}</span><span style={{fontSize:9,color:"#555"}}>{c.regions.length}</span></button>)}</div>
   </div></div>;
 
   /* ========== 選區域 ========== */
@@ -680,7 +697,7 @@ function App(){
     <button onClick={()=>setCountry(null)} style={{position:"absolute",top:12,left:16,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>← 選國家</button>
     <div className="fu" style={{textAlign:"center",marginBottom:24}}>
       <span style={{fontSize:48}}>{curCountry.f}</span>
-      <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{curCountry.n}</h2>
+      <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{cn(curCountry)}</h2>
       <p style={{color:"#555",fontSize:12,marginTop:4}}>選擇地區</p>
     </div>
     <div className="fu" style={{animationDelay:".1s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:400,width:"100%"}}>{curCountry.regions.map(r=><button key={r.n} onClick={()=>setRegion(r.n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"14px 6px",borderRadius:14,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}><span style={{fontSize:15,fontWeight:900}}>{r.n}</span><span style={{fontSize:8,color:"#555",textAlign:"center"}}>{r.d}</span></button>)}</div>
@@ -693,15 +710,18 @@ function App(){
     <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,10,15,.93)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
       <div style={{maxWidth:1200,margin:"0 auto",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{curCountry.n}</span></h1>
+          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{cn(curCountry)}</span></h1>
           <button onClick={()=>setRegion(null)} style={{padding:"4px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>{region} ▾</button>
           {/* 天氣 */}
           {wx&&<span style={{fontSize:10,color:"#aaa",display:"flex",alignItems:"center",gap:3}}>{WX_ICON[wx.icon]||"🌤️"}{wx.temp}° {wx.desc}</span>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{t(x.k)}</button>)}
-          {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{t("login")}</button>}
-          <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"3px 6px",borderRadius:6,fontSize:9,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.12)"}}>{lang==='zh'?'ID':'中'}</button>
+          {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{tr("login")}</button>}
+          <div style={{display:"flex",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.02)"}}>
+            <button onClick={()=>setLang('zh')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555"}}>中</button>
+            <button onClick={()=>setLang('id')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='id'?"#10b981":"transparent",color:lang==='id'?"#fff":"#555"}}>ID</button>
+          </div>
           <button onClick={()=>setSidebar(!sidebar)} style={{position:"relative",padding:5,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
         </div>
       </div>
@@ -719,30 +739,35 @@ function App(){
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
             {[{id:"dist",k:"nearest"},{id:"rating",k:"rating"}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{t(s.k)}</button>)}
             <div style={{flex:1}}/>
-            <span style={{fontSize:9,color:"#444"}}>{loading?t('loading')+(loadCount>0?' ('+loadCount+')':''):places.length?places.length+t('items'):""}</span>
+            <span style={{fontSize:9,color:"#444"}}>{loading?tr('loading')+(loadCount>0?' ('+loadCount+')':''):places.length?places.length+tr('items'):""}</span>
           </div>
-          <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={t('search')+' '+region+'...'} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
+          <div style={{position:"relative"}}><div style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)"}}><Ico d={I.search} s={14} c="#444"/></div><input type="text" placeholder={tr('search')+' '+region+'...'} value={search} onChange={e=>setSearch(e.target.value)} style={{width:"100%",padding:"10px 12px 10px 36px",borderRadius:10,fontSize:14,color:"#fff",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",outline:"none"}}/></div>
         </div>
-        {loading?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{[1,2,3,4,5,6].map(i=><Skel key={i}/>)}</div>:filtered.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{filtered.map(p=><Card key={p.id} p={p} catId={cat} onAdd={add} added={nameSet.has(p.n)} apiKey={apiKey} gm={curT.gm} wx={wx} onCk={p=>setCkModal(p)} user={user}/>)}</div>:<div style={{textAlign:"center",padding:"48px 0",color:"#555"}}>{t("noResult")}</div>}
+        {loading?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{[1,2,3,4,5,6].map(i=><Skel key={i}/>)}</div>:filtered.length>0?<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:14}}>{filtered.map(p=><Card key={p.id} p={p} catId={cat} onAdd={add} added={nameSet.has(p.n)} apiKey={apiKey} gm={curT.gm} wx={wx} onCk={p=>setCkModal(p)} user={user}/>)}</div>:<div style={{textAlign:"center",padding:"48px 0",color:"#555"}}>{tr("noResult")}</div>}
       </div>}
 
       {/* ===== 地圖打卡 ===== */}
       {view==="map"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div style={{textAlign:"center"}}><h2 style={{fontSize:20,fontWeight:900}}>{curCountry.f} {t('travelMap')}</h2>
-          {user&&<p style={{fontSize:11,color:"#666",marginTop:4}}>{user.displayName} ・ {totalCk}  {t("checkin")}</p>}
+        <div style={{textAlign:"center"}}><h2 style={{fontSize:20,fontWeight:900}}>{curCountry.f} {tr('travelMap')}</h2>
+          {user&&<p style={{fontSize:11,color:"#666",marginTop:4}}>{user.displayName} ・ {totalCk}  {tr("checkin")}</p>}
           {!user&&<p style={{fontSize:11,color:"#f59e0b",marginTop:4}}>登入即可打卡</p>}
-          {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {t('onlinePals')}</p>}
+          {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {tr('onlinePals')}</p>}
         </div>
-        <div style={{display:"flex",gap:6,justifyContent:"center"}}>{[{id:"map",l:t("mapTab")},{id:"log",l:t("logTab")}].map(t=><button key={t.id} onClick={()=>setMapTab(t.id)} style={{padding:"6px 16px",borderRadius:8,fontSize:12,fontWeight:700,background:mapTab===t.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(mapTab===t.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:mapTab===t.id?"#10b981":"#666"}}>{t.l}</button>)}</div>
+        <div style={{display:"flex",gap:6,justifyContent:"center",alignItems:"center"}}>{[{id:"map",l:tr("mapTab")},{id:"log",l:tr("logTab")}].map(tb=><button key={tb.id} onClick={()=>setMapTab(tb.id)} style={{padding:"6px 16px",borderRadius:8,fontSize:12,fontWeight:700,background:mapTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(mapTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:mapTab===tb.id?"#10b981":"#666"}}>{tb.l}</button>)}</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"6px 12px",borderRadius:10,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.04)"}}>
+          <span style={{fontSize:13}}>{sharePos?"📡":"🔒"}</span>
+          <span style={{fontSize:11,color:sharePos?"#10b981":"#666",fontWeight:600}}>{sharePos?(lang==='id'?"Berbagi Lokasi":"共享位置"):(lang==='id'?"Tersembunyi":"已隱藏")}</span>
+          <div style={{marginLeft:"auto"}}><button onClick={toggleShare} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:sharePos?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:sharePos?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button></div>
+        </div>
         {mapTab==="map"&&<>
-          <GMap apiKey={apiKey} regions={curCountry.regions} checkins={checkins} country={country} region={region} online={online} userLoc={userLoc} user={user} onSelect={n=>{setRegion(n);setView("explore")}} history={history}/>
-          <div style={{display:"flex",justifyContent:"center",gap:12,fontSize:9,color:"#555",marginTop:8}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.15)",border:"1px solid #888"}}/>{t("unvisited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.5)"}}/>{t("visited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>{t("frequent")}</span></div>
+          <GMap apiKey={apiKey} regions={curCountry.regions} checkins={checkins} country={country} region={region} online={sharePos?online:[]} userLoc={sharePos?userLoc:null} user={user} onSelect={n=>{setRegion(n);setView("explore")}} history={history}/>
+          <div style={{display:"flex",justifyContent:"center",gap:12,fontSize:9,color:"#555",marginTop:8}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.15)",border:"1px solid #888"}}/>{tr("unvisited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.5)"}}/>{tr("visited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>{tr("frequent")}</span></div>
           {wx&&<div style={{padding:14,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)",marginTop:8}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:32}}>{WX_ICON[wx.icon]||"🌤️"}</span><div><p style={{fontSize:20,fontWeight:900}}>{wx.temp}°C</p><p style={{fontSize:11,color:"#888"}}>{wx.desc}</p></div><div style={{marginLeft:"auto",fontSize:10,color:"#666",textAlign:"right"}}><p>體感 {wx.feel}°</p><p>濕度 {wx.humidity}%</p><p>風速 {wx.wind}km/h</p></div></div>
           </div>}
         </>}
         {mapTab==="log"&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
-          {history.length===0?<div style={{textAlign:"center",padding:"40px 0",color:"#444",fontSize:13}}>{t('ckPrompt')}</div>:history.filter(h=>h.country===country).map((h,i)=><div key={h.id||i} className="ci" style={{padding:12,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+          {history.length===0?<div style={{textAlign:"center",padding:"40px 0",color:"#444",fontSize:13}}>{tr('ckPrompt')}</div>:history.filter(h=>h.country===country).map((h,i)=><div key={h.id||i} className="ci" style={{padding:12,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
             <div style={{display:"flex",gap:10}}>
               <div style={{width:56,height:56,borderRadius:12,overflow:"hidden",flexShrink:0,background:"#1a1d24"}}>{h.placePhoto?<img src={h.placePhoto} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<div style={{width:"100%",height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>📍</div>}</div>
               <div style={{flex:1,minWidth:0}}>
@@ -758,7 +783,7 @@ function App(){
             {h.userImg&&<img src={h.userImg} style={{width:"100%",borderRadius:10,maxHeight:200,objectFit:"cover",marginTop:8}}/>}
             {h.note&&<p style={{fontSize:13,color:"#aaa",marginTop:6,lineHeight:1.6}}>📝 {h.note}</p>}
             <div style={{display:"flex",justifyContent:"flex-end",marginTop:6}}>
-              <button onClick={()=>{if(confirm("確定刪除這筆打卡？"))deleteCheckin(h)}} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:600,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)"}}><Ico d={I.trash} s={11} c="#ef4444"/>{t("ckDelete")}</button>
+              <button onClick={()=>{if(confirm("確定刪除這筆打卡？"))deleteCheckin(h)}} style={{display:"flex",alignItems:"center",gap:4,padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:600,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)"}}><Ico d={I.trash} s={11} c="#ef4444"/>{tr("ckDelete")}</button>
             </div>
           </div>)}
         </div>}
@@ -769,7 +794,7 @@ function App(){
         {!plan?<div style={{padding:"24px 16px",borderRadius:18,background:"rgba(255,255,255,.01)",border:"1px solid rgba(255,255,255,.04)"}}>
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{fontSize:40,marginBottom:8}}>🗺️</div>
-            <h3 style={{fontSize:20,fontWeight:800,marginBottom:4}}>{t("planTitle")}</h3>
+            <h3 style={{fontSize:20,fontWeight:800,marginBottom:4}}>{tr("planTitle")}</h3>
             <p style={{fontSize:12,color:"#555"}}>{region} · {curCountry?.n}</p>
           </div>
           {/* 天數 + 交通 */}
@@ -786,14 +811,14 @@ function App(){
           <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
             {/* 自動推薦 */}
             <button disabled={autoLoading} onClick={async()=>{if(!curRegion||!apiKey)return;setAutoLoading(true);try{const ds=await autoRecommend(apiKey,curRegion.lat,curRegion.lng,region,days,transport);let p={title:curCountry.f+' '+region+' '+days+'日遊',days:ds,gm:curT.gm,auto:true,_v:2};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}}catch(e){console.error(e)}setAutoLoading(false)}} style={{padding:"14px 32px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",display:"inline-flex",alignItems:"center",gap:8,width:"100%",maxWidth:320,justifyContent:"center"}}>
-              {autoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.zap} s={16} f="white" c="white"/>}{autoLoading?t("loading"):t("autoRec")+" "+days+" "+t("autoRecN")}
+              {autoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.zap} s={16} f="white" c="white"/>}{autoLoading?tr("loading"):tr("autoRec")+" "+days+" "+tr("autoRecN")}
             </button>
-            <p style={{fontSize:10,color:"#555",textAlign:"center"}}>{t("autoRecDesc")}</p>
+            <p style={{fontSize:10,color:"#555",textAlign:"center"}}>{tr("autoRecDesc")}</p>
             {/* 手動排程 */}
             {itin.length>0&&<>
               <div style={{width:"100%",maxWidth:320,height:1,background:"rgba(255,255,255,.06)",margin:"8px 0"}}/>
-              <button onClick={async()=>{setAutoLoading(true);const ds=smartPlan(itin,days,transport);let p={title:curCountry.f+' '+days+'日遊',days:ds,gm:curT.gm,_v:2};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}setAutoLoading(false)}} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}><Ico d={I.zap} s={14} f="white" c="white"/>{t("manualPlan")} {itin.length} {t("manualPlanSuffix")}</button>
-              <p style={{fontSize:10,color:"#555",textAlign:"center"}}>{t("manualDesc")}</p>
+              <button onClick={async()=>{setAutoLoading(true);const ds=smartPlan(itin,days,transport);let p={title:curCountry.f+' '+days+'日遊',days:ds,gm:curT.gm,_v:2};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}setAutoLoading(false)}} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}><Ico d={I.zap} s={14} f="white" c="white"/>{tr("manualPlan")} {itin.length} {tr("manualPlanSuffix")}</button>
+              <p style={{fontSize:10,color:"#555",textAlign:"center"}}>{tr("manualDesc")}</p>
             </>}
           </div>
         </div>:<>
@@ -811,41 +836,77 @@ function App(){
                 {s.address&&<p style={{fontSize:12,color:"#666",marginTop:3}}>{s.address}</p>}
                 {s.rating>0&&<div style={{display:"flex",alignItems:"center",gap:4,marginTop:3}}><span style={{fontSize:12,color:"#fbbf24",fontWeight:700}}>★ {s.rating}</span>{s.rc>0&&<span style={{fontSize:11,color:"#555"}}>({s.rc})</span>}</div>}
                 <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap"}}>
-                  <button className="nb" onClick={()=>openNav(s.name,s.address,plan.gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa",fontSize:11,padding:"7px 12px"}}><Ico d={I.compass} s={12} c="#60a5fa"/>{t("nav")}</button>
+                  <button className="nb" onClick={()=>openNav(s.name,s.address,plan.gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa",fontSize:11,padding:"7px 12px"}}><Ico d={I.compass} s={12} c="#60a5fa"/>{tr("nav")}</button>
                   {s.tel&&<a href={"tel:"+s.tel} className="nb" style={{background:"rgba(16,185,129,.12)",color:"#10b981",textDecoration:"none",fontSize:11,padding:"7px 12px"}}><Ico d={I.phone} s={12} c="#10b981"/>{s.tel}</a>}
-                  {s.mapsUrl&&<button className="nb" onClick={()=>openM(s.mapsUrl)} style={{background:"rgba(255,255,255,.04)",color:"#888",fontSize:11,padding:"7px 12px"}}>{t("map")}</button>}
+                  {s.mapsUrl&&<button className="nb" onClick={()=>openM(s.mapsUrl)} style={{background:"rgba(255,255,255,.04)",color:"#888",fontSize:11,padding:"7px 12px"}}>{tr("map")}</button>}
                 </div>
                 {/* 停車資訊 */}
                 {s.parking?.any?<div style={{display:"flex",alignItems:"center",gap:4,marginTop:6,padding:"5px 10px",borderRadius:8,background:"rgba(59,130,246,.06)",border:"1px solid rgba(59,130,246,.12)"}}>
-                  <span style={{fontSize:13}}>🅿️</span><span style={{fontSize:11,color:"#60a5fa",fontWeight:600}}>{s.parking.free?"免費停車場":s.parking.paid?"付費停車場":s.parking.garage?t("hasPk"):s.parking.street?"路邊停車":"有停車位"}</span>
+                  <span style={{fontSize:13}}>🅿️</span><span style={{fontSize:11,color:"#60a5fa",fontWeight:600}}>{s.parking.free?"免費停車場":s.parking.paid?"付費停車場":s.parking.garage?tr("hasPk"):s.parking.street?"路邊停車":"有停車位"}</span>
                 </div>
                 :s.nearbyPk?.length>0?<div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(245,158,11,.04)",border:"1px solid rgba(245,158,11,.1)"}}>
-                  <p style={{fontSize:10,color:"#f59e0b",fontWeight:700,marginBottom:4}}>{t("nearbyPk")}</p>
+                  <p style={{fontSize:10,color:"#f59e0b",fontWeight:700,marginBottom:4}}>{tr("nearbyPk")}</p>
                   {s.nearbyPk.map((pk,j)=><div key={j} style={{display:"flex",alignItems:"center",gap:6,marginTop:j?4:0}}>
                     <div style={{flex:1,minWidth:0}}><span style={{fontSize:12,color:"#ddd",fontWeight:600}}>{pk.n}</span><span style={{fontSize:10,color:"#10b981",marginLeft:6,fontWeight:700}}>{pk.dist<1?(pk.dist*1000).toFixed(0)+'m':pk.dist.toFixed(1)+'km'}</span></div>
-                    <button className="nb" onClick={()=>openNav(pk.n,pk.a,'driving')} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa",fontSize:10,padding:"5px 8px",flexShrink:0}}><Ico d={I.compass} s={10} c="#60a5fa"/>{t("nav")}</button>
+                    <button className="nb" onClick={()=>openNav(pk.n,pk.a,'driving')} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa",fontSize:10,padding:"5px 8px",flexShrink:0}}><Ico d={I.compass} s={10} c="#60a5fa"/>{tr("nav")}</button>
                   </div>)}
                 </div>:null}
               </div>
             </div>)}</div>
           </div>)}
-          <div style={{display:"flex",justifyContent:"center",gap:8}}><button onClick={()=>{setPlan(null);localStorage.removeItem('tw_plan')}} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:10,fontSize:12,fontWeight:700,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}><Ico d={I.rotate} s={12}/>{t("replan")}</button></div>
+          <div style={{display:"flex",justifyContent:"center",gap:8}}><button onClick={()=>{setPlan(null);localStorage.removeItem('tw_plan')}} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:10,fontSize:12,fontWeight:700,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}><Ico d={I.rotate} s={12}/>{tr("replan")}</button></div>
         </>}
       </div>}
     </div>
 
+
+    {/* Admin */}
+    {view==="admin"&&isAdmin&&<div style={{maxWidth:600,margin:"0 auto",padding:"12px"}}>
+      <div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{background:"linear-gradient(135deg,#0d3320,#10b981,#06b6d4)",padding:"20px 16px",borderRadius:16}}><h2 style={{fontSize:20,fontWeight:900,color:"#fff"}}>🔐 管理後台</h2><p style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>{user?.displayName}</p></div>
+        {adMsg&&<div style={{padding:"10px 16px",borderRadius:10,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",fontSize:13,fontWeight:700,color:"#10b981",textAlign:"center"}}>{adMsg}</div>}
+        <div style={{display:"flex",gap:6}}>{[{id:"key",n:"🔑 API Key"},{id:"wl",n:"👥 白名單"}].map(tb=><button key={tb.id} onClick={()=>setAdminTab(tb.id)} style={{flex:1,padding:10,borderRadius:10,fontSize:12,fontWeight:700,background:adminTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1.5px solid "+(adminTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:adminTab===tb.id?"#10b981":"#666"}}>{tb.n}</button>)}</div>
+        {adminTab==="key"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <div><p style={{fontSize:16,fontWeight:800}}>{adKeyActive?"🟢 共享啟用中":"🔴 共享未啟用"}</p><p style={{fontSize:11,color:"#666",marginTop:2}}>{adKeyActive?adWl.filter(w=>w.enabled).length+" 位用戶使用中":"啟用後登入用戶自動使用此 Key"}</p></div>
+              <button onClick={adToggleActive} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:adKeyActive?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:adKeyActive?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
+            </div>
+            {adSharedKey&&<div style={{padding:10,borderRadius:8,background:"rgba(255,255,255,.02)"}}><p style={{fontSize:10,color:"#888"}}>目前 Key</p><p style={{fontSize:12,fontFamily:"monospace",color:"#ddd",wordBreak:"break-all",marginTop:2}}>{adSharedKey.slice(0,20)}...{adSharedKey.slice(-6)}</p></div>}
+          </div>
+          <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+            <p style={{fontSize:14,fontWeight:700,marginBottom:10}}>{adSharedKey?"更換":"設定"} API Key</p>
+            <input type="text" value={adNewKey} onChange={e=>setAdNewKey(e.target.value)} placeholder="AIzaSy..." style={{width:"100%",padding:"12px 14px",borderRadius:10,fontSize:13,color:"#fff",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none",fontFamily:"monospace",marginBottom:10}}/>
+            <button disabled={adSaving} onClick={adSaveKey} style={{width:"100%",padding:12,borderRadius:10,fontSize:14,fontWeight:700,color:"#fff",background:adSaving?"#333":"linear-gradient(135deg,#10b981,#0d9488)",border:"none"}}>{adSaving?"驗證中...":"儲存 Key"}</button>
+          </div>
+        </div>}
+        {adminTab==="wl"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p style={{fontSize:14,fontWeight:700}}>👥 白名單</p><span style={{fontSize:11,padding:"3px 10px",borderRadius:20,background:"rgba(16,185,129,.1)",color:"#10b981",fontWeight:700}}>{adWl.filter(w=>w.enabled).length}/{adWl.length}</span></div>
+          {!adWl.length?<div style={{padding:32,textAlign:"center",color:"#444",fontSize:12}}>尚無用戶</div>
+          :adWl.map(w=><div key={w.uid} style={{display:"flex",alignItems:"center",gap:10,padding:12,borderRadius:12,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+            <div style={{width:40,height:40,borderRadius:"50%",background:w.enabled?"rgba(16,185,129,.1)":"rgba(239,68,68,.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{w.enabled?"✅":"⛔"}</div>
+            <div style={{flex:1,minWidth:0}}><p style={{fontSize:14,fontWeight:700,color:w.enabled?"#eee":"#555"}}>{w.name||"未知"}</p><p style={{fontSize:10,color:"#555"}}>{w.email}</p></div>
+            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+              <button onClick={()=>adToggleUser(w.uid,w.enabled)} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:w.enabled?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:w.enabled?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
+              <button onClick={()=>adKickUser(w.uid,w.name)} style={{fontSize:9,color:"#ef4444",background:"none",border:"none"}}>踢出</button>
+            </div>
+          </div>)}
+        </div>}
+      </div>
+    </div>}
+
     {/* Sidebar */}
     {sidebar&&<div style={{position:"fixed",inset:0,zIndex:40,background:"rgba(0,0,0,.5)"}} onClick={()=>setSidebar(false)}/>}
     <div style={{display:sidebar?"block":"none",position:"fixed",right:0,top:0,height:"100vh",width:260,background:"#0d0f14",borderLeft:"1px solid rgba(255,255,255,.04)",overflowY:"auto",zIndex:50,padding:14}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}><h2 style={{fontWeight:700,fontSize:13,color:"#888"}}>{t("sidebar")} {itin.length>0&&<span style={{fontSize:9,padding:"2px 8px",borderRadius:20,background:"rgba(16,185,129,.12)",color:"#10b981"}}>{itin.length}</span>}</h2><button onClick={()=>setSidebar(false)} style={{padding:4,color:"#555",background:"none",border:"none"}}><Ico d={I.x} s={16}/></button></div>
-      {!itin.length?<div style={{textAlign:"center",padding:"40px 0",fontSize:10,color:"#444"}}>{t("sidebarEmpty")}</div>:<div style={{display:"flex",flexDirection:"column",gap:4}}>{itin.map((item,i)=>{const c=CATS.find(x=>x.id===item.category)||CATS[0];return <div key={item.id} style={{display:"flex",alignItems:"center",gap:6,padding:8,borderRadius:10,background:"rgba(255,255,255,.02)"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14}}><h2 style={{fontWeight:700,fontSize:13,color:"#888"}}>{tr("sidebar")} {itin.length>0&&<span style={{fontSize:9,padding:"2px 8px",borderRadius:20,background:"rgba(16,185,129,.12)",color:"#10b981"}}>{itin.length}</span>}</h2><button onClick={()=>setSidebar(false)} style={{padding:4,color:"#555",background:"none",border:"none"}}><Ico d={I.x} s={16}/></button></div>
+      {!itin.length?<div style={{textAlign:"center",padding:"40px 0",fontSize:10,color:"#444"}}>{tr("sidebarEmpty")}</div>:<div style={{display:"flex",flexDirection:"column",gap:4}}>{itin.map((item,i)=>{const c=CATS.find(x=>x.id===item.category)||CATS[0];return <div key={item.id} style={{display:"flex",alignItems:"center",gap:6,padding:8,borderRadius:10,background:"rgba(255,255,255,.02)"}}>
         <div style={{width:20,height:20,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",background:c.c+"15",fontSize:9,fontWeight:700,color:c.c,flexShrink:0}}>{i+1}</div>
         <div style={{flex:1,minWidth:0}}><p style={{fontSize:10,fontWeight:700,color:"#aaa",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.n}</p><p style={{fontSize:8,color:"#444"}}>{item._region}</p></div>
         {item.tel&&<a href={"tel:"+item.tel} style={{color:"#10b981",padding:2}}><Ico d={I.phone} s={10} c="#10b981"/></a>}
         <button onClick={()=>rm(i)} style={{color:"#333",padding:2,background:"none",border:"none"}}><Ico d={I.trash} s={11}/></button>
       </div>})}</div>}
       {itin.length>0&&<div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
-        <button onClick={()=>{setView("plan");setSidebar(false)}} style={{width:"100%",padding:10,borderRadius:10,fontSize:12,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",display:"flex",alignItems:"center",justifyContent:"center",gap:6,border:"none"}}><Ico d={I.zap} s={13} f="white" c="white"/>{t("plan")}</button>
+        <button onClick={()=>{setView("plan");setSidebar(false)}} style={{width:"100%",padding:10,borderRadius:10,fontSize:12,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",display:"flex",alignItems:"center",justifyContent:"center",gap:6,border:"none"}}><Ico d={I.zap} s={13} f="white" c="white"/>{tr("plan")}</button>
         <button onClick={()=>setItin([])} style={{width:"100%",padding:6,fontSize:9,color:"#333",background:"none",border:"none"}}>清空全部</button>
       </div>}
     </div>
