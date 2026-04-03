@@ -51,8 +51,6 @@ function App(){
   useEffect(()=>{window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();setInstallEvt(e)})},[]);
   useEffect(()=>{if(!auth){setLoading(false);return}
     const timeout=setTimeout(()=>setLoading(false),8000);
-    /* 處理 redirect 登入結果 */
-    auth.getRedirectResult().catch(()=>{});
     return auth.onAuthStateChanged(u=>{clearTimeout(timeout);setUser(u);setLoading(false)})},[]);
 
   /* 載入資料 */
@@ -72,9 +70,8 @@ function App(){
   },[user]);
 
   const flash=m=>{setMsg(m);setTimeout(()=>setMsg(''),3500)};
-  const signIn=()=>{const p=new firebase.auth.GoogleAuthProvider();
-    const isMobile=/Android|iPhone|iPad/i.test(navigator.userAgent);
-    if(isMobile)auth.signInWithRedirect(p);else auth.signInWithPopup(p).catch(()=>auth.signInWithRedirect(p))};
+  const[loginErr,setLoginErr]=useState('');
+  const signIn=async()=>{setLoginErr('');try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){setLoginErr(e.message||'登入失敗，請再試一次')}};
   const signOut=()=>auth.signOut();
 
   /* 儲存 Key */
@@ -121,6 +118,7 @@ function App(){
     <div style={{width:80,height:80,borderRadius:20,background:"linear-gradient(135deg,#10b981,#06b6d4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:36}}>🔐</div>
     <h1 style={{fontSize:24,fontWeight:900}}>旅遊通 管理後台</h1>
     <button onClick={signIn} style={{padding:"14px 40px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",boxShadow:"0 4px 20px rgba(16,185,129,.3)"}}>Google 登入</button>
+    {loginErr&&<p style={{color:"#ef4444",fontSize:11,marginTop:8,maxWidth:300,textAlign:"center"}}>{loginErr}</p>}
     {installEvt&&<button onClick={()=>{installEvt.prompt();setInstallEvt(null)}} style={{padding:"10px 20px",borderRadius:10,fontSize:12,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none"}}>📲 安裝 App</button>}
   </div>;
 
