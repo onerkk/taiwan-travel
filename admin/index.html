@@ -58,8 +58,6 @@ function App(){
   /* 載入資料 */
   useEffect(()=>{
     if(!user||!db)return;
-    const ALLOWED=['onerkk@gmail.com'];
-    if(!ALLOWED.includes((user.email||'').toLowerCase())){return}
     (async()=>{
       let cfg=await db.collection("admin").doc("config").get();
       if(!cfg.exists){await db.collection("admin").doc("config").set({admins:[user.uid],sharedKey:'',active:false});cfg=await db.collection("admin").doc("config").get()}
