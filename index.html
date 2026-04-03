@@ -739,12 +739,11 @@ function App(){
           {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{tr(x.k)}</button>)}
           {isAdmin&&<button onClick={()=>setView("admin")} style={{padding:"5px 8px",borderRadius:6,fontSize:12,fontWeight:700,background:view==="admin"?"#f59e0b":"transparent",color:view==="admin"?"#fff":"#555",border:"none"}}>🔐</button>}
           {user?<img src={user.photoURL} onClick={signOut} style={{width:26,height:26,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{tr("login")}</button>}
-          <div style={{display:"flex",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.02)"}}>
-            <button onClick={()=>setLang('zh')} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555"}}>中</button>
-            <button onClick={()=>setLang('id')} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"none",background:lang==='id'?"#10b981":"transparent",color:lang==='id'?"#fff":"#555"}}>ID</button>
+          <div style={{display:"flex",borderRadius:14,overflow:"hidden",border:"1.5px solid rgba(255,255,255,.1)",background:"rgba(255,255,255,.03)",flexShrink:0}}>
+            <button onClick={()=>setLang('zh')} style={{padding:"6px 12px",fontSize:11,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555",minWidth:36,minHeight:32}}>中</button>
+            <button onClick={()=>setLang('id')} style={{padding:"6px 12px",fontSize:11,fontWeight:700,border:"none",background:lang==='id'?"#10b981":"transparent",color:lang==='id'?"#fff":"#555",minWidth:36,minHeight:32}}>ID</button>
           </div>
-          <button onClick={()=>setSidebar(!sidebar)} style={{position:"relative",padding:5,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
-        </div>
+          </div>
       </div>
     </div>
 
