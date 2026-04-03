@@ -179,7 +179,7 @@ async function getRouteInfo(key,lat1,lng1,lat2,lng2,transId,depTime){
   const mode={car:'DRIVE',walk:'WALK',bus:'TRANSIT',train:'TRANSIT'}[transId]||'DRIVE';
   const ck=lat1.toFixed(3)+','+lng1.toFixed(3)+'→'+lat2.toFixed(3)+','+lng2.toFixed(3)+':'+mode+':'+_lang+':'+(depTime||'');
   if(rtCache.has(ck))return rtCache.get(ck);
-  const fields=mode==='TRANSIT'?'routes.duration,routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.transitDetails':'routes.duration';
+  const fields=mode==='TRANSIT'?'routes.duration,routes.legs.steps.travelMode,routes.legs.steps.staticDuration,routes.legs.steps.transitDetails.stopDetails.departureStop.name,routes.legs.steps.transitDetails.stopDetails.arrivalStop.name,routes.legs.steps.transitDetails.stopDetails.departureTime,routes.legs.steps.transitDetails.stopDetails.arrivalTime,routes.legs.steps.transitDetails.transitLine.name,routes.legs.steps.transitDetails.transitLine.nameShort,routes.legs.steps.transitDetails.transitLine.vehicle.type':'routes.duration';
   const body={origin:{location:{latLng:{latitude:lat1,longitude:lng1}}},destination:{location:{latLng:{latitude:lat2,longitude:lng2}}},travelMode:mode,languageCode:_lang==='id'?'id':'zh-TW'};
   if(mode==='TRANSIT'&&depTime)body.departureTime=depTime;
   if(mode==='DRIVE'){body.routingPreference='TRAFFIC_AWARE';if(depTime)body.departureTime=depTime}
@@ -189,18 +189,22 @@ async function getRouteInfo(key,lat1,lng1,lat2,lng2,transId,depTime){
     if(!r.ok){const res={min:null,steps:[]};rtCache.set(ck,res);return res}
     const d=await r.json();const dur=d.routes?.[0]?.duration;
     const min=dur?Math.max(1,Math.round(parseInt(dur.replace('s',''))/60)):null;
-    const steps=[];const fmtT=t=>{if(!t)return'';try{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}catch{return''}};
+    const steps=[];const fmtT=t=>{if(!t)return'';try{const dt=new Date(t);return String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0')}catch{return''}};
     if(mode==='TRANSIT'){const legs=d.routes?.[0]?.legs||[];
       for(const leg of legs){for(const step of(leg.steps||[])){
-        const td=step.transitDetails;const sm=step.travelMode;
-        const stepMin=step.staticDuration?Math.round(parseInt(step.staticDuration.replace('s',''))/60):0;
-        if(sm==='WALK'&&stepMin>1){steps.push({mode:'walk',min:stepMin})}
-        else if(sm==='TRANSIT'&&td){
+        const td=step.transitDetails;const sm=step.travelMode||'';
+        const stepMin=step.staticDuration?Math.round(parseInt(String(step.staticDuration).replace('s',''))/60):0;
+        if((sm==='WALK'||sm==='WALKING')&&stepMin>0){steps.push({mode:'walk',min:stepMin})}
+        else if(td){
           const vt=td.transitLine?.vehicle?.type||'';
           const icon=vt.includes('BUS')?'🚌':vt.includes('SUBWAY')||vt.includes('METRO')?'🚇':vt.includes('RAIL')||vt.includes('TRAIN')?'🚆':vt.includes('TRAM')?'🚊':'🚍';
           steps.push({mode:'transit',icon,line:td.transitLine?.nameShort||td.transitLine?.name||'',from:td.stopDetails?.departureStop?.name||'',to:td.stopDetails?.arrivalStop?.name||'',min:stepMin,vehicle:vt,
-            depTime:fmtT(td.stopDetails?.departureTime),arrTime:fmtT(td.stopDetails?.arrivalTime)})}}}}
-    const res={min,steps};rtCache.set(ck,res);return res
+            depTime:fmtT(td.stopDetails?.departureTime),arrTime:fmtT(td.stopDetails?.arrivalTime)})}
+        else if(sm==='TRANSIT'&&!td&&stepMin>0){steps.push({mode:'transit',icon:'🚍',line:'公共運輸',from:'',to:'',min:stepMin,vehicle:'',depTime:'',arrTime:''})}
+      }}
+      /* 若 API 沒回傳步驟但有總時間，加一個概要 */
+      if(!steps.length&&min){steps.push({mode:'transit',icon:'🚍',line:'公共運輸',from:'',to:'',min,vehicle:'',depTime:'',arrTime:''})}
+    }    const res={min,steps};rtCache.set(ck,res);return res
   }catch{const res={min:null,steps:[]};rtCache.set(ck,res);return res}
 }
 const STOP_DUR={'🌅 早餐':45,'🍜 午餐':60,'🌙 晚餐':75,'🏨 住宿':0,'🏛 景點':75,'🏛 額外':60};
