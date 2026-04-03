@@ -342,46 +342,33 @@ function Setup({onDone}){
   const[key,setKey]=useState('');const[busy,setBusy]=useState(false);const[err,setErr]=useState("");const[loadingKey,setLoadingKey]=useState(false);
   const[bgIdx,setBgIdx]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setBgIdx(i=>(i+1)%3),6000);return()=>clearInterval(t)},[]);
-  /* Auth timeout 保護 */
-  useEffect(()=>{const t=setTimeout(()=>setAuthLoading(false),6000);return()=>clearTimeout(t)},[]);
-  /* 監聯登入狀態 */
+  useEffect(()=>{const t=setTimeout(()=>setAuthLoading(false),5000);return()=>clearTimeout(t)},[]);
   useEffect(()=>{if(!fbOK){setAuthLoading(false);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthLoading(false);
     if(u&&db){setLoadingKey(true);
-      /* 8 秒 timeout 保護 */
-      const timeout=setTimeout(()=>{console.warn("Key check timeout");setLoadingKey(false)},8000);
-      const done=(k,g)=>{clearTimeout(timeout);onDone(k,g)};
-      const fail=()=>{clearTimeout(timeout);setLoadingKey(false)};
-      /* 存基本資料 + 自動註冊白名單 */
+      const timer=setTimeout(()=>setLoadingKey(false),5000);
+      /* 自動註冊白名單 */
+      db.collection("whitelist").doc(u.uid).get().then(w=>{if(!w.exists)db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{})}).catch(()=>{});
       db.collection("users").doc(u.uid).set({email:u.email||"",name:u.displayName||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-      db.collection("whitelist").doc(u.uid).get().then(wDoc=>{
-        if(!wDoc.exists)db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
-      }).catch(()=>{});
-      /* 查後台共享 Key */
-      Promise.all([
-        db.collection("admin").doc("config").get().catch(()=>null),
-        db.collection("whitelist").doc(u.uid).get().catch(()=>null)
-      ]).then(([cfgSnap,wSnap])=>{
-        const cfg=cfgSnap?.exists?cfgSnap.data():{};
-        const wData=wSnap?.exists?wSnap.data():{};
-        if(cfg.active&&cfg.sharedKey&&wData.enabled!==false){
-          const k=cfg.sharedKey;setKey(k);
-          hashKey(k).then(g=>{saveK(k);saveG(g);done(k,g)}).catch(fail);return;
+      /* 簡單流程：1.查共享Key 2.查個人Key 3.查localStorage */
+      db.collection("admin").doc("config").get().catch(()=>null).then(async cfg=>{
+        const d=cfg?.exists?cfg.data():{};
+        /* 共享 Key 啟用？ */
+        if(d.active&&d.sharedKey){
+          const wDoc=await db.collection("whitelist").doc(u.uid).get().catch(()=>null);
+          if(!wDoc||!wDoc.exists||wDoc.data().enabled!==false){
+            clearTimeout(timer);const g=await hashKey(d.sharedKey);saveK(d.sharedKey);saveG(g);onDone(d.sharedKey,g);return;
+          }
         }
-        /* 不符合 → 查個人 Key */
+        /* 個人 Key */
+        const uDoc=await db.collection("users").doc(u.uid).get().catch(()=>null);
+        const pk=uDoc?.exists?uDoc.data().apiKey:'';
+        if(pk&&pk!==d.sharedKey){clearTimeout(timer);const g=await hashKey(pk);saveK(pk);saveG(g);onDone(pk,g);return}
+        /* localStorage */
         const lk=getK();
-        if(cfg.sharedKey&&lk===cfg.sharedKey&&(wData.enabled===false||!cfg.active)){
-          localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');fail();return;
-        }
-        db.collection("users").doc(u.uid).get().then(d=>{
-          if(d.exists&&d.data().apiKey&&d.data().apiKey!==(cfg.sharedKey||'')){
-            const k=d.data().apiKey;setKey(k);hashKey(k).then(g=>{saveK(k);saveG(g);done(k,g)}).catch(fail)}
-          else if(lk&&lk!==(cfg.sharedKey||'')){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);
-            db.collection("users").doc(u.uid).set({apiKey:lk},{merge:true}).catch(()=>{});done(lk,g)}).catch(fail)}
-          else fail()
-        }).catch(fail);
-      }).catch(()=>{
-        const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);done(lk,g)}).catch(fail)}else fail();
-      });
+        if(lk&&lk!==d.sharedKey){clearTimeout(timer);const g=await hashKey(lk);saveK(lk);saveG(g);onDone(lk,g);return}
+        /* 都沒有 → 顯示輸入框 */
+        clearTimeout(timer);setLoadingKey(false);
+      }).catch(()=>{const lk=getK();if(lk){hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)})}else setLoadingKey(false)});
     }
   })},[]);
   const signIn=async()=>{if(!fbOK)return;try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){setErr("登入失敗，請再試一次")}};
