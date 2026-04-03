@@ -112,9 +112,9 @@ id:{
   breakfast:"🌅 Sarapan",lunch:"🍜 Makan Siang",dinner:"🌙 Makan Malam",hotelLabel:"🏨 Penginapan",spot:"🏛 Wisata",extra:"🏛 Ekstra",
   min:"mnt",km:"km",m:"m",
 }};
-let _lang=getLang();const tr=k=>I18N[_lang]?.[k]||I18N.zh[k]||k;
+let _lang=getLang();function tr(k){return I18N[_lang]?.[k]||I18N.zh[k]||k}
 const CNAME={tw:{zh:"台灣",id:"Taiwan"},jp:{zh:"日本",id:"Jepang"},th:{zh:"泰國",id:"Thailand"},cn:{zh:"中國",id:"Tiongkok"},kr:{zh:"韓國",id:"Korea Selatan"},hk:{zh:"香港",id:"Hong Kong"},vn:{zh:"越南",id:"Vietnam"},mo:{zh:"澳門",id:"Makau"},us:{zh:"美國",id:"Amerika"},sg:{zh:"新加坡",id:"Singapura"},my:{zh:"馬來西亞",id:"Malaysia"}};
-const cn=c=>CNAME[c.id]?.[_lang]||c.n;
+function cn(c){return CNAME[c.id]?.[_lang]||c.n}
 
 /* ======= 11 國區域資料 ======= */
 const COUNTRIES=[
