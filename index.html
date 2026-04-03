@@ -603,17 +603,20 @@ function App(){
   useEffect(()=>{if(!fbOK){setAuthChecked(true);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthChecked(true);if(u&&db){db.collection("checkins").doc(u.uid).get().then(d=>{if(d.exists)setCheckins(d.data().regions||{})});db.collection("history").where("uid","==",u.uid).where("gid","==",groupId).orderBy("ts","desc").limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{db.collection("history").where("uid","==",u.uid).limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{})})}})},[groupId]);
 
   /* Online presence */
-  /* Admin check */
-  useEffect(()=>{if(!user||!db||!fbOK)return;(async()=>{try{
+  /* Admin check - hardcoded owner email */
+  const ADMIN_EMAIL='onerkk@gmail.com';
+  useEffect(()=>{if(!user||!db||!fbOK)return;
+    const isOwner=(user.email||'').toLowerCase()===ADMIN_EMAIL;
+    if(!isOwner)return;
+    setIsAdmin(true);
+    (async()=>{try{
     let cfg=await db.collection("admin").doc("config").get();
     if(!cfg.exists){await db.collection("admin").doc("config").set({admins:[user.uid],sharedKey:'',active:false});cfg=await db.collection("admin").doc("config").get()}
-    const d=cfg.data();const adm=d.admins||[];
-    if(adm.includes(user.uid)||adm.length===0){
-      if(adm.length===0)await db.collection("admin").doc("config").set({admins:[user.uid]},{merge:true});
-      setIsAdmin(true);setAdSharedKey(d.sharedKey||'');setAdNewKey(d.sharedKey||'');setAdKeyActive(!!d.active);
-      const snap=await db.collection("whitelist").orderBy("addedAt","desc").get();
-      setAdWl(snap.docs.map(x=>({uid:x.id,...x.data()})));
-    }}catch{}})()},[user]);
+    const d=cfg.data();
+    setAdSharedKey(d.sharedKey||'');setAdNewKey(d.sharedKey||'');setAdKeyActive(!!d.active);
+    const snap=await db.collection("whitelist").orderBy("addedAt","desc").get();
+    setAdWl(snap.docs.map(x=>({uid:x.id,...x.data()})));
+    }catch{}})()},[user]);
   const adFlash=m=>{setAdMsg(m);setTimeout(()=>setAdMsg(''),3500)};
   const adSaveKey=async()=>{if(!adNewKey.trim()||!adNewKey.startsWith("AIza"))return adFlash("❌ Key 需以 AIza 開頭");setAdSaving(true);try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':adNewKey.trim(),'X-Goog-FieldMask':'places.id'},body:JSON.stringify({textQuery:"test",maxResultCount:1})});if(!r.ok){adFlash("❌ Key 無效");setAdSaving(false);return}await db.collection("admin").doc("config").set({sharedKey:adNewKey.trim()},{merge:true});setAdSharedKey(adNewKey.trim());adFlash("✅ Key 已儲存")}catch{adFlash("❌ 失敗")}setAdSaving(false)};
   const adToggleActive=async()=>{if(!adKeyActive&&!adSharedKey)return adFlash("❌ 請先設定 Key");await db.collection("admin").doc("config").set({active:!adKeyActive},{merge:true});setAdKeyActive(!adKeyActive);adFlash(adKeyActive?"⛔ 已停用":"✅ 已啟用")};
