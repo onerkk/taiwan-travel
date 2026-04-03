@@ -45,7 +45,7 @@ img.ph{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity
 </style>
 </head>
 <body>
-<div id="root"><div style="min-height:100vh;display:flex;align-items:center;justify-content:center"><div style="width:32px;height:32px;border:3px solid rgba(16,185,129,.2);border-top-color:#10b981;border-radius:50%;animation:spin 1s linear infinite"></div></div></div>
+<div id="root"></div>
 <script type="text/babel">
 const{useState,useEffect,useRef,useCallback}=React;
 const Ico=({d,s=16,c="currentColor",f="none"})=><svg width={s} height={s} viewBox="0 0 24 24" fill={f} stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d.split('|').map((p,i)=><path key={i} d={p}/>)}</svg>;
@@ -66,15 +66,15 @@ const getLang=()=>localStorage.getItem('tw_lang')||'zh';
 const I18N={
 zh:{
   explore:"探索",map:"地圖",plan:"行程",attraction:"景點",food:"美食",hotel:"住宿",fishing:"釣魚",camping:"露營",
-  nearest:"📍 最近",rating:"⭐ 評分",search:"搜尋",loading:"載入中...",noResult:"沒有找到結果",items:"筆",
+  nearest:t("nearest"),rating:t("rating"),search:"搜尋",loading:"載入中...",noResult:"沒有找到結果",items:"筆",
   nav:"導航",streetView:"街景",checkin:"打卡",collapse:"收起",addPlan:"加入",added:"已加入",
   open:"營業中",closed:"已休息",reviews:"📝 旅客評價",website:"官網",seeMore:"看更多 ▼",seeLess:"收起 ▲",
-  parking:"🅿️ 停車",freePk:"免費停車場",paidPk:"付費停車場",streetPk:"路邊停車",hasPk:"有停車位",nearbyPk:"🅿️ 附近停車場",
-  planTitle:"行程規劃",days:"天數",autoRec:"⚡ 自動推薦",autoRecN:"日行程",autoRecDesc:"依地區自動搜尋景點、三餐、住宿並安排",
+  parking:"🅿️ 停車",freePk:t("freePk"),paidPk:t("paidPk"),streetPk:t("streetPk"),hasPk:t("hasPk"),nearbyPk:"🅿️ 附近停車場",
+  planTitle:"行程規劃",days:t("days"),autoRec:"⚡ 自動推薦",autoRecN:"日行程",autoRecDesc:"依地區自動搜尋景點、三餐、住宿並安排",
   manualPlan:"用已選",manualPlanSuffix:"點排行程",manualDesc:"智慧排序：按距離分組、餐廳穿插景點間、住宿排最後",
   replan:"重新規劃",aiAuto:"⚡ AI 自動推薦行程",day:"Day",
   car:"自駕",walk:"徒步",bus:"公車",train:"火車",
-  travelMap:"旅遊地圖",mapTab:"🗺️ 地圖",logTab:"📋 打卡記錄",unvisited:"未到訪",visited:"去過",frequent:"常去",
+  travelMap:"旅遊地圖",mapTab:t("mapTab"),logTab:t("logTab"),unvisited:"未到訪",visited:"去過",frequent:"常去",
   weather:"天氣",feelsLike:"體感",humidity:"濕度",wind:"風速",
   ckTitle:"📍 打卡",ckNearby:"👥 附近旅伴",ckPhoto:"📷 拍照 / 選擇照片",ckRemove:"✕ 移除",ckNote:"寫下感想...",ckConfirm:"📍 確認打卡",ckAuto:"時間 · 地點 · 旅伴自動記錄",ckAlone:"獨自打卡",ckSuccess:"打卡成功！",ckDeleted:"🗑️ 已刪除打卡記錄",ckDelete:"刪除",ckConfirmDel:"確定刪除這筆打卡？",ckPrompt:"到「探索」找景點，1km 內打卡",
   login:"登入",logout:"登出",loginFail:"登入失敗，請再試一次",
@@ -109,8 +109,6 @@ id:{
   min:"mnt",km:"km",m:"m",
 }};
 let _lang=getLang();const t=k=>I18N[_lang]?.[k]||I18N.zh[k]||k;
-const CNAME={tw:{zh:"台灣",id:"Taiwan"},jp:{zh:"日本",id:"Jepang"},th:{zh:"泰國",id:"Thailand"},cn:{zh:"中國",id:"Tiongkok"},kr:{zh:"韓國",id:"Korea Selatan"},hk:{zh:"香港",id:"Hong Kong"},vn:{zh:"越南",id:"Vietnam"},mo:{zh:"澳門",id:"Makau"},us:{zh:"美國",id:"Amerika"},sg:{zh:"新加坡",id:"Singapura"},my:{zh:"馬來西亞",id:"Malaysia"}};
-const cn=c=>CNAME[c.id]?.[_lang]||c.n;
 
 /* ======= 11 國區域資料 ======= */
 const COUNTRIES=[
@@ -128,7 +126,7 @@ const COUNTRIES=[
 ];
 const CATS=[{id:"attraction",nk:"attraction",c:"#10b981",qs:["熱門景點","觀光景點","公園步道","博物館","寺廟古蹟"]},{id:"food",nk:"food",c:"#f59e0b",qs:["必吃餐廳","小吃","咖啡甜點","早午餐","海鮮料理"]},{id:"hotel",nk:"hotel",c:"#6366f1",qs:["飯店","民宿","度假村","青年旅館","溫泉旅館"]},{id:"fishing",nk:"fishing",c:"#06b6d4",qs:["磯釣點","堤防釣魚","漁港釣魚","溪流釣魚","海釣熱門釣點","野釣秘境","水庫釣魚","防波堤釣魚","釣魚場","河口釣點"]},{id:"camping",nk:"camping",c:"#84cc16",qs:["露營區","露營場","豪華露營","野營地","營地推薦","露營區營地"]}];
 const TRANS=[{id:"car",nk:"car",e:"🚗",gm:"driving"},{id:"walk",nk:"walk",e:"🚶",gm:"walking"},{id:"bus",nk:"bus",e:"🚌",gm:"transit"},{id:"train",nk:"train",e:"🚄",gm:"transit"}];
-const PRICE=()=>["",t("price1"),t("price2"),t("price3"),t("price4")];
+const PRICE=["",(t("price1")),(t("price2")),(t("price3")),(t("price4"))];
 const hDist=(a,b,c,d)=>{const R=6371,t=x=>x*Math.PI/180,dL=t(c-a),dN=t(d-b),s=Math.sin(dL/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(dN/2)**2;return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s))};
 const fmtDate=ts=>{if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
 
@@ -141,7 +139,7 @@ async function fetchP(key,cLat,cLng,rad,rName,catId,isGeo,onP){
   const cat=CATS.find(c=>c.id===catId);const hdrs={'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':FM};
   const loc={circle:{center:{latitude:cLat,longitude:cLng},radius:rad}};const seen=new Set();const all=[];
   const qs=isGeo?cat.qs.map(q=>q).concat(cat.qs.slice(0,2).map(q=>rName+' '+q)):cat.qs.map(q=>rName+' '+q);
-  const batches=await Promise.all(qs.map(async q=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:20,languageCode:_lang==='id'?'id':'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,catId))}catch{return[]}}));
+  const batches=await Promise.all(qs.map(async q=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:20,languageCode:'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,catId))}catch{return[]}}));
   for(const b of batches){for(const p of b){if(!seen.has(p.id)){seen.add(p.id);all.push(p)}}if(onP)onP(all.length)}
   all.forEach(p=>{p._dist=(p.lat&&p.lng)?hDist(cLat,cLng,p.lat,p.lng):9999});
   cache.set(ck,all);return all;
@@ -153,7 +151,7 @@ async function findParking(key,lat,lng){
   const ck=lat.toFixed(2)+','+lng.toFixed(2);if(pkCache.has(ck))return pkCache.get(ck);
   try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',
     headers:{'Content-Type':'application/json','X-Goog-Api-Key':key,'X-Goog-FieldMask':'places.displayName,places.formattedAddress,places.location,places.googleMapsUri'},
-    body:JSON.stringify({textQuery:'停車場',maxResultCount:5,languageCode:_lang==='id'?'id':'zh-TW',locationBias:{circle:{center:{latitude:lat,longitude:lng},radius:5000}}})});
+    body:JSON.stringify({textQuery:'停車場',maxResultCount:5,languageCode:'zh-TW',locationBias:{circle:{center:{latitude:lat,longitude:lng},radius:5000}}})});
     if(!r.ok){pkCache.set(ck,[]);return[]}const d=await r.json();
     const res=(d.places||[]).map(p=>({n:p.displayName?.text||'',a:p.formattedAddress||'',lat:p.location?.latitude,lng:p.location?.longitude,url:p.googleMapsUri||'',dist:hDist(lat,lng,p.location?.latitude||0,p.location?.longitude||0)})).sort((a,b)=>a.dist-b.dist).slice(0,2);
     pkCache.set(ck,res);return res}catch{pkCache.set(ck,[]);return[]}
@@ -250,7 +248,7 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
     <div style={{padding:"8px 14px 14px",display:"flex",flexDirection:"column",gap:6}}>
       {/* 價位 + 距離 */}
       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-        {p.price>0&&<span style={{fontSize:10,color:"#f59e0b",fontWeight:700}}>{PRICE()[p.price]}</span>}
+        {p.price>0&&<span style={{fontSize:10,color:"#f59e0b",fontWeight:700}}>{PRICE[p.price]}</span>}
         {p.a&&<span style={{fontSize:10,color:"#6b7280",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>{p.a}</span>}
         {p._dist!=null&&p._dist<9999&&<span style={{flexShrink:0,padding:"2px 8px",borderRadius:8,background:"rgba(16,185,129,.12)",color:"#10b981",fontSize:10,fontWeight:700}}>{p._dist<1?(p._dist*1000).toFixed(0)+'m':p._dist.toFixed(1)+'km'}</span>}
       </div>
@@ -284,7 +282,7 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
         <button className="nb" onClick={()=>openNav(p.n,p.a,gm)} style={{background:"rgba(59,130,246,.12)",color:"#60a5fa"}}><Ico d={I.compass} s={11} c="#60a5fa"/>{t("nav")}</button>
         {p.tel&&<a href={"tel:"+p.tel} className="nb" style={{background:"rgba(16,185,129,.12)",color:"#10b981",textDecoration:"none"}}><Ico d={I.phone} s={11} c="#10b981"/>{p.tel}</a>}
         {p.lat&&apiKey&&<button className="nb" onClick={()=>setSv(!sv)} style={{background:"rgba(168,85,247,.1)",color:"#a855f7"}}><Ico d={I.ext} s={10} c="#a855f7"/>{sv?t("collapse"):t("streetView")}</button>}
-        {onCk&&<button onClick={()=>canCk&&onCk(p)} disabled={!canCk} className="nb" style={{background:canCk?"rgba(245,158,11,.15)":"rgba(255,255,255,.02)",color:canCk?"#f59e0b":"#444",border:canCk?"1px solid rgba(245,158,11,.3)":"none"}}><Ico d={I.flag} s={11} c={canCk?"#f59e0b":"#444"}/>{canCk?t("checkin"):p._dist!=null&&p._dist<9999?(p._dist).toFixed(1)+"km":t("login")}</button>}
+        {onCk&&<button onClick={()=>canCk&&onCk(p)} disabled={!canCk} className="nb" style={{background:canCk?"rgba(245,158,11,.15)":"rgba(255,255,255,.02)",color:canCk?"#f59e0b":"#444",border:canCk?"1px solid rgba(245,158,11,.3)":"none"}}><Ico d={I.flag} s={11} c={canCk?"#f59e0b":"#444"}/>{canCk?"打卡":p._dist!=null&&p._dist<9999?(p._dist).toFixed(1)+"km":"登入"}</button>}
         <div style={{flex:1}}/>
         <button onClick={()=>onAdd(p,catId)} disabled={added} style={{display:"flex",alignItems:"center",gap:4,padding:"7px 12px",borderRadius:10,fontSize:11,fontWeight:700,background:added?"rgba(255,255,255,.04)":c.c,color:added?"#555":"#fff"}}>{added?<><Ico d={I.check} s={10}/>{t("added")}</>:<><Ico d={I.plus} s={10}/>{t("addPlan")}</>}</button>
       </div>
@@ -342,33 +340,47 @@ function Setup({onDone}){
   const[key,setKey]=useState('');const[busy,setBusy]=useState(false);const[err,setErr]=useState("");const[loadingKey,setLoadingKey]=useState(false);
   const[bgIdx,setBgIdx]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setBgIdx(i=>(i+1)%3),6000);return()=>clearInterval(t)},[]);
-  useEffect(()=>{const t=setTimeout(()=>setAuthLoading(false),5000);return()=>clearTimeout(t)},[]);
+  /* 監聯登入狀態 */
   useEffect(()=>{if(!fbOK){setAuthLoading(false);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthLoading(false);
     if(u&&db){setLoadingKey(true);
-      const timer=setTimeout(()=>setLoadingKey(false),5000);
-      /* 自動註冊白名單 */
-      db.collection("whitelist").doc(u.uid).get().then(w=>{if(!w.exists)db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{})}).catch(()=>{});
+      /* 存基本資料 */
       db.collection("users").doc(u.uid).set({email:u.email||"",name:u.displayName||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-      /* 簡單流程：1.查共享Key 2.查個人Key 3.查localStorage */
-      db.collection("admin").doc("config").get().catch(()=>null).then(async cfg=>{
-        const d=cfg?.exists?cfg.data():{};
-        /* 共享 Key 啟用？ */
-        if(d.active&&d.sharedKey){
-          const wDoc=await db.collection("whitelist").doc(u.uid).get().catch(()=>null);
-          if(!wDoc||!wDoc.exists||wDoc.data().enabled!==false){
-            clearTimeout(timer);const g=await hashKey(d.sharedKey);saveK(d.sharedKey);saveG(g);onDone(d.sharedKey,g);return;
-          }
+      /* 自動註冊白名單（如果不存在就建立，預設 enabled） */
+      db.collection("whitelist").doc(u.uid).get().then(wDoc=>{
+        if(!wDoc.exists)db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
+      }).catch(()=>{});
+      /* 查後台：共享 Key 是否啟用 + 此用戶是否有權限 */
+      Promise.all([
+        db.collection("admin").doc("config").get(),
+        db.collection("whitelist").doc(u.uid).get()
+      ]).then(([cfgDoc,wDoc])=>{
+        const cfg=cfgDoc.exists?cfgDoc.data():{};
+        const wData=wDoc.exists?wDoc.data():{};
+        /* 條件：後台啟用 + 有共享 Key + 此用戶白名單啟用 */
+        if(cfg.active&&cfg.sharedKey&&wData.enabled!==false){
+          const k=cfg.sharedKey;setKey(k);
+          hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)});return;
         }
-        /* 個人 Key */
-        const uDoc=await db.collection("users").doc(u.uid).get().catch(()=>null);
-        const pk=uDoc?.exists?uDoc.data().apiKey:'';
-        if(pk&&pk!==d.sharedKey){clearTimeout(timer);const g=await hashKey(pk);saveK(pk);saveG(g);onDone(pk,g);return}
-        /* localStorage */
+        /* 不符合 → 清掉可能殘留的共享 Key，改查個人 Key */
         const lk=getK();
-        if(lk&&lk!==d.sharedKey){clearTimeout(timer);const g=await hashKey(lk);saveK(lk);saveG(g);onDone(lk,g);return}
-        /* 都沒有 → 顯示輸入框 */
-        clearTimeout(timer);setLoadingKey(false);
-      }).catch(()=>{const lk=getK();if(lk){hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)})}else setLoadingKey(false)});
+        /* 如果本地存的是共享 Key 但權限被關了，清掉 */
+        if(cfg.sharedKey&&lk===cfg.sharedKey&&(wData.enabled===false||!cfg.active)){
+          localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');
+          setLoadingKey(false);return;
+        }
+        /* 查個人 Firestore Key */
+        db.collection("users").doc(u.uid).get().then(d=>{
+          if(d.exists&&d.data().apiKey&&d.data().apiKey!==cfg.sharedKey){
+            const k=d.data().apiKey;setKey(k);hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)})}
+          else if(lk&&lk!==cfg.sharedKey){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);
+            db.collection("users").doc(u.uid).set({apiKey:lk},{merge:true}).catch(()=>{});onDone(lk,g)})}
+          else setLoadingKey(false)
+        }).catch(()=>setLoadingKey(false));
+      }).catch(()=>{
+        /* Firestore 失敗 fallback：用本地 Key */
+        const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)})}
+        else setLoadingKey(false);
+      });
     }
   })},[]);
   const signIn=async()=>{if(!fbOK)return;try{await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())}catch(e){setErr("登入失敗，請再試一次")}};
@@ -395,7 +407,7 @@ function Setup({onDone}){
     <div style={{position:"relative",zIndex:1,textAlign:"center",width:"100%",maxWidth:380}}>
       <h1 className="fu" style={{fontSize:48,fontWeight:900,letterSpacing:-3,marginBottom:4}}><span style={{background:"linear-gradient(135deg,#f5c850,#10b981,#06b6d4)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",filter:"drop-shadow(0 2px 12px rgba(245,200,80,.2))"}}>旅遊通</span></h1>
       <p className="fu" style={{animationDelay:".1s",color:"rgba(255,255,255,.5)",fontSize:13,fontWeight:500,letterSpacing:4,marginBottom:6}}>TRAVEL PASS</p>
-      <p className="fu" style={{animationDelay:".2s",color:"rgba(255,255,255,.35)",fontSize:12,marginBottom:32}}>{lang==="id"?"11 Negara · 265 Wilayah · Jelajah · Check-in · Rencana":"11 國 · 265 區域 · 探索 · 打卡 · 行程"}</p>
+      <p className="fu" style={{animationDelay:".2s",color:"rgba(255,255,255,.35)",fontSize:12,marginBottom:32}}>11 國 · 265 區域 · 探索 · 打卡 · 行程</p>
       <button className="fu" onClick={signIn} style={{animationDelay:".3s",display:"flex",alignItems:"center",gap:10,padding:"16px 0",borderRadius:16,fontSize:15,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.08)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(255,255,255,.12)",width:"100%",justifyContent:"center",transition:"all .3s"}}>
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.9 33.1 29.4 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.2-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.3 15.6 18.8 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.3 0-9.8-3.6-11.3-8.5l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.2-2.6-.4-3.9z"/></svg>
         使用 Google 帳號登入
@@ -404,7 +416,7 @@ function Setup({onDone}){
       <div className="fu" style={{animationDelay:".4s",display:"flex",justifyContent:"center",gap:12,marginTop:20}}>
         <a href="guide.html" style={{padding:"8px 18px",borderRadius:12,fontSize:11,color:"rgba(255,255,255,.4)",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)",textDecoration:"none",backdropFilter:"blur(10px)"}}>📖 使用說明</a>
       </div>
-      <p className="fu" style={{animationDelay:".5s",color:"rgba(255,255,255,.2)",fontSize:10,marginTop:16}}>{lang==="id"?"Masuk untuk menggunakan semua fitur":"登入即可使用全部功能"}</p>
+      <p className="fu" style={{animationDelay:".5s",color:"rgba(255,255,255,.2)",fontSize:10,marginTop:16}}>登入即可使用全部功能</p>
       {/* 輪播指示點 */}
       <div style={{display:"flex",justifyContent:"center",gap:6,marginTop:12}}>{bgs.map((_,i)=><div key={i} style={{width:bgIdx===i?16:6,height:6,borderRadius:3,background:bgIdx===i?"rgba(245,200,80,.6)":"rgba(255,255,255,.15)",transition:"all .5s"}}/>)}</div>
     </div>
@@ -477,7 +489,7 @@ async function autoRecommend(apiKey,cLat,cLng,regionName,days,transId){
   const speed=SPEED[transId]||30;
   const hdrs={'Content-Type':'application/json','X-Goog-Api-Key':apiKey,'X-Goog-FieldMask':'places.id,places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.location,places.editorialSummary,places.currentOpeningHours,places.googleMapsUri,places.nationalPhoneNumber,places.internationalPhoneNumber,places.photos,places.parkingOptions'};
   const loc={circle:{center:{latitude:cLat,longitude:cLng},radius:15000}};
-  const doSearch=async(q)=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:10,languageCode:_lang==='id'?'id':'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,'auto'))}catch{return[]}};
+  const doSearch=async(q)=>{try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:hdrs,body:JSON.stringify({textQuery:q,maxResultCount:10,languageCode:'zh-TW',locationBias:loc})});if(!r.ok)return[];const d=await r.json();return(d.places||[]).map(p=>parseP(p,'auto'))}catch{return[]}};
   /* 平行搜尋 */
   const[atts,breakfasts,lunches,dinners,hotels]=await Promise.all([
     doSearch(regionName+' 熱門景點 必去'),
@@ -569,18 +581,16 @@ function GMap({apiKey,regions,checkins,country,region,online,userLoc,user,onSele
 
 function App(){
   const[lang,setLangState]=useState(getLang());
-  const setLang=l=>{_lang=l;localStorage.setItem('tw_lang',l);setLangState(l);cache.clear();pkCache.clear()};
+  const setLang=l=>{_lang=l;localStorage.setItem('tw_lang',l);setLangState(l)};
   const[apiKey,setApiKey]=useState(getK());const[groupId,setGroupId]=useState(getG());
   const[user,setUser]=useState(null);const[authChecked,setAuthChecked]=useState(false);
   const ready=!!apiKey&&!!groupId&&!!user&&authChecked;
   const onSetup=useCallback((k,g)=>{setApiKey(k);setGroupId(g)},[]);
   const changeKey=()=>{localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');if(user&&db)db.collection("users").doc(user.uid).update({apiKey:firebase.firestore.FieldValue.delete()}).catch(()=>{});setApiKey('');setGroupId('')};
   const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(()=>{try{const s=localStorage.getItem('tw_plan');if(!s)return null;const p=JSON.parse(s);if(p._v!==2){localStorage.removeItem('tw_plan');return null}return p}catch{return null}});const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
-  const[online,setOnline]=useState([]);const[sharePos,setSharePos]=useState(()=>{const v=localStorage.getItem('tw_share_pos');return v===null?true:v==='1'});
-  const toggleShare=()=>{const nv=!sharePos;setSharePos(nv);localStorage.setItem('tw_share_pos',nv?'1':'0');if(!nv&&user&&db)db.collection("online").doc(user.uid).delete().catch(()=>{})};
-  const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckModal,setCkModal]=useState(null);const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);const[installEvt,setInstallEvt]=useState(null);const[autoLoading,setAutoLoading]=useState(false);
-  /* Admin states */
+  const[online,setOnline]=useState([]);
   const[isAdmin,setIsAdmin]=useState(false);const[adminTab,setAdminTab]=useState("key");const[adSharedKey,setAdSharedKey]=useState('');const[adKeyActive,setAdKeyActive]=useState(false);const[adNewKey,setAdNewKey]=useState('');const[adSaving,setAdSaving]=useState(false);const[adWl,setAdWl]=useState([]);const[adMsg,setAdMsg]=useState('');
+  const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckModal,setCkModal]=useState(null);const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);const[installEvt,setInstallEvt]=useState(null);const[autoLoading,setAutoLoading]=useState(false);
   useEffect(()=>{const h=e=>{e.preventDefault();setInstallEvt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);
   const doInstall=async()=>{if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice;if(r.outcome==='accepted')setInstallEvt(null)};
   const curCountry=COUNTRIES.find(c=>c.id===country);
@@ -590,24 +600,20 @@ function App(){
   useEffect(()=>{if(!fbOK){setAuthChecked(true);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthChecked(true);if(u&&db){db.collection("checkins").doc(u.uid).get().then(d=>{if(d.exists)setCheckins(d.data().regions||{})});db.collection("history").where("uid","==",u.uid).where("gid","==",groupId).orderBy("ts","desc").limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{db.collection("history").where("uid","==",u.uid).limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{})})}})},[groupId]);
 
   /* Online presence */
-  /* Admin check */
+  useEffect(()=>{if(!fbOK||!user||!db||!groupId||!ready)return;const ref=db.collection("online").doc(user.uid);ref.set({uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,gid:groupId,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});return()=>{ref.delete().catch(()=>{})}},[user,groupId,ready]);
+  useEffect(()=>{if(!fbOK||!db||!groupId||!ready)return;const unsub=db.collection("online").where("gid","==",groupId).onSnapshot(snap=>{const u=[];snap.forEach(d=>{const x=d.data();if(!user||x.uid!==user?.uid)u.push(x)});setOnline(u)});return()=>unsub()},[user,groupId,ready]);
+  /* Admin */
   useEffect(()=>{if(!user||!db||!fbOK)return;(async()=>{try{
     let cfg=await db.collection("admin").doc("config").get();
     if(!cfg.exists){await db.collection("admin").doc("config").set({admins:[user.uid],sharedKey:'',active:false});cfg=await db.collection("admin").doc("config").get()}
-    if(cfg.exists){const d=cfg.data();
-      if((d.admins||[]).includes(user.uid)){setIsAdmin(true);setAdSharedKey(d.sharedKey||'');setAdNewKey(d.sharedKey||'');setAdKeyActive(!!d.active);
-        const snap=await db.collection("whitelist").orderBy("addedAt","desc").get();
-        setAdWl(snap.docs.map(x=>({uid:x.id,...x.data()})))}}
-  }catch{}})()},[user]);
+    if(cfg.exists){const d=cfg.data();if((d.admins||[]).includes(user.uid)){setIsAdmin(true);setAdSharedKey(d.sharedKey||'');setAdNewKey(d.sharedKey||'');setAdKeyActive(!!d.active);
+      const snap=await db.collection("whitelist").orderBy("addedAt","desc").get();setAdWl(snap.docs.map(x=>({uid:x.id,...x.data()})))}}
+  }catch(e){console.log("admin check err",e)}})()},[user]);
   const adFlash=m=>{setAdMsg(m);setTimeout(()=>setAdMsg(''),3500)};
   const adSaveKey=async()=>{if(!adNewKey.trim()||!adNewKey.startsWith("AIza"))return adFlash("❌ Key 需以 AIza 開頭");setAdSaving(true);try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':adNewKey.trim(),'X-Goog-FieldMask':'places.id'},body:JSON.stringify({textQuery:"test",maxResultCount:1})});if(!r.ok){adFlash("❌ Key 無效");setAdSaving(false);return}await db.collection("admin").doc("config").set({sharedKey:adNewKey.trim()},{merge:true});setAdSharedKey(adNewKey.trim());adFlash("✅ Key 已儲存")}catch{adFlash("❌ 失敗")}setAdSaving(false)};
   const adToggleActive=async()=>{if(!adKeyActive&&!adSharedKey)return adFlash("❌ 請先設定 Key");await db.collection("admin").doc("config").set({active:!adKeyActive},{merge:true});setAdKeyActive(!adKeyActive);adFlash(adKeyActive?"⛔ 已停用":"✅ 已啟用")};
   const adToggleUser=async(uid,en)=>{await db.collection("whitelist").doc(uid).update({enabled:!en});setAdWl(p=>p.map(w=>w.uid===uid?{...w,enabled:!en}:w));adFlash(en?"⛔ 已停用":"✅ 已啟用")};
-  const adKickUser=async(uid,name)=>{if(!confirm("踢出 "+(name||"")+"？"))return;await db.collection("whitelist").doc(uid).delete();setAdWl(p=>p.filter(w=>w.uid!==uid));adFlash("🗑️ 已踢出")};
-  const adEnabledCount=adWl.filter(w=>w.enabled).length;
-  /* Online presence */
-  useEffect(()=>{if(!fbOK||!user||!db||!groupId||!ready)return;const ref=db.collection("online").doc(user.uid);if(sharePos){ref.set({uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,gid:groupId,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}else{ref.delete().catch(()=>{})}return()=>{ref.delete().catch(()=>{})}},[user,groupId,ready,sharePos,userLoc]);
-  useEffect(()=>{if(!fbOK||!db||!groupId||!ready||!sharePos){setOnline([]);return}const unsub=db.collection("online").where("gid","==",groupId).onSnapshot(snap=>{const u=[];snap.forEach(d=>{const x=d.data();if(!user||x.uid!==user?.uid)u.push(x)});setOnline(u)});return()=>unsub()},[user,groupId,ready,sharePos]);
+  const adKickUser=async(uid,name)=>{if(!confirm("確定踢出 "+(name||"")+"？"))return;await db.collection("whitelist").doc(uid).delete();setAdWl(p=>p.filter(w=>w.uid!==uid));adFlash("🗑️ 已踢出")};
 
   /* Fetch places */
   useEffect(()=>{if(!region||!curRegion||!apiKey||!ready)return;const uL=userLoc&&userLoc.region===region;const cLat=uL?userLoc.lat:curRegion.lat;const cLng=uL?userLoc.lng:curRegion.lng;
@@ -630,7 +636,7 @@ function App(){
     const photoUri=getPhotoUri(place.photos);
     const companions=(pals||[]).map(p=>({uid:p.uid||'',name:p.name}));
     const rec={uid:user.uid,userName:user.displayName||"",userPhoto:user.photoURL||"",country,region,placeName:place.n,placePhoto:photoUri,placeAddress:place.a||"",lat:place.lat,lng:place.lng,gid:groupId,note:note||"",userImg:userImg||"",ts:firebase.firestore.FieldValue.serverTimestamp(),companions};
-    if(companions.length)setCkMsg("🎉 "+place.n+" "+t("ckSuccess")+(companions.length?" 👥 "+companions.map(p=>p.name).join(", "):""));
+    if(companions.length)setCkMsg("🎉 "+place.n+" 打卡！與 "+companions.map(p=>p.name).join("、")+" 同行！");
     else setCkMsg("✅ "+place.n+" "+t("ckSuccess"));
     try{const ref=await db.collection("history").add(rec);setHistory(prev=>[{id:ref.id,...rec,ts:new Date()},...prev])}catch{}
     setTimeout(()=>setCkMsg(""),4000);
@@ -645,7 +651,7 @@ function App(){
     const rKey=(h.country||country)+'-'+(h.region||region);
     const nc=Math.max(0,(checkins[rKey]||1)-1);const nck={...checkins,[rKey]:nc};setCheckins(nck);
     try{await db.collection("checkins").doc(user.uid).set({regions:nck},{merge:true})}catch{}
-    setCkMsg(t("ckDeleted"));setTimeout(()=>setCkMsg(""),3000);
+    setCkMsg("🗑️ 已刪除打卡記錄");setTimeout(()=>setCkMsg(""),3000);
   };
   const totalCk=Object.values(checkins).reduce((a,b)=>a+b,0);
   const visitedRegions=Object.entries(checkins).filter(([k,v])=>k.startsWith((country||'')+'−')&&v>0).length;
@@ -661,13 +667,11 @@ function App(){
   /* ========== 選國家 ========== */
   if(!country)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}}><div className="hero-bg"/><div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",position:"relative",zIndex:1}}>
     <div style={{position:"absolute",top:16,right:16,display:"flex",gap:6,zIndex:10}}>
-      <div style={{display:"flex",borderRadius:20,overflow:"hidden",border:"1.5px solid rgba(255,255,255,.1)",background:"rgba(255,255,255,.03)"}}>
-        <button onClick={()=>setLang('zh')} style={{padding:"6px 14px",fontSize:11,fontWeight:700,border:"none",display:"flex",alignItems:"center",gap:4,background:lang==='zh'?"linear-gradient(135deg,#10b981,#0d9488)":"transparent",color:lang==='zh'?"#fff":"#555",transition:"all .2s"}}>🇹🇼 中文</button>
-        <button onClick={()=>setLang('id')} style={{padding:"6px 14px",fontSize:11,fontWeight:700,border:"none",display:"flex",alignItems:"center",gap:4,background:lang==='id'?"linear-gradient(135deg,#10b981,#0d9488)":"transparent",color:lang==='id'?"#fff":"#555",transition:"all .2s"}}>🇮🇩 ID</button>
-      </div>
+      <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.15)"}}>{lang==='zh'?'🇮🇩 ID':'🇹🇼 中文'}</button>
       {user?<img src={user.photoURL} onClick={signOut} style={{width:28,height:28,borderRadius:"50%",border:"2px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}><Ico d={I.login} s={14}/>{t("login")}</button>}
       <button onClick={changeKey} style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>🔑</button>
       <a href="guide.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#10b981",background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.15)",textDecoration:"none"}}>{t("guide")}</a>
+      <a href="admin.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#f59e0b",background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.15)",textDecoration:"none"}}>{t("admin")}</a>
       {installEvt&&<button onClick={doInstall} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",animation:"glow 2s ease-in-out infinite"}}>{t("install")}</button>}
     </div>
     <div className="fu" style={{textAlign:"center",marginBottom:24,paddingTop:64}}>
@@ -675,9 +679,9 @@ function App(){
       <p style={{color:"#555",fontSize:13,marginTop:8}}>{t("selectCountry")}</p>
       {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {t('onlinePals')}</p>}
     </div>
-    <button className="fu" onClick={geolocate} disabled={geoLoading} style={{animationDelay:".1s",display:"flex",alignItems:"center",gap:10,padding:"14px 32px",borderRadius:50,background:"linear-gradient(135deg,#10b981,#06b6d4)",color:"#fff",fontSize:15,fontWeight:800,marginBottom:8,boxShadow:"0 4px 24px rgba(16,185,129,.35)",letterSpacing:.5}}>{geoLoading?<span style={{width:18,height:18,border:"2.5px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<span style={{fontSize:18}}>📍</span>}{geoLoading?t("geoLocating"):(lang==='id'?"Lokasi Otomatis":"自動定位")}</button>
+    <button className="fu" onClick={geolocate} disabled={geoLoading} style={{animationDelay:".1s",display:"flex",alignItems:"center",gap:8,padding:"12px 24px",borderRadius:14,background:"linear-gradient(135deg,#10b981,#0d9488)",color:"#fff",fontSize:14,fontWeight:700,marginBottom:6,animation:"glow 3s ease-in-out infinite"}}>{geoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.nav} s={16} f="white" c="white"/>}{geoLoading?t("geoLocating"):"📍 GPS"}</button>
     {geoMsg&&<p className="fi" style={{fontSize:11,color:"#10b981",marginBottom:8}}>{geoMsg}</p>}
-    <div className="fu" style={{animationDelay:".15s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:400,width:"100%",marginTop:16}}>{COUNTRIES.map(c=><button key={c.id} onClick={()=>setCountry(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"16px 8px",borderRadius:16,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:32}}>{c.f}</span><span style={{fontSize:13,fontWeight:700}}>{cn(c)}</span><span style={{fontSize:9,color:"#555"}}>{c.regions.length}</span></button>)}</div>
+    <div className="fu" style={{animationDelay:".15s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:400,width:"100%",marginTop:16}}>{COUNTRIES.map(c=><button key={c.id} onClick={()=>setCountry(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"16px 8px",borderRadius:16,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:32}}>{c.f}</span><span style={{fontSize:13,fontWeight:700}}>{c.n}</span><span style={{fontSize:9,color:"#555"}}>{c.regions.length}</span></button>)}</div>
   </div></div>;
 
   /* ========== 選區域 ========== */
@@ -685,7 +689,7 @@ function App(){
     <button onClick={()=>setCountry(null)} style={{position:"absolute",top:12,left:16,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>← 選國家</button>
     <div className="fu" style={{textAlign:"center",marginBottom:24}}>
       <span style={{fontSize:48}}>{curCountry.f}</span>
-      <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{cn(curCountry)}</h2>
+      <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{curCountry.n}</h2>
       <p style={{color:"#555",fontSize:12,marginTop:4}}>選擇地區</p>
     </div>
     <div className="fu" style={{animationDelay:".1s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:400,width:"100%"}}>{curCountry.regions.map(r=><button key={r.n} onClick={()=>setRegion(r.n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"14px 6px",borderRadius:14,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}><span style={{fontSize:15,fontWeight:900}}>{r.n}</span><span style={{fontSize:8,color:"#555",textAlign:"center"}}>{r.d}</span></button>)}</div>
@@ -698,20 +702,16 @@ function App(){
     <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,10,15,.93)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
       <div style={{maxWidth:1200,margin:"0 auto",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{cn(curCountry)}</span></h1>
+          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{curCountry.n}</span></h1>
           <button onClick={()=>setRegion(null)} style={{padding:"4px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>{region} ▾</button>
           {/* 天氣 */}
           {wx&&<span style={{fontSize:10,color:"#aaa",display:"flex",alignItems:"center",gap:3}}>{WX_ICON[wx.icon]||"🌤️"}{wx.temp}° {wx.desc}</span>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{t(x.k)}</button>)}
-          {isAdmin&&<button onClick={()=>setView("admin")} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view==="admin"?"#f59e0b":"transparent",color:view==="admin"?"#fff":"#555",border:"none"}}>🔐</button>}
-          {isAdmin&&<button onClick={()=>setView("admin")} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view==="admin"?"#f59e0b":"transparent",color:view==="admin"?"#fff":"#555",border:"none"}}>🔐</button>}
+          {isAdmin&&<button onClick={()=>setView("admin")} style={{padding:"4px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:view==="admin"?"#f59e0b":"transparent",color:view==="admin"?"#fff":"#555",border:"none"}}>🔐</button>}
           {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{t("login")}</button>}
-          <div style={{display:"flex",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.02)"}}>
-            <button onClick={()=>setLang('zh')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555"}}>中</button>
-            <button onClick={()=>setLang('id')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='id'?"#10b981":"transparent",color:lang==='id'?"#fff":"#555"}}>ID</button>
-          </div>
+          <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"3px 6px",borderRadius:6,fontSize:9,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.12)"}}>{lang==='zh'?'ID':'中'}</button>
           <button onClick={()=>setSidebar(!sidebar)} style={{position:"relative",padding:5,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
         </div>
       </div>
@@ -721,7 +721,7 @@ function App(){
 
       {/* ===== 探索 ===== */}
       {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{position:"sticky",top:44,zIndex:20,background:"#080a0f",paddingTop:6,paddingBottom:8,display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{position:"sticky",top:0,zIndex:20,background:"#080a0f",paddingTop:4,paddingBottom:8,display:"flex",flexDirection:"column",gap:8}}>
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
             {CATS.map(c=>{const a=cat===c.id;const icons={attraction:"🏛",food:"🍜",hotel:"🏨",fishing:"🎣",camping:"⛺"};return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,padding:"8px 4px",borderRadius:10,fontSize:11,fontWeight:700,background:a?c.c+"22":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"55":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}><span style={{fontSize:13}}>{icons[c.id]||""}</span>{t(c.nk)}</button>})}
             <button onClick={refresh} style={{padding:"8px 6px",borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",flexShrink:0}}><Ico d={I.reload} s={14}/></button>
@@ -740,17 +740,12 @@ function App(){
       {view==="map"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
         <div style={{textAlign:"center"}}><h2 style={{fontSize:20,fontWeight:900}}>{curCountry.f} {t('travelMap')}</h2>
           {user&&<p style={{fontSize:11,color:"#666",marginTop:4}}>{user.displayName} ・ {totalCk}  {t("checkin")}</p>}
-          {!user&&<p style={{fontSize:11,color:"#f59e0b",marginTop:4}}>{lang==="id"?"Masuk untuk check-in":"登入即可打卡"}</p>}
+          {!user&&<p style={{fontSize:11,color:"#f59e0b",marginTop:4}}>登入即可打卡</p>}
           {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {t('onlinePals')}</p>}
         </div>
-        <div style={{display:"flex",gap:6,justifyContent:"center",alignItems:"center"}}>{[{id:"map",l:t("mapTab")},{id:"log",l:t("logTab")}].map(tb=><button key={tb.id} onClick={()=>setMapTab(tb.id)} style={{padding:"6px 16px",borderRadius:8,fontSize:12,fontWeight:700,background:mapTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(mapTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:mapTab===tb.id?"#10b981":"#666"}}>{tb.l}</button>)}</div>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,padding:"6px 12px",borderRadius:10,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.04)"}}>
-          <span style={{fontSize:13}}>{sharePos?"📡":"🔒"}</span>
-          <span style={{fontSize:11,color:sharePos?"#10b981":"#666",fontWeight:600}}>{sharePos?(lang==='id'?"Berbagi Lokasi Aktif":"共享位置 開啟"):(lang==='id'?"Lokasi Tersembunyi":"位置已隱藏")}</span>
-          <div style={{marginLeft:"auto",display:"flex",alignItems:"center"}}><button onClick={toggleShare} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",transition:"background .2s",background:sharePos?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:sharePos?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button></div>
-        </div>
+        <div style={{display:"flex",gap:6,justifyContent:"center"}}>{[{id:"map",l:t("mapTab")},{id:"log",l:t("logTab")}].map(t=><button key={t.id} onClick={()=>setMapTab(t.id)} style={{padding:"6px 16px",borderRadius:8,fontSize:12,fontWeight:700,background:mapTab===t.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(mapTab===t.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:mapTab===t.id?"#10b981":"#666"}}>{t.l}</button>)}</div>
         {mapTab==="map"&&<>
-          <GMap apiKey={apiKey} regions={curCountry.regions} checkins={checkins} country={country} region={region} online={sharePos?online:[]} userLoc={sharePos?userLoc:null} user={user} onSelect={n=>{setRegion(n);setView("explore")}} history={history}/>
+          <GMap apiKey={apiKey} regions={curCountry.regions} checkins={checkins} country={country} region={region} online={online} userLoc={userLoc} user={user} onSelect={n=>{setRegion(n);setView("explore")}} history={history}/>
           <div style={{display:"flex",justifyContent:"center",gap:12,fontSize:9,color:"#555",marginTop:8}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.15)",border:"1px solid #888"}}/>{t("unvisited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.5)"}}/>{t("visited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>{t("frequent")}</span></div>
           {wx&&<div style={{padding:14,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)",marginTop:8}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:32}}>{WX_ICON[wx.icon]||"🌤️"}</span><div><p style={{fontSize:20,fontWeight:900}}>{wx.temp}°C</p><p style={{fontSize:11,color:"#888"}}>{wx.desc}</p></div><div style={{marginLeft:"auto",fontSize:10,color:"#666",textAlign:"right"}}><p>體感 {wx.feel}°</p><p>濕度 {wx.humidity}%</p><p>風速 {wx.wind}km/h</p></div></div>
@@ -785,11 +780,11 @@ function App(){
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{fontSize:40,marginBottom:8}}>🗺️</div>
             <h3 style={{fontSize:20,fontWeight:800,marginBottom:4}}>{t("planTitle")}</h3>
-            <p style={{fontSize:12,color:"#555"}}>{region} · {cn(curCountry)}</p>
+            <p style={{fontSize:12,color:"#555"}}>{region} · {curCountry?.n}</p>
           </div>
           {/* 天數 + 交通 */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:16}}>
-            <span style={{fontSize:13,color:"#666"}}>{t("days")}</span>
+            <span style={{fontSize:13,color:"#666"}}>天數</span>
             <div style={{display:"flex",alignItems:"center",borderRadius:10,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>
               <button onClick={()=>setDays(Math.max(1,days-1))} style={{padding:"6px 14px",color:"#777",fontWeight:700,fontSize:18,background:"none",border:"none"}}>−</button>
               <span style={{padding:"6px 18px",fontSize:22,fontWeight:900,color:"#10b981"}}>{days}</span>
@@ -832,7 +827,7 @@ function App(){
                 </div>
                 {/* 停車資訊 */}
                 {s.parking?.any?<div style={{display:"flex",alignItems:"center",gap:4,marginTop:6,padding:"5px 10px",borderRadius:8,background:"rgba(59,130,246,.06)",border:"1px solid rgba(59,130,246,.12)"}}>
-                  <span style={{fontSize:13}}>🅿️</span><span style={{fontSize:11,color:"#60a5fa",fontWeight:600}}>{s.parking.free?t("freePk"):s.parking.paid?t("paidPk"):s.parking.garage?t("hasPk"):s.parking.street?t("streetPk"):t("hasPk")}</span>
+                  <span style={{fontSize:13}}>🅿️</span><span style={{fontSize:11,color:"#60a5fa",fontWeight:600}}>{s.parking.free?"免費停車場":s.parking.paid?"付費停車場":s.parking.garage?t("hasPk"):s.parking.street?"路邊停車":"有停車位"}</span>
                 </div>
                 :s.nearbyPk?.length>0?<div style={{marginTop:6,padding:"8px 10px",borderRadius:8,background:"rgba(245,158,11,.04)",border:"1px solid rgba(245,158,11,.1)"}}>
                   <p style={{fontSize:10,color:"#f59e0b",fontWeight:700,marginBottom:4}}>{t("nearbyPk")}</p>
@@ -847,88 +842,39 @@ function App(){
           <div style={{display:"flex",justifyContent:"center",gap:8}}><button onClick={()=>{setPlan(null);localStorage.removeItem('tw_plan')}} style={{display:"flex",alignItems:"center",gap:6,padding:"10px 20px",borderRadius:10,fontSize:12,fontWeight:700,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}><Ico d={I.rotate} s={12}/>{t("replan")}</button></div>
         </>}
       </div>}
-
-      {/* ===== 管理後台 ===== */}
-      {view==="admin"&&isAdmin&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div style={{background:"linear-gradient(135deg,#0d3320,#10b981,#06b6d4)",padding:"16px",borderRadius:16}}>
-          <h2 style={{fontSize:18,fontWeight:900,color:"#fff"}}>🔐 管理後台</h2>
-          <p style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2}}>{user?.displayName}</p>
-        </div>
-        <div style={{display:"flex",gap:4}}>
-          {[{id:"key",n:"🔑 API Key"},{id:"users",n:"👥 白名單"}].map(tb=><button key={tb.id} onClick={()=>setAdminTab(tb.id)} style={{flex:1,padding:"8px",borderRadius:8,fontSize:12,fontWeight:700,background:adminTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(adminTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:adminTab===tb.id?"#10b981":"#666"}}>{tb.n}</button>)}
-        </div>
-        {adMsg&&<div className="fi" style={{padding:"10px 16px",borderRadius:10,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",fontSize:12,fontWeight:700,color:"#10b981",textAlign:"center"}}>{adMsg}</div>}
-        {adminTab==="key"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
-          <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid "+(adKeyActive?"rgba(16,185,129,.2)":"rgba(239,68,68,.15)")}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <div><p style={{fontSize:15,fontWeight:800}}>{adKeyActive?"🟢 共享啟用中":"🔴 共享未啟用"}</p><p style={{fontSize:10,color:"#666",marginTop:2}}>{adKeyActive?adEnabledCount+" 位用戶使用中":"啟用後用戶自動取得 Key"}</p></div>
-              <button onClick={adToggleActive} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:adKeyActive?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:adKeyActive?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
-            </div>
-            {adSharedKey&&<div style={{padding:10,borderRadius:8,background:"rgba(255,255,255,.02)"}}><p style={{fontSize:9,color:"#888"}}>目前 Key</p><p style={{fontSize:11,fontFamily:"monospace",color:"#ddd",wordBreak:"break-all",marginTop:2}}>{adSharedKey.slice(0,20)}...{adSharedKey.slice(-6)}</p></div>}
-          </div>
-          <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-            <p style={{fontSize:13,fontWeight:700,marginBottom:8}}>{adSharedKey?"更換 Key":"設定 Key"}</p>
-            <input type="text" value={adNewKey} onChange={e=>setAdNewKey(e.target.value)} placeholder="AIzaSy..." style={{width:"100%",padding:"12px",borderRadius:10,fontSize:13,color:"#fff",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none",fontFamily:"monospace",marginBottom:10}}/>
-            <button disabled={adSaving} onClick={adSaveKey} style={{width:"100%",padding:12,borderRadius:10,fontSize:14,fontWeight:700,color:"#fff",background:adSaving?"#333":"linear-gradient(135deg,#10b981,#0d9488)",border:"none"}}>{adSaving?"驗證中...":"儲存 Key"}</button>
-          </div>
-        </div>}
-        {adminTab==="users"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:8}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><h3 style={{fontSize:14,fontWeight:800}}>👥 白名單</h3><div style={{display:"flex",gap:4}}><span style={{padding:"3px 10px",borderRadius:20,fontSize:10,fontWeight:700,background:"rgba(16,185,129,.1)",color:"#10b981"}}>{adEnabledCount} 啟用</span><span style={{padding:"3px 10px",borderRadius:20,fontSize:10,fontWeight:700,background:"rgba(255,255,255,.04)",color:"#555"}}>{adWl.length} 總計</span></div></div>
-          <p style={{fontSize:10,color:"#555"}}>用戶登入後自動出現。關閉 = 撤銷權限。</p>
-          {!adWl.length?<div style={{textAlign:"center",padding:32,color:"#444",fontSize:12}}>😴 尚無用戶</div>
-          :adWl.map(w=><div key={w.uid} style={{display:"flex",alignItems:"center",gap:10,padding:12,borderRadius:12,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:w.enabled?"rgba(16,185,129,.1)":"rgba(239,68,68,.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0,border:"2px solid "+(w.enabled?"rgba(16,185,129,.25)":"rgba(239,68,68,.15)")}}>{w.enabled?"✅":"⛔"}</div>
-            <div style={{flex:1,minWidth:0}}><p style={{fontSize:13,fontWeight:700,color:w.enabled?"#eee":"#555"}}>{w.name||"未知"}</p><p style={{fontSize:10,color:"#555"}}>{w.email}</p></div>
-            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end",flexShrink:0}}>
-              <button onClick={()=>adToggleUser(w.uid,w.enabled)} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:w.enabled?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:w.enabled?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
-              <button onClick={()=>adKickUser(w.uid,w.name)} style={{fontSize:9,color:"#ef4444",background:"none",border:"none"}}>踢出</button>
-            </div>
-          </div>)}
-        </div>}
-      </div>}
     </div>
 
-    {/* ===== Admin Panel ===== */}
-    {view==="admin"&&isAdmin&&<div style={{maxWidth:600,margin:"0 auto",width:"100%",padding:"0 12px"}}>
-      <div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
-        <div style={{background:"linear-gradient(135deg,#0d3320,#10b981,#06b6d4)",padding:"20px 16px",borderRadius:16}}>
-          <h2 style={{fontSize:20,fontWeight:900,color:"#fff"}}>🔐 管理後台</h2>
-          <p style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>{user?.displayName}</p>
-        </div>
-        {adMsg&&<div className="fi" style={{padding:"10px 16px",borderRadius:10,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",fontSize:13,fontWeight:700,color:"#10b981",textAlign:"center"}}>{adMsg}</div>}
-        <div style={{display:"flex",gap:6}}>
-          {[{id:"key",n:"🔑 API Key"},{id:"wl",n:"👥 白名單"}].map(tb=><button key={tb.id} onClick={()=>setAdminTab(tb.id)} style={{flex:1,padding:"10px",borderRadius:10,fontSize:12,fontWeight:700,background:adminTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1.5px solid "+(adminTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:adminTab===tb.id?"#10b981":"#666"}}>{tb.n}</button>)}
-        </div>
-        {adminTab==="key"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
-          <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid "+(adKeyActive?"rgba(16,185,129,.2)":"rgba(239,68,68,.15)")}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <div><p style={{fontSize:16,fontWeight:800}}>{adKeyActive?"🟢 共享啟用中":"🔴 共享未啟用"}</p>
-                <p style={{fontSize:11,color:"#666",marginTop:2}}>{adKeyActive?adWl.filter(w=>w.enabled).length+" 位用戶使用中":"啟用後登入用戶自動使用此 Key"}</p></div>
-              <button onClick={adToggleActive} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:adKeyActive?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:adKeyActive?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
-            </div>
-            {adSharedKey&&<div style={{padding:10,borderRadius:8,background:"rgba(255,255,255,.02)"}}><p style={{fontSize:10,color:"#888"}}>目前 Key</p><p style={{fontSize:12,fontFamily:"monospace",color:"#ddd",wordBreak:"break-all",marginTop:2}}>{adSharedKey.slice(0,20)}...{adSharedKey.slice(-6)}</p></div>}
+    {/* Admin */}
+    {view==="admin"&&isAdmin&&<div style={{maxWidth:600,margin:"0 auto",padding:"12px"}}>
+      <div style={{background:"linear-gradient(135deg,#0d3320,#10b981,#06b6d4)",padding:"20px 16px",borderRadius:16,marginBottom:12}}><h2 style={{fontSize:20,fontWeight:900,color:"#fff"}}>🔐 管理後台</h2><p style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>{user?.displayName}</p></div>
+      {adMsg&&<div style={{padding:"10px 16px",borderRadius:10,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",fontSize:13,fontWeight:700,color:"#10b981",textAlign:"center",marginBottom:8}}>{adMsg}</div>}
+      <div style={{display:"flex",gap:6,marginBottom:12}}>{[{id:"key",n:"🔑 API Key"},{id:"wl",n:"👥 白名單"}].map(tb=><button key={tb.id} onClick={()=>setAdminTab(tb.id)} style={{flex:1,padding:10,borderRadius:10,fontSize:12,fontWeight:700,background:adminTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1.5px solid "+(adminTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:adminTab===tb.id?"#10b981":"#666"}}>{tb.n}</button>)}</div>
+      {adminTab==="key"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+            <div><p style={{fontSize:16,fontWeight:800}}>{adKeyActive?"🟢 共享啟用中":"🔴 共享未啟用"}</p><p style={{fontSize:11,color:"#666",marginTop:2}}>{adKeyActive?adWl.filter(w=>w.enabled).length+" 位用戶使用中":"啟用後登入用戶自動使用此 Key"}</p></div>
+            <button onClick={adToggleActive} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:adKeyActive?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:adKeyActive?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
           </div>
-          <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-            <p style={{fontSize:14,fontWeight:700,marginBottom:10}}>{adSharedKey?"更換":"設定"} API Key</p>
-            <input type="text" value={adNewKey} onChange={e=>setAdNewKey(e.target.value)} placeholder="AIzaSy..." style={{width:"100%",padding:"12px 14px",borderRadius:10,fontSize:13,color:"#fff",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none",fontFamily:"monospace",marginBottom:10}}/>
-            <button disabled={adSaving} onClick={adSaveKey} style={{width:"100%",padding:12,borderRadius:10,fontSize:14,fontWeight:700,color:"#fff",background:adSaving?"#333":"linear-gradient(135deg,#10b981,#0d9488)",border:"none"}}>{adSaving?"驗證中...":"儲存 Key"}</button>
+          {adSharedKey&&<div style={{padding:10,borderRadius:8,background:"rgba(255,255,255,.02)"}}><p style={{fontSize:10,color:"#888"}}>目前 Key</p><p style={{fontSize:12,fontFamily:"monospace",color:"#ddd",wordBreak:"break-all",marginTop:2}}>{adSharedKey.slice(0,20)}...{adSharedKey.slice(-6)}</p></div>}
+        </div>
+        <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+          <p style={{fontSize:14,fontWeight:700,marginBottom:10}}>{adSharedKey?"更換":"設定"} API Key</p>
+          <input type="text" value={adNewKey} onChange={e=>setAdNewKey(e.target.value)} placeholder="AIzaSy..." style={{width:"100%",padding:"12px 14px",borderRadius:10,fontSize:13,color:"#fff",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none",fontFamily:"monospace",marginBottom:10}}/>
+          <button disabled={adSaving} onClick={adSaveKey} style={{width:"100%",padding:12,borderRadius:10,fontSize:14,fontWeight:700,color:"#fff",background:adSaving?"#333":"linear-gradient(135deg,#10b981,#0d9488)",border:"none"}}>{adSaving?"驗證中...":"儲存 Key"}</button>
+        </div>
+      </div>}
+      {adminTab==="wl"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p style={{fontSize:14,fontWeight:700}}>👥 白名單</p><span style={{fontSize:11,padding:"3px 10px",borderRadius:20,background:"rgba(16,185,129,.1)",color:"#10b981",fontWeight:700}}>{adWl.filter(w=>w.enabled).length}/{adWl.length}</span></div>
+        {!adWl.length?<div style={{padding:32,textAlign:"center",color:"#444",fontSize:12}}>尚無用戶</div>
+        :adWl.map(w=><div key={w.uid} style={{display:"flex",alignItems:"center",gap:10,padding:12,borderRadius:12,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
+          <div style={{width:40,height:40,borderRadius:"50%",background:w.enabled?"rgba(16,185,129,.1)":"rgba(239,68,68,.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{w.enabled?"✅":"⛔"}</div>
+          <div style={{flex:1,minWidth:0}}><p style={{fontSize:14,fontWeight:700,color:w.enabled?"#eee":"#555"}}>{w.name||"未知"}</p><p style={{fontSize:10,color:"#555"}}>{w.email}</p></div>
+          <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+            <button onClick={()=>adToggleUser(w.uid,w.enabled)} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:w.enabled?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:w.enabled?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
+            <button onClick={()=>adKickUser(w.uid,w.name)} style={{fontSize:9,color:"#ef4444",background:"none",border:"none"}}>踢出</button>
           </div>
-        </div>}
-        {adminTab==="wl"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:8}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p style={{fontSize:14,fontWeight:700}}>👥 白名單</p>
-            <span style={{fontSize:11,padding:"3px 10px",borderRadius:20,background:"rgba(16,185,129,.1)",color:"#10b981",fontWeight:700}}>{adWl.filter(w=>w.enabled).length} / {adWl.length}</span></div>
-          <p style={{fontSize:11,color:"#555"}}>使用者登入後自動出現。關閉 = 撤銷權限。</p>
-          {!adWl.length?<div style={{padding:32,textAlign:"center",color:"#444",fontSize:12}}>😴 尚無用戶</div>
-          :adWl.map(w=><div key={w.uid} style={{display:"flex",alignItems:"center",gap:10,padding:12,borderRadius:12,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:w.enabled?"rgba(16,185,129,.1)":"rgba(239,68,68,.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0,border:"2px solid "+(w.enabled?"rgba(16,185,129,.25)":"rgba(239,68,68,.15)")}}>{w.enabled?"✅":"⛔"}</div>
-            <div style={{flex:1,minWidth:0}}><p style={{fontSize:14,fontWeight:700,color:w.enabled?"#eee":"#555"}}>{w.name||"未知"}</p><p style={{fontSize:10,color:"#555"}}>{w.email}</p></div>
-            <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end",flexShrink:0}}>
-              <button onClick={()=>adToggleUser(w.uid,w.enabled)} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:w.enabled?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:w.enabled?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
-              <button onClick={()=>adKickUser(w.uid,w.name)} style={{fontSize:9,color:"#ef4444",background:"none",border:"none"}}>踢出</button>
-            </div>
-          </div>)}
-        </div>}
-      </div>
+        </div>)}
+      </div>}
     </div>}
 
     {/* Sidebar */}
@@ -951,7 +897,7 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 <script>
-if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>r.forEach(sw=>sw.unregister()))}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{})}
 </script>
 </body>
 </html>
