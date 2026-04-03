@@ -109,6 +109,8 @@ id:{
   min:"mnt",km:"km",m:"m",
 }};
 let _lang=getLang();const t=k=>I18N[_lang]?.[k]||I18N.zh[k]||k;
+const CNAME={tw:{zh:"台灣",id:"Taiwan"},jp:{zh:"日本",id:"Jepang"},th:{zh:"泰國",id:"Thailand"},cn:{zh:"中國",id:"Tiongkok"},kr:{zh:"韓國",id:"Korea Selatan"},hk:{zh:"香港",id:"Hong Kong"},vn:{zh:"越南",id:"Vietnam"},mo:{zh:"澳門",id:"Makau"},us:{zh:"美國",id:"Amerika"},sg:{zh:"新加坡",id:"Singapura"},my:{zh:"馬來西亞",id:"Malaysia"}};
+const cn=c=>CNAME[c.id]?.[_lang]||c.n;
 
 /* ======= 11 國區域資料 ======= */
 const COUNTRIES=[
@@ -651,11 +653,11 @@ function App(){
   /* ========== 選國家 ========== */
   if(!country)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}}><div className="hero-bg"/><div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",position:"relative",zIndex:1}}>
     <div style={{position:"absolute",top:16,right:16,display:"flex",gap:6,zIndex:10}}>
-      <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.15)"}}>{lang==='zh'?'🇮🇩 ID':'🇹🇼 中文'}</button>
+      <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"6px 14px",borderRadius:20,fontSize:12,fontWeight:800,color:"#fff",background:"linear-gradient(135deg,#06b6d4,#0891b2)",border:"none",display:"flex",alignItems:"center",gap:5,boxShadow:"0 2px 10px rgba(6,182,212,.3)"}}><span style={{fontSize:14}}>🌐</span>{lang==='zh'?'🇮🇩 Indonesia':'🇹🇼 中文'}</button>
       {user?<img src={user.photoURL} onClick={signOut} style={{width:28,height:28,borderRadius:"50%",border:"2px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{display:"flex",alignItems:"center",gap:4,padding:"6px 14px",borderRadius:10,fontSize:11,fontWeight:700,color:"#fff",background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)"}}><Ico d={I.login} s={14}/>{t("login")}</button>}
       <button onClick={changeKey} style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#555",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)"}}>🔑</button>
       <a href="guide.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#10b981",background:"rgba(16,185,129,.06)",border:"1px solid rgba(16,185,129,.15)",textDecoration:"none"}}>{t("guide")}</a>
-      <a href="admin.html" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#f59e0b",background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.15)",textDecoration:"none"}}>{t("admin")}</a>
+      <a href="admin/" style={{padding:"6px 10px",borderRadius:8,fontSize:10,color:"#f59e0b",background:"rgba(245,158,11,.06)",border:"1px solid rgba(245,158,11,.15)",textDecoration:"none"}}>{t("admin")}</a>
       {installEvt&&<button onClick={doInstall} style={{padding:"6px 10px",borderRadius:8,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",animation:"glow 2s ease-in-out infinite"}}>{t("install")}</button>}
     </div>
     <div className="fu" style={{textAlign:"center",marginBottom:24,paddingTop:64}}>
@@ -665,7 +667,7 @@ function App(){
     </div>
     <button className="fu" onClick={geolocate} disabled={geoLoading} style={{animationDelay:".1s",display:"flex",alignItems:"center",gap:8,padding:"12px 24px",borderRadius:14,background:"linear-gradient(135deg,#10b981,#0d9488)",color:"#fff",fontSize:14,fontWeight:700,marginBottom:6,animation:"glow 3s ease-in-out infinite"}}>{geoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.nav} s={16} f="white" c="white"/>}{geoLoading?t("geoLocating"):"📍 GPS"}</button>
     {geoMsg&&<p className="fi" style={{fontSize:11,color:"#10b981",marginBottom:8}}>{geoMsg}</p>}
-    <div className="fu" style={{animationDelay:".15s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:400,width:"100%",marginTop:16}}>{COUNTRIES.map(c=><button key={c.id} onClick={()=>setCountry(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"16px 8px",borderRadius:16,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:32}}>{c.f}</span><span style={{fontSize:13,fontWeight:700}}>{c.n}</span><span style={{fontSize:9,color:"#555"}}>{c.regions.length}</span></button>)}</div>
+    <div className="fu" style={{animationDelay:".15s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,maxWidth:400,width:"100%",marginTop:16}}>{COUNTRIES.map(c=><button key={c.id} onClick={()=>setCountry(c.id)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,padding:"16px 8px",borderRadius:16,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc",transition:"all .25s"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.borderColor="rgba(16,185,129,.3)"}} onMouseLeave={e=>{e.currentTarget.style.transform="";e.currentTarget.style.borderColor="rgba(255,255,255,.06)"}}><span style={{fontSize:32}}>{c.f}</span><span style={{fontSize:13,fontWeight:700}}>{cn(c)}</span><span style={{fontSize:9,color:"#555"}}>{c.regions.length}</span></button>)}</div>
   </div></div>;
 
   /* ========== 選區域 ========== */
@@ -673,7 +675,7 @@ function App(){
     <button onClick={()=>setCountry(null)} style={{position:"absolute",top:12,left:16,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>← 選國家</button>
     <div className="fu" style={{textAlign:"center",marginBottom:24}}>
       <span style={{fontSize:48}}>{curCountry.f}</span>
-      <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{curCountry.n}</h2>
+      <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{cn(curCountry)}</h2>
       <p style={{color:"#555",fontSize:12,marginTop:4}}>選擇地區</p>
     </div>
     <div className="fu" style={{animationDelay:".1s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:400,width:"100%"}}>{curCountry.regions.map(r=><button key={r.n} onClick={()=>setRegion(r.n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"14px 6px",borderRadius:14,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}><span style={{fontSize:15,fontWeight:900}}>{r.n}</span><span style={{fontSize:8,color:"#555",textAlign:"center"}}>{r.d}</span></button>)}</div>
@@ -686,7 +688,7 @@ function App(){
     <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,10,15,.93)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
       <div style={{maxWidth:1200,margin:"0 auto",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{curCountry.n}</span></h1>
+          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{cn(curCountry)}</span></h1>
           <button onClick={()=>setRegion(null)} style={{padding:"4px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>{region} ▾</button>
           {/* 天氣 */}
           {wx&&<span style={{fontSize:10,color:"#aaa",display:"flex",alignItems:"center",gap:3}}>{WX_ICON[wx.icon]||"🌤️"}{wx.temp}° {wx.desc}</span>}
@@ -694,7 +696,7 @@ function App(){
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{t(x.k)}</button>)}
           {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{t("login")}</button>}
-          <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"3px 6px",borderRadius:6,fontSize:9,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.12)"}}>{lang==='zh'?'ID':'中'}</button>
+          <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"3px 8px",borderRadius:12,fontSize:10,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#06b6d4,#0891b2)",border:"none",display:"flex",alignItems:"center",gap:3}}>🌐 {lang==='zh'?'🇮🇩':'🇹🇼'}</button>
           <button onClick={()=>setSidebar(!sidebar)} style={{position:"relative",padding:5,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
         </div>
       </div>
