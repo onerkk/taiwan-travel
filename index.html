@@ -342,6 +342,8 @@ function Setup({onDone}){
   const[key,setKey]=useState('');const[busy,setBusy]=useState(false);const[err,setErr]=useState("");const[loadingKey,setLoadingKey]=useState(false);
   const[bgIdx,setBgIdx]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setBgIdx(i=>(i+1)%3),6000);return()=>clearInterval(t)},[]);
+  /* Auth timeout 保護 */
+  useEffect(()=>{const t=setTimeout(()=>setAuthLoading(false),6000);return()=>clearTimeout(t)},[]);
   /* 監聯登入狀態 */
   useEffect(()=>{if(!fbOK){setAuthLoading(false);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthLoading(false);
     if(u&&db){setLoadingKey(true);
