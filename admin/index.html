@@ -51,6 +51,8 @@ function App(){
   useEffect(()=>{window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();setInstallEvt(e)})},[]);
   useEffect(()=>{if(!auth){setLoading(false);return}
     const timeout=setTimeout(()=>setLoading(false),8000);
+    /* 處理 redirect 登入結果 */
+    auth.getRedirectResult().catch(()=>{});
     return auth.onAuthStateChanged(u=>{clearTimeout(timeout);setUser(u);setLoading(false)})},[]);
 
   /* 載入資料 */
@@ -72,7 +74,9 @@ function App(){
   },[user]);
 
   const flash=m=>{setMsg(m);setTimeout(()=>setMsg(''),3500)};
-  const signIn=()=>auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(()=>{});
+  const signIn=()=>{const p=new firebase.auth.GoogleAuthProvider();
+    const isMobile=/Android|iPhone|iPad/i.test(navigator.userAgent);
+    if(isMobile)auth.signInWithRedirect(p);else auth.signInWithPopup(p).catch(()=>auth.signInWithRedirect(p))};
   const signOut=()=>auth.signOut();
 
   /* 儲存 Key */
