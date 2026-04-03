@@ -340,7 +340,6 @@ function Setup({onDone}){
   const[key,setKey]=useState('');const[busy,setBusy]=useState(false);const[err,setErr]=useState("");const[loadingKey,setLoadingKey]=useState(false);
   const[bgIdx,setBgIdx]=useState(0);
   useEffect(()=>{const t=setInterval(()=>setBgIdx(i=>(i+1)%3),6000);return()=>clearInterval(t)},[]);
-  useEffect(()=>{const t=setTimeout(()=>{setAuthLoading(false);setLoadingKey(false)},6000);return()=>clearTimeout(t)},[]);
   /* 監聯登入狀態 */
   useEffect(()=>{if(!fbOK){setAuthLoading(false);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthLoading(false);
     if(u&&db){setLoadingKey(true);
@@ -360,7 +359,7 @@ function Setup({onDone}){
         /* 條件：後台啟用 + 有共享 Key + 此用戶白名單啟用 */
         if(cfg.active&&cfg.sharedKey&&wData.enabled!==false){
           const k=cfg.sharedKey;setKey(k);
-          hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)}).catch(()=>setLoadingKey(false));return;
+          hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)});return;
         }
         /* 不符合 → 清掉可能殘留的共享 Key，改查個人 Key */
         const lk=getK();
@@ -372,14 +371,14 @@ function Setup({onDone}){
         /* 查個人 Firestore Key */
         db.collection("users").doc(u.uid).get().then(d=>{
           if(d.exists&&d.data().apiKey&&d.data().apiKey!==cfg.sharedKey){
-            const k=d.data().apiKey;setKey(k);hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)}).catch(()=>setLoadingKey(false))}
+            const k=d.data().apiKey;setKey(k);hashKey(k).then(g=>{saveK(k);saveG(g);onDone(k,g)})}
           else if(lk&&lk!==cfg.sharedKey){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);
-            db.collection("users").doc(u.uid).set({apiKey:lk},{merge:true}).catch(()=>{});onDone(lk,g)}).catch(()=>setLoadingKey(false))}
+            db.collection("users").doc(u.uid).set({apiKey:lk},{merge:true}).catch(()=>{});onDone(lk,g)})}
           else setLoadingKey(false)
         }).catch(()=>setLoadingKey(false));
       }).catch(()=>{
         /* Firestore 失敗 fallback：用本地 Key */
-        const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)}).catch(()=>setLoadingKey(false))}
+        const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)})}
         else setLoadingKey(false);
       });
     }
@@ -590,7 +589,6 @@ function App(){
   const changeKey=()=>{localStorage.removeItem('tw_api_key');localStorage.removeItem('tw_group_id');if(user&&db)db.collection("users").doc(user.uid).update({apiKey:firebase.firestore.FieldValue.delete()}).catch(()=>{});setApiKey('');setGroupId('')};
   const[country,setCountry]=useState(null);const[region,setRegion]=useState(null);const[cat,setCat]=useState("attraction");const[search,setSearch]=useState("");const[places,setPlaces]=useState([]);const[loading,setLoading]=useState(false);const[loadCount,setLoadCount]=useState(0);const[itin,setItin]=useState([]);const[sidebar,setSidebar]=useState(false);const[transport,setTransport]=useState("car");const[plan,setPlan]=useState(()=>{try{const s=localStorage.getItem('tw_plan');if(!s)return null;const p=JSON.parse(s);if(p._v!==2){localStorage.removeItem('tw_plan');return null}return p}catch{return null}});const[days,setDays]=useState(2);const[view,setView]=useState("explore");const[geoLoading,setGeoLoading]=useState(false);const[geoMsg,setGeoMsg]=useState("");const[userLoc,setUserLoc]=useState(null);const[sortMode,setSortMode]=useState("dist");const[wx,setWx]=useState(null);
   const[online,setOnline]=useState([]);
-  const[isAdmin,setIsAdmin]=useState(false);const[adminTab,setAdminTab]=useState("key");const[adSharedKey,setAdSharedKey]=useState('');const[adKeyActive,setAdKeyActive]=useState(false);const[adNewKey,setAdNewKey]=useState('');const[adSaving,setAdSaving]=useState(false);const[adWl,setAdWl]=useState([]);const[adMsg,setAdMsg]=useState('');
   const[checkins,setCheckins]=useState({});const[history,setHistory]=useState([]);const[ckMsg,setCkMsg]=useState("");const[ckModal,setCkModal]=useState(null);const[mapTab,setMapTab]=useState("map");const[mapZoom,setMapZoom]=useState(1);const[installEvt,setInstallEvt]=useState(null);const[autoLoading,setAutoLoading]=useState(false);
   useEffect(()=>{const h=e=>{e.preventDefault();setInstallEvt(e)};window.addEventListener('beforeinstallprompt',h);return()=>window.removeEventListener('beforeinstallprompt',h)},[]);
   const doInstall=async()=>{if(!installEvt)return;installEvt.prompt();const r=await installEvt.userChoice;if(r.outcome==='accepted')setInstallEvt(null)};
@@ -603,19 +601,6 @@ function App(){
   /* Online presence */
   useEffect(()=>{if(!fbOK||!user||!db||!groupId||!ready)return;const ref=db.collection("online").doc(user.uid);ref.set({uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,gid:groupId,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});return()=>{ref.delete().catch(()=>{})}},[user,groupId,ready]);
   useEffect(()=>{if(!fbOK||!db||!groupId||!ready)return;const unsub=db.collection("online").where("gid","==",groupId).onSnapshot(snap=>{const u=[];snap.forEach(d=>{const x=d.data();if(!user||x.uid!==user?.uid)u.push(x)});setOnline(u)});return()=>unsub()},[user,groupId,ready]);
-  /* Admin */
-  useEffect(()=>{if(!user||!db||!fbOK)return;(async()=>{try{
-    let cfg=await db.collection("admin").doc("config").get();
-    if(!cfg.exists){await db.collection("admin").doc("config").set({admins:[user.uid],sharedKey:'',active:false});cfg=await db.collection("admin").doc("config").get()}
-    if(cfg.exists){const d=cfg.data();if((d.admins||[]).includes(user.uid)){setIsAdmin(true);setAdSharedKey(d.sharedKey||'');setAdNewKey(d.sharedKey||'');setAdKeyActive(!!d.active);
-      const snap=await db.collection("whitelist").orderBy("addedAt","desc").get();setAdWl(snap.docs.map(x=>({uid:x.id,...x.data()})))}}
-  }catch(e){console.log("admin check err",e)}})()},[user]);
-  const adFlash=m=>{setAdMsg(m);setTimeout(()=>setAdMsg(''),3500)};
-  const adSaveKey=async()=>{if(!adNewKey.trim()||!adNewKey.startsWith("AIza"))return adFlash("❌ Key 需以 AIza 開頭");setAdSaving(true);try{const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',headers:{'Content-Type':'application/json','X-Goog-Api-Key':adNewKey.trim(),'X-Goog-FieldMask':'places.id'},body:JSON.stringify({textQuery:"test",maxResultCount:1})});if(!r.ok){adFlash("❌ Key 無效");setAdSaving(false);return}await db.collection("admin").doc("config").set({sharedKey:adNewKey.trim()},{merge:true});setAdSharedKey(adNewKey.trim());adFlash("✅ Key 已儲存")}catch{adFlash("❌ 失敗")}setAdSaving(false)};
-  const adToggleActive=async()=>{if(!adKeyActive&&!adSharedKey)return adFlash("❌ 請先設定 Key");await db.collection("admin").doc("config").set({active:!adKeyActive},{merge:true});setAdKeyActive(!adKeyActive);adFlash(adKeyActive?"⛔ 已停用":"✅ 已啟用")};
-  const adToggleUser=async(uid,en)=>{await db.collection("whitelist").doc(uid).update({enabled:!en});setAdWl(p=>p.map(w=>w.uid===uid?{...w,enabled:!en}:w));adFlash(en?"⛔ 已停用":"✅ 已啟用")};
-  const adKickUser=async(uid,name)=>{if(!confirm("確定踢出 "+(name||"")+"？"))return;await db.collection("whitelist").doc(uid).delete();setAdWl(p=>p.filter(w=>w.uid!==uid));adFlash("🗑️ 已踢出")};
-
   /* Fetch places */
   useEffect(()=>{if(!region||!curRegion||!apiKey||!ready)return;const uL=userLoc&&userLoc.region===region;const cLat=uL?userLoc.lat:curRegion.lat;const cLng=uL?userLoc.lng:curRegion.lng;
     setLoading(true);setLoadCount(0);
@@ -710,7 +695,6 @@ function App(){
         </div>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
           {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{t(x.k)}</button>)}
-          {isAdmin&&<button onClick={()=>setView("admin")} style={{padding:"4px 8px",borderRadius:6,fontSize:10,fontWeight:700,background:view==="admin"?"#f59e0b":"transparent",color:view==="admin"?"#fff":"#555",border:"none"}}>🔐</button>}
           {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{t("login")}</button>}
           <button onClick={()=>setLang(lang==='zh'?'id':'zh')} style={{padding:"3px 6px",borderRadius:6,fontSize:9,fontWeight:700,color:"#06b6d4",background:"rgba(6,182,212,.06)",border:"1px solid rgba(6,182,212,.12)"}}>{lang==='zh'?'ID':'中'}</button>
           <button onClick={()=>setSidebar(!sidebar)} style={{position:"relative",padding:5,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
@@ -844,39 +828,6 @@ function App(){
         </>}
       </div>}
     </div>
-
-    {/* Admin */}
-    {view==="admin"&&isAdmin&&<div style={{maxWidth:600,margin:"0 auto",padding:"12px"}}>
-      <div style={{background:"linear-gradient(135deg,#0d3320,#10b981,#06b6d4)",padding:"20px 16px",borderRadius:16,marginBottom:12}}><h2 style={{fontSize:20,fontWeight:900,color:"#fff"}}>🔐 管理後台</h2><p style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:2}}>{user?.displayName}</p></div>
-      {adMsg&&<div style={{padding:"10px 16px",borderRadius:10,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",fontSize:13,fontWeight:700,color:"#10b981",textAlign:"center",marginBottom:8}}>{adMsg}</div>}
-      <div style={{display:"flex",gap:6,marginBottom:12}}>{[{id:"key",n:"🔑 API Key"},{id:"wl",n:"👥 白名單"}].map(tb=><button key={tb.id} onClick={()=>setAdminTab(tb.id)} style={{flex:1,padding:10,borderRadius:10,fontSize:12,fontWeight:700,background:adminTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1.5px solid "+(adminTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:adminTab===tb.id?"#10b981":"#666"}}>{tb.n}</button>)}</div>
-      {adminTab==="key"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
-        <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-            <div><p style={{fontSize:16,fontWeight:800}}>{adKeyActive?"🟢 共享啟用中":"🔴 共享未啟用"}</p><p style={{fontSize:11,color:"#666",marginTop:2}}>{adKeyActive?adWl.filter(w=>w.enabled).length+" 位用戶使用中":"啟用後登入用戶自動使用此 Key"}</p></div>
-            <button onClick={adToggleActive} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:adKeyActive?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:adKeyActive?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
-          </div>
-          {adSharedKey&&<div style={{padding:10,borderRadius:8,background:"rgba(255,255,255,.02)"}}><p style={{fontSize:10,color:"#888"}}>目前 Key</p><p style={{fontSize:12,fontFamily:"monospace",color:"#ddd",wordBreak:"break-all",marginTop:2}}>{adSharedKey.slice(0,20)}...{adSharedKey.slice(-6)}</p></div>}
-        </div>
-        <div style={{padding:16,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-          <p style={{fontSize:14,fontWeight:700,marginBottom:10}}>{adSharedKey?"更換":"設定"} API Key</p>
-          <input type="text" value={adNewKey} onChange={e=>setAdNewKey(e.target.value)} placeholder="AIzaSy..." style={{width:"100%",padding:"12px 14px",borderRadius:10,fontSize:13,color:"#fff",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none",fontFamily:"monospace",marginBottom:10}}/>
-          <button disabled={adSaving} onClick={adSaveKey} style={{width:"100%",padding:12,borderRadius:10,fontSize:14,fontWeight:700,color:"#fff",background:adSaving?"#333":"linear-gradient(135deg,#10b981,#0d9488)",border:"none"}}>{adSaving?"驗證中...":"儲存 Key"}</button>
-        </div>
-      </div>}
-      {adminTab==="wl"&&<div style={{display:"flex",flexDirection:"column",gap:8}}>
-        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><p style={{fontSize:14,fontWeight:700}}>👥 白名單</p><span style={{fontSize:11,padding:"3px 10px",borderRadius:20,background:"rgba(16,185,129,.1)",color:"#10b981",fontWeight:700}}>{adWl.filter(w=>w.enabled).length}/{adWl.length}</span></div>
-        {!adWl.length?<div style={{padding:32,textAlign:"center",color:"#444",fontSize:12}}>尚無用戶</div>
-        :adWl.map(w=><div key={w.uid} style={{display:"flex",alignItems:"center",gap:10,padding:12,borderRadius:12,background:"#12141a",border:"1px solid rgba(255,255,255,.04)"}}>
-          <div style={{width:40,height:40,borderRadius:"50%",background:w.enabled?"rgba(16,185,129,.1)":"rgba(239,68,68,.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{w.enabled?"✅":"⛔"}</div>
-          <div style={{flex:1,minWidth:0}}><p style={{fontSize:14,fontWeight:700,color:w.enabled?"#eee":"#555"}}>{w.name||"未知"}</p><p style={{fontSize:10,color:"#555"}}>{w.email}</p></div>
-          <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
-            <button onClick={()=>adToggleUser(w.uid,w.enabled)} style={{position:"relative",width:44,height:24,borderRadius:12,border:"none",cursor:"pointer",background:w.enabled?"linear-gradient(135deg,#10b981,#0d9488)":"#333"}}><span style={{position:"absolute",top:2,left:w.enabled?22:2,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 4px rgba(0,0,0,.3)"}}/></button>
-            <button onClick={()=>adKickUser(w.uid,w.name)} style={{fontSize:9,color:"#ef4444",background:"none",border:"none"}}>踢出</button>
-          </div>
-        </div>)}
-      </div>}
-    </div>}
 
     {/* Sidebar */}
     {sidebar&&<div style={{position:"fixed",inset:0,zIndex:40,background:"rgba(0,0,0,.5)"}} onClick={()=>setSidebar(false)}/>}
