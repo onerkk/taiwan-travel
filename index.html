@@ -458,34 +458,35 @@ function smartPlan(items,days,transId){
   const atts=items.filter(i=>i.category==='attraction');
   const foods=items.filter(i=>i.category==='food');
   const hotels=items.filter(i=>i.category==='hotel');
-  /* 每天框架: 早餐→景點→午餐→景點→晚餐→住宿 */
+  /* 每天框架: 早餐(07:30)→景點→午餐(11:30)→景點→晚餐(17:30)→住宿 */
   const result=[];
   const usedA=new Set(),usedF=new Set(),usedH=new Set();
-  /* 找最近的未用項目 */
   const nearest=(list,used,lat,lng)=>{let best=null,bd=1e9;list.forEach((p,i)=>{if(used.has(i))return;const d=p.lat&&lat?hDist(lat,lng,p.lat,p.lng):9999;if(d<bd){bd=d;best=i}});return best};
-  /* 通勤時間（分鐘）- 路程≈直線×1.4 + 紅綠燈 */
   const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
   const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
+  const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
   const mkStop=(p,time,label)=>({time,name:p.n,address:p.a||'',type:p.category,tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,parking:p.parking||null});
+  const addSpots=(stops,lastP,t,until)=>{let lp=lastP,ct=t;while(toMin(ct)<until){const idx=nearest(atts,usedA,lp?.lat,lp?.lng);if(idx==null)break;const p=atts[idx];usedA.add(idx);const cm=lp?commute(lp,p):0;const s=mkStop(p,ct,'🏛 景點');s.commute=cm;stops.push(s);lp=p;ct=addMin(ct,75+cm);if(toMin(ct)>=until)break}return{lastP:lp,t:ct}};
   for(let d=0;d<days;d++){
-    const stops=[];let t='08:00',lastP=null;
-    /* 早餐 */
+    const stops=[];let t='07:30',lastP=null;
+    /* 早餐 07:30 */
     const bf=nearest(foods,usedF,lastP?.lat||items[0]?.lat,lastP?.lng||items[0]?.lng);
-    if(bf!=null){const p=foods[bf];usedF.add(bf);const s=mkStop(p,t,'🌅 早餐');if(lastP)s.commute=commute(lastP,p);stops.push(s);lastP=p;t=addMin(t,45+s.commute)}
-    /* 上午景點 2 個 */
-    for(let j=0;j<2;j++){const idx=nearest(atts,usedA,lastP?.lat,lastP?.lng);if(idx!=null){const p=atts[idx];usedA.add(idx);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🏛 景點');s.commute=cm;stops.push(s);lastP=p;t=addMin(t,75+cm)}}
-    /* 午餐 */
+    if(bf!=null){const p=foods[bf];usedF.add(bf);const s=mkStop(p,t,'🌅 早餐');if(lastP)s.commute=commute(lastP,p);stops.push(s);lastP=p;t=addMin(t,45+(lastP?s.commute:0))}
+    /* 上午景點（到 11:30 前） */
+    const am=addSpots(stops,lastP,t,11*60+30);lastP=am.lastP;t=am.t;
+    /* 午餐 11:30（若時間未到就等到 11:30） */
+    if(toMin(t)<11*60+30)t='11:30';
     const ln=nearest(foods,usedF,lastP?.lat,lastP?.lng);
     if(ln!=null){const p=foods[ln];usedF.add(ln);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🍜 午餐');s.commute=cm;stops.push(s);lastP=p;t=addMin(t,60+cm)}
-    /* 下午景點 2 個 */
-    for(let j=0;j<2;j++){const idx=nearest(atts,usedA,lastP?.lat,lastP?.lng);if(idx!=null){const p=atts[idx];usedA.add(idx);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🏛 景點');s.commute=cm;stops.push(s);lastP=p;t=addMin(t,75+cm)}}
-    /* 晚餐 */
+    /* 下午景點（到 17:30 前） */
+    const pm=addSpots(stops,lastP,t,17*60+30);lastP=pm.lastP;t=pm.t;
+    /* 晚餐 17:30（若時間未到就等到 17:30） */
+    if(toMin(t)<17*60+30)t='17:30';
     const dn=nearest(foods,usedF,lastP?.lat,lastP?.lng);
     if(dn!=null){const p=foods[dn];usedF.add(dn);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🌙 晚餐');s.commute=cm;stops.push(s);lastP=p;t=addMin(t,75+cm)}
     /* 住宿 */
     const ht=nearest(hotels,usedH,lastP?.lat,lastP?.lng);
     if(ht!=null){const p=hotels[ht];usedH.add(ht);const cm=lastP?commute(lastP,p):0;const s=mkStop(p,t,'🏨 住宿');s.commute=cm;stops.push(s);lastP=p}
-    /* 剩餘景點塞進去 */
     if(d===days-1){[...usedA].length;atts.forEach((p,i)=>{if(!usedA.has(i)){usedA.add(i);t=addMin(t,60);stops.push(mkStop(p,t,'🏛 額外'))}})}
     result.push({day:d+1,stops});
   }
@@ -511,18 +512,21 @@ async function autoRecommend(apiKey,cLat,cLng,regionName,days,transId){
   const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
   const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
   const mkS=(p,time,label)=>({time,name:p.n,address:p.a||'',type:label.includes('景點')?'attraction':'food',tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,rating:p.r,rc:p.rc,parking:p.parking||null});
+  const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
   const result=[];let aIdx=0;
   for(let d=0;d<days;d++){
-    const stops=[];let t='08:00',last=null;
-    /* 早餐 */
+    const stops=[];let t='07:30',last=null;
+    /* 早餐 07:30 */
     if(sBf[d]){const p=sBf[d],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🌅 早餐'),commute:cm});last=p;t=addMin(t,45+cm)}
-    /* 上午景點×2 */
-    for(let j=0;j<2&&aIdx<sAtts.length;j++,aIdx++){const p=sAtts[aIdx],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏛 景點'),commute:cm});last=p;t=addMin(t,75+cm)}
-    /* 午餐 */
+    /* 上午景點（到 11:30 前） */
+    while(toMin(t)<11*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏛 景點'),commute:cm});last=p;t=addMin(t,75+cm);aIdx++}
+    /* 午餐 11:30 */
+    if(toMin(t)<11*60+30)t='11:30';
     if(sLn[d]){const p=sLn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🍜 午餐'),commute:cm});last=p;t=addMin(t,60+cm)}
-    /* 下午景點×2 */
-    for(let j=0;j<2&&aIdx<sAtts.length;j++,aIdx++){const p=sAtts[aIdx],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏛 景點'),commute:cm});last=p;t=addMin(t,75+cm)}
-    /* 晚餐 */
+    /* 下午景點（到 17:30 前） */
+    while(toMin(t)<17*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏛 景點'),commute:cm});last=p;t=addMin(t,75+cm);aIdx++}
+    /* 晚餐 17:30 */
+    if(toMin(t)<17*60+30)t='17:30';
     if(sDn[d]){const p=sDn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🌙 晚餐'),commute:cm});last=p;t=addMin(t,75+cm)}
     /* 住宿 */
     if(sHt[d%sHt.length]){const p=sHt[d%sHt.length],cm=last?commute(last,p):0;stops.push({...mkS(p,t,'🏨 住宿'),commute:cm});last=p}
@@ -708,19 +712,20 @@ function App(){
     {ckMsg&&<div className="fi" style={{position:"fixed",top:56,left:"50%",transform:"translateX(-50%)",zIndex:100,padding:"12px 24px",borderRadius:14,background:"#12141a",border:"1px solid rgba(16,185,129,.3)",boxShadow:"0 8px 32px rgba(0,0,0,.5)",fontSize:13,fontWeight:700,color:"#10b981",whiteSpace:"nowrap",maxWidth:"90vw",overflow:"hidden",textOverflow:"ellipsis"}}>{ckMsg}</div>}
     {ckModal&&<CkModal place={ckModal} onConfirm={doCheckin} onClose={()=>setCkModal(null)} online={online}/>}
     <div style={{position:"sticky",top:0,zIndex:50,background:"rgba(8,10,15,.93)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
-      <div style={{maxWidth:1200,margin:"0 auto",padding:"8px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+      <div style={{maxWidth:1200,margin:"0 auto",padding:"10px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <h1 style={{fontSize:13,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{cn(curCountry)}</span></h1>
-          <button onClick={()=>setRegion(null)} style={{padding:"4px 8px",borderRadius:6,fontSize:10,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>{region} ▾</button>
+          <h1 style={{fontSize:15,fontWeight:900,cursor:"pointer"}} onClick={()=>{setRegion(null)}}><span style={{color:"#10b981"}}>{curCountry.f}</span><span style={{color:"#666",marginLeft:4}}>{cn(curCountry)}</span></h1>
+          <button onClick={()=>setRegion(null)} style={{padding:"4px 8px",borderRadius:6,fontSize:12,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>{region} ▾</button>
           {/* 天氣 */}
-          {wx&&<span style={{fontSize:10,color:"#aaa",display:"flex",alignItems:"center",gap:3}}>{WX_ICON[wx.icon]||"🌤️"}{wx.temp}° {wx.desc}</span>}
+          {wx&&<span style={{fontSize:11,color:"#aaa",display:"flex",alignItems:"center",gap:3}}>{WX_ICON[wx.icon]||"🌤️"}{wx.temp}° {wx.desc}</span>}
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:4}}>
-          {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{tr(x.k)}</button>)}
-          {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{tr("login")}</button>}
+        <div style={{display:"flex",alignItems:"center",gap:5}}>
+          {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"5px 12px",borderRadius:6,fontSize:12,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{tr(x.k)}</button>)}
+          {isAdmin&&<button onClick={()=>setView("admin")} style={{padding:"5px 8px",borderRadius:6,fontSize:12,fontWeight:700,background:view==="admin"?"#f59e0b":"transparent",color:view==="admin"?"#fff":"#555",border:"none"}}>🔐</button>}
+          {user?<img src={user.photoURL} onClick={signOut} style={{width:26,height:26,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{tr("login")}</button>}
           <div style={{display:"flex",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.02)"}}>
-            <button onClick={()=>setLang('zh')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555"}}>中</button>
-            <button onClick={()=>setLang('id')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='id'?"#10b981":"transparent",color:lang==='id'?"#fff":"#555"}}>ID</button>
+            <button onClick={()=>setLang('zh')} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555"}}>中</button>
+            <button onClick={()=>setLang('id')} style={{padding:"3px 8px",fontSize:10,fontWeight:700,border:"none",background:lang==='id'?"#10b981":"transparent",color:lang==='id'?"#fff":"#555"}}>ID</button>
           </div>
           <button onClick={()=>setSidebar(!sidebar)} style={{position:"relative",padding:5,borderRadius:8,color:"#555",background:"none",border:"none"}}><Ico d={I.menu} s={18}/>{itin.length>0&&<span style={{position:"absolute",top:-2,right:-2,width:16,height:16,borderRadius:"50%",background:"#10b981",color:"#fff",fontSize:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>{itin.length}</span>}</button>
         </div>
