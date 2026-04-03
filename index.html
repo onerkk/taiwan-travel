@@ -244,7 +244,7 @@ function Card({p,catId,onAdd,added,apiKey,gm,wx,onCk,user}){
       <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,#12141a 0%,rgba(18,20,26,.3) 40%,rgba(0,0,0,.15) 100%)"}}/>
       {p.r>0&&<div style={{position:"absolute",top:10,right:10,display:"flex",alignItems:"center",gap:4,padding:"5px 10px",borderRadius:20,background:"rgba(0,0,0,.7)",backdropFilter:"blur(6px)"}}><Ico d={I.star} s={11} c="#fbbf24" f="#fbbf24"/><span style={{fontSize:12,fontWeight:800}}>{p.r}</span>{p.rc>0&&<span style={{fontSize:10,color:"#aaa"}}>({p.rc>999?(p.rc/1000).toFixed(1)+'k':p.rc})</span>}</div>}
       <div style={{position:"absolute",top:10,left:10,display:"flex",gap:5,flexWrap:"wrap"}}>
-        <span style={{padding:"4px 12px",borderRadius:20,background:c.c,fontSize:11,fontWeight:800,color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{t(c.nk)}</span>
+        <span style={{padding:"4px 12px",borderRadius:20,background:c.c,fontSize:11,fontWeight:800,color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{tr(c.nk)}</span>
         {p.typeName&&<span style={{padding:"4px 10px",borderRadius:20,background:"rgba(0,0,0,.6)",backdropFilter:"blur(6px)",fontSize:10,fontWeight:700,color:"#ddd"}}>{p.typeName}</span>}
         {p.isOpen!=null&&<span style={{padding:"4px 10px",borderRadius:20,background:p.isOpen?"rgba(16,185,129,.85)":"rgba(239,68,68,.85)",fontSize:10,fontWeight:800,color:"#fff",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>{p.isOpen?tr("open"):tr("closed")}</span>}
       </div>
@@ -716,7 +716,7 @@ function App(){
           {wx&&<span style={{fontSize:10,color:"#aaa",display:"flex",alignItems:"center",gap:3}}>{WX_ICON[wx.icon]||"🌤️"}{wx.temp}° {wx.desc}</span>}
         </div>
         <div style={{display:"flex",alignItems:"center",gap:4}}>
-          {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{t(x.k)}</button>)}
+          {[{v:"explore",k:"explore"},{v:"map",k:"map"},{v:"plan",k:"plan"}].map(x=><button key={x.v} onClick={()=>setView(x.v)} style={{padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:700,background:view===x.v?"#10b981":"transparent",color:view===x.v?"#fff":"#555",border:"none"}}>{tr(x.k)}</button>)}
           {user?<img src={user.photoURL} onClick={signOut} style={{width:22,height:22,borderRadius:"50%",border:"1.5px solid #10b981",cursor:"pointer"}} referrerPolicy="no-referrer"/>:<button onClick={signIn} style={{padding:"3px 8px",borderRadius:6,fontSize:9,fontWeight:700,color:"#10b981",background:"rgba(16,185,129,.08)",border:"1px solid rgba(16,185,129,.15)"}}>{tr("login")}</button>}
           <div style={{display:"flex",borderRadius:12,overflow:"hidden",border:"1px solid rgba(255,255,255,.08)",background:"rgba(255,255,255,.02)"}}>
             <button onClick={()=>setLang('zh')} style={{padding:"2px 6px",fontSize:9,fontWeight:700,border:"none",background:lang==='zh'?"#10b981":"transparent",color:lang==='zh'?"#fff":"#555"}}>中</button>
@@ -733,11 +733,11 @@ function App(){
       {view==="explore"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:10}}>
         <div style={{position:"sticky",top:0,zIndex:20,background:"#080a0f",paddingTop:4,paddingBottom:8,display:"flex",flexDirection:"column",gap:8}}>
           <div style={{display:"flex",gap:4,alignItems:"center"}}>
-            {CATS.map(c=>{const a=cat===c.id;const icons={attraction:"🏛",food:"🍜",hotel:"🏨",fishing:"🎣",camping:"⛺"};return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,padding:"8px 4px",borderRadius:10,fontSize:11,fontWeight:700,background:a?c.c+"22":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"55":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}><span style={{fontSize:13}}>{icons[c.id]||""}</span>{t(c.nk)}</button>})}
+            {CATS.map(c=>{const a=cat===c.id;const icons={attraction:"🏛",food:"🍜",hotel:"🏨",fishing:"🎣",camping:"⛺"};return <button key={c.id} onClick={()=>{setCat(c.id);setSearch("")}} style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:3,padding:"8px 4px",borderRadius:10,fontSize:11,fontWeight:700,background:a?c.c+"22":"rgba(255,255,255,.02)",border:"1.5px solid "+(a?c.c+"55":"rgba(255,255,255,.04)"),color:a?c.c:"#6b7280"}}><span style={{fontSize:13}}>{icons[c.id]||""}</span>{tr(c.nk)}</button>})}
             <button onClick={refresh} style={{padding:"8px 6px",borderRadius:8,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",color:"#555",flexShrink:0}}><Ico d={I.reload} s={14}/></button>
           </div>
           <div style={{display:"flex",gap:6,alignItems:"center"}}>
-            {[{id:"dist",k:"nearest"},{id:"rating",k:"rating"}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{t(s.k)}</button>)}
+            {[{id:"dist",k:"nearest"},{id:"rating",k:"rating"}].map(s=><button key={s.id} onClick={()=>setSortMode(s.id)} style={{padding:"5px 10px",borderRadius:8,fontSize:10,fontWeight:700,background:sortMode===s.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(sortMode===s.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:sortMode===s.id?"#10b981":"#666"}}>{tr(s.k)}</button>)}
             <div style={{flex:1}}/>
             <span style={{fontSize:9,color:"#444"}}>{loading?tr('loading')+(loadCount>0?' ('+loadCount+')':''):places.length?places.length+tr('items'):""}</span>
           </div>
@@ -806,7 +806,7 @@ function App(){
               <button onClick={()=>setDays(Math.min(7,days+1))} style={{padding:"6px 14px",color:"#777",fontWeight:700,fontSize:18,background:"none",border:"none"}}>+</button>
             </div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,maxWidth:340,margin:"0 auto 20px"}}>{TRANS.map(tr=><button key={tr.id} onClick={()=>setTransport(tr.id)} style={{padding:"10px 6px",borderRadius:10,textAlign:"center",background:transport===tr.id?"rgba(16,185,129,.1)":"rgba(255,255,255,.02)",border:"1.5px solid "+(transport===tr.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:transport===tr.id?"#10b981":"#777"}}><div style={{fontSize:20}}>{tr.e}</div><div style={{fontSize:10,fontWeight:700,marginTop:2}}>{t(tr.nk)}</div></button>)}</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,maxWidth:340,margin:"0 auto 20px"}}>{TRANS.map(tx=><button key={tx.id} onClick={()=>setTransport(tx.id)} style={{padding:"10px 6px",borderRadius:10,textAlign:"center",background:transport===tx.id?"rgba(16,185,129,.1)":"rgba(255,255,255,.02)",border:"1.5px solid "+(transport===tx.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.04)"),color:transport===tx.id?"#10b981":"#777"}}><div style={{fontSize:20}}>{tx.e}</div><div style={{fontSize:10,fontWeight:700,marginTop:2}}>{tr(tx.nk)}</div></button>)}</div>
           {/* 兩個按鈕 */}
           <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
             {/* 自動推薦 */}
