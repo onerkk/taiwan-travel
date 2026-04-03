@@ -1,4 +1,5 @@
 {
+  "id": "/taiwan-travel/admin/",
   "name": "旅遊通 管理後台",
   "short_name": "管理後台",
   "start_url": "./",
