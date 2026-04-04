@@ -89,6 +89,11 @@ zh:{
   guide:"📖 說明",admin:"🔐 管理",install:"📲 安裝 App",changeKey:"🔑",
   breakfast:"🌅 早餐",lunch:"🍜 午餐",dinner:"🌙 晚餐",hotelLabel:"🏨 住宿",spot:"🏛 景點",extra:"🏛 額外",
   min:"分",km:"km",m:"m",
+  labelSpot:"景點",labelBreakfast:"早餐",labelLunch:"午餐",labelDinner:"晚餐",labelHotel:"住宿",labelExtra:"額外",
+  driving:"自駕",walking:"步行",transit:"公車",trainMode:"火車",
+  depart:"出發",mins:"分",swap:"換",aiAuto2:"AI 自動推薦行程",customTitle:"自訂行程",
+  sortedList:"已排行程",addFromBelow:"從下方選擇景點加入",waitList:"待選景點",allAdded:"所有景點已排入行程",
+  genPlan:"產生行程",planning:"規劃中...",cancelCustom:"取消自訂",customPlan:"自訂行程",
 },
 id:{
   explore:"Jelajah",map:"Peta",plan:"Rencana",attraction:"Wisata",food:"Kuliner",hotel:"Penginapan",fishing:"Memancing",camping:"Kemping",
@@ -111,10 +116,17 @@ id:{
   guide:"📖 Panduan",admin:"🔐 Admin",install:"📲 Install App",changeKey:"🔑",
   breakfast:"🌅 Sarapan",lunch:"🍜 Makan Siang",dinner:"🌙 Makan Malam",hotelLabel:"🏨 Penginapan",spot:"🏛 Wisata",extra:"🏛 Ekstra",
   min:"mnt",km:"km",m:"m",
+  labelSpot:"Wisata",labelBreakfast:"Sarapan",labelLunch:"Makan Siang",labelDinner:"Makan Malam",labelHotel:"Penginapan",labelExtra:"Ekstra",
+  driving:"Berkendara",walking:"Jalan Kaki",transit:"Bus",trainMode:"Kereta",
+  depart:"Berangkat",mins:"mnt",swap:"Ganti",aiAuto2:"AI Rekomendasi Otomatis",customTitle:"Kustom",
+  sortedList:"Daftar Tersusun",addFromBelow:"Pilih tempat dari bawah",waitList:"Daftar Tunggu",allAdded:"Semua sudah ditambahkan",
+  genPlan:"Buat Rencana",planning:"Merencanakan...",cancelCustom:"Batalkan",customPlan:"Kustom Rencana",
 }};
 let _lang=getLang();const tr=k=>I18N[_lang]?.[k]||I18N.zh[k]||k;
 const CNAME={tw:{zh:"台灣",id:"Taiwan"},jp:{zh:"日本",id:"Jepang"},th:{zh:"泰國",id:"Thailand"},cn:{zh:"中國",id:"Tiongkok"},kr:{zh:"韓國",id:"Korea Selatan"},hk:{zh:"香港",id:"Hong Kong"},vn:{zh:"越南",id:"Vietnam"},mo:{zh:"澳門",id:"Makau"},us:{zh:"美國",id:"Amerika"},sg:{zh:"新加坡",id:"Singapura"},my:{zh:"馬來西亞",id:"Malaysia"}};
 const cn=c=>CNAME[c.id]?.[_lang]||c.n;
+const trLabel=l=>{if(!l)return'';const m={'🌅 早餐':'🌅 '+tr('labelBreakfast'),'🍜 午餐':'🍜 '+tr('labelLunch'),'🌙 晚餐':'🌙 '+tr('labelDinner'),'🏨 住宿':'🏨 '+tr('labelHotel'),'🏛 景點':'🏛 '+tr('labelSpot'),'🏛 額外':'🏛 '+tr('labelExtra')};return m[l]||l};
+const trMode=m=>{const t={car:tr('driving'),walk:tr('walking'),bus:tr('transit'),train:tr('trainMode')};return t[m]||m};
 
 /* ======= 11 國區域資料 ======= */
 const COUNTRIES=[
@@ -815,11 +827,11 @@ function App(){
 
   /* ========== 選區域 ========== */
   if(!region)return <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative"}}><div className="hero-bg"/><div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px 16px",position:"relative",zIndex:1}}>
-    <button onClick={()=>setCountry(null)} style={{position:"absolute",top:12,left:16,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>← 選國家</button>
+    <button onClick={()=>setCountry(null)} style={{position:"absolute",top:12,left:16,padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:700,color:"#888",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.06)"}}>{lang==="id"?"← Pilih Negara":"← 選國家"}</button>
     <div className="fu" style={{textAlign:"center",marginBottom:24}}>
       <span style={{fontSize:48}}>{curCountry.f}</span>
       <h2 style={{fontSize:28,fontWeight:900,marginTop:8}}>{cn(curCountry)}</h2>
-      <p style={{color:"#555",fontSize:12,marginTop:4}}>選擇地區</p>
+      <p style={{color:"#555",fontSize:12,marginTop:4}}>{lang==="id"?"Pilih Wilayah":"選擇地區"}</p>
     </div>
     <div className="fu" style={{animationDelay:".1s",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,maxWidth:400,width:"100%"}}>{curCountry.regions.map(r=><button key={r.n} onClick={()=>setRegion(r.n)} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"14px 6px",borderRadius:14,background:"rgba(255,255,255,.02)",border:"1px solid rgba(255,255,255,.06)",color:"#ccc"}} onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)"}} onMouseLeave={e=>{e.currentTarget.style.transform=""}}><span style={{fontSize:15,fontWeight:900}}>{r.n}</span><span style={{fontSize:8,color:"#555",textAlign:"center"}}>{r.d}</span></button>)}</div>
   </div></div>;
@@ -874,7 +886,7 @@ function App(){
       {view==="map"&&<div className="fi" style={{display:"flex",flexDirection:"column",gap:12}}>
         <div style={{textAlign:"center"}}><h2 style={{fontSize:20,fontWeight:900}}>{curCountry.f} {tr('travelMap')}</h2>
           {user&&<p style={{fontSize:11,color:"#666",marginTop:4}}>{user.displayName} ・ {totalCk}  {tr("checkin")}</p>}
-          {!user&&<p style={{fontSize:11,color:"#f59e0b",marginTop:4}}>登入即可打卡</p>}
+          {!user&&<p style={{fontSize:11,color:"#f59e0b",marginTop:4}}>{lang==="id"?"Masuk untuk check-in":"登入即可打卡"}</p>}
           {online.length>0&&<p style={{fontSize:10,color:"#10b981",marginTop:4}}>👥 {online.length} {tr('onlinePals')}</p>}
         </div>
         <div style={{display:"flex",gap:6,justifyContent:"center",alignItems:"center"}}>{[{id:"map",l:tr("mapTab")},{id:"log",l:tr("logTab")}].map(tb=><button key={tb.id} onClick={()=>setMapTab(tb.id)} style={{padding:"6px 16px",borderRadius:8,fontSize:12,fontWeight:700,background:mapTab===tb.id?"rgba(16,185,129,.12)":"rgba(255,255,255,.02)",border:"1px solid "+(mapTab===tb.id?"rgba(16,185,129,.3)":"rgba(255,255,255,.06)"),color:mapTab===tb.id?"#10b981":"#666"}}>{tb.l}</button>)}</div>
@@ -887,7 +899,7 @@ function App(){
           <GMap apiKey={apiKey} regions={curCountry.regions} checkins={checkins} country={country} region={region} online={sharePos?online:[]} userLoc={sharePos?userLoc:null} user={user} onSelect={n=>{setRegion(n);setView("explore")}} history={history}/>
           <div style={{display:"flex",justifyContent:"center",gap:12,fontSize:9,color:"#555",marginTop:8}}><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(255,255,255,.15)",border:"1px solid #888"}}/>{tr("unvisited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.5)"}}/>{tr("visited")}</span><span style={{display:"flex",alignItems:"center",gap:3}}><span style={{width:8,height:8,borderRadius:"50%",background:"rgba(16,185,129,.9)"}}/>{tr("frequent")}</span></div>
           {wx&&<div style={{padding:14,borderRadius:14,background:"#12141a",border:"1px solid rgba(255,255,255,.04)",marginTop:8}}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:32}}>{WX_ICON[wx.icon]||"🌤️"}</span><div><p style={{fontSize:20,fontWeight:900}}>{wx.temp}°C</p><p style={{fontSize:11,color:"#888"}}>{wx.desc}</p></div><div style={{marginLeft:"auto",fontSize:10,color:"#666",textAlign:"right"}}><p>體感 {wx.feel}°</p><p>濕度 {wx.humidity}%</p><p>風速 {wx.wind}km/h</p></div></div>
+            <div style={{display:"flex",alignItems:"center",gap:12}}><span style={{fontSize:32}}>{WX_ICON[wx.icon]||"🌤️"}</span><div><p style={{fontSize:20,fontWeight:900}}>{wx.temp}°C</p><p style={{fontSize:11,color:"#888"}}>{wx.desc}</p></div><div style={{marginLeft:"auto",fontSize:10,color:"#666",textAlign:"right"}}><p>{lang==="id"?"Terasa":"體感"} {wx.feel}°</p><p>{lang==="id"?"Kelembaban":"濕度"} {wx.humidity}%</p><p>{lang==="id"?"Angin":"風速"} {wx.wind}km/h</p></div></div>
           </div>}
         </>}
         {mapTab==="log"&&<div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -943,13 +955,13 @@ function App(){
               <div style={{width:"100%",maxWidth:320,height:1,background:"rgba(255,255,255,.06)",margin:"8px 0"}}/>
               <button onClick={async()=>{setAutoLoading(true);const ds=smartPlan(itin,days,transport);let p={title:curCountry.f+' '+days+'日遊',days:ds,gm:curT.gm,_v:2};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}setAutoLoading(false)}} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#10b981,#0d9488)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}><Ico d={I.zap} s={14} f="white" c="white"/>{tr("manualPlan")} {itin.length} {tr("manualPlanSuffix")}</button>
               <p style={{fontSize:10,color:"#555",textAlign:"center"}}>{tr("manualDesc")}</p>
-              <button onClick={()=>setCustomMode(!customMode)} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:customMode?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#6366f1,#4f46e5)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}>{customMode?"✕ 取消自訂":"✏️ 自訂行程"}</button>
+              <button onClick={()=>setCustomMode(!customMode)} style={{padding:"12px 28px",borderRadius:14,fontSize:14,fontWeight:700,color:"#fff",background:customMode?"linear-gradient(135deg,#ef4444,#dc2626)":"linear-gradient(135deg,#6366f1,#4f46e5)",border:"none",display:"inline-flex",alignItems:"center",gap:6,width:"100%",maxWidth:320,justifyContent:"center"}}>{customMode?<>✕ {tr("cancelCustom")}</>:<>✏️ {tr("customPlan")}</>}</button>
             </>}
             {/* 自訂行程 builder */}
             {customMode&&<div style={{width:"100%",maxWidth:400,margin:"0 auto"}}>
               <div style={{padding:16,borderRadius:14,background:"rgba(99,102,241,.04)",border:"1px solid rgba(99,102,241,.15)",marginBottom:12}}>
-                <h4 style={{fontSize:14,fontWeight:800,color:"#818cf8",marginBottom:8}}>📋 已排行程 ({customStops.length})</h4>
-                {!customStops.length?<p style={{fontSize:11,color:"#555",textAlign:"center",padding:"12px 0"}}>從下方選擇景點加入</p>
+                <h4 style={{fontSize:14,fontWeight:800,color:"#818cf8",marginBottom:8}}>📋 {tr("sortedList")} ({customStops.length})</h4>
+                {!customStops.length?<p style={{fontSize:11,color:"#555",textAlign:"center",padding:"12px 0"}}>{tr("addFromBelow")}</p>
                 :customStops.map((s,i)=><div key={s.id} style={{display:"flex",alignItems:"center",gap:6,padding:"8px 0",borderBottom:i<customStops.length-1?"1px solid rgba(255,255,255,.03)":"none"}}>
                   <div style={{display:"flex",flexDirection:"column",gap:2,flexShrink:0}}>
                     <button onClick={()=>moveCustom(i,-1)} disabled={i===0} style={{padding:"1px 4px",fontSize:10,background:"none",border:"none",color:i===0?"#333":"#888",cursor:i===0?"default":"pointer"}}>▲</button>
@@ -957,22 +969,22 @@ function App(){
                   </div>
                   <input type="time" value={s.time} onChange={e=>setCustomTime(i,e.target.value)} style={{width:70,padding:"4px 6px",borderRadius:6,fontSize:12,color:"#10b981",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none",fontFamily:"monospace"}}/>
                   <select value={s.label} onChange={e=>setCustomLabel(i,e.target.value)} style={{padding:"4px 4px",borderRadius:6,fontSize:10,color:"#aaa",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",outline:"none"}}>
-                    <option value="🏛 景點">🏛 景點</option>
-                    <option value="🌅 早餐">🌅 早餐</option>
-                    <option value="🍜 午餐">🍜 午餐</option>
-                    <option value="🌙 晚餐">🌙 晚餐</option>
-                    <option value="🏨 住宿">🏨 住宿</option>
+                    <option value="🏛 景點">🏛 {tr("labelSpot")}</option>
+                    <option value="🌅 早餐">🌅 {tr("labelBreakfast")}</option>
+                    <option value="🍜 午餐">🍜 {tr("labelLunch")}</option>
+                    <option value="🌙 晚餐">🌙 {tr("labelDinner")}</option>
+                    <option value="🏨 住宿">🏨 {tr("labelHotel")}</option>
                   </select>
                   <span style={{flex:1,fontSize:12,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.name}</span>
                   <button onClick={()=>rmCustomStop(i)} style={{padding:"3px 6px",borderRadius:4,fontSize:10,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"none",flexShrink:0}}>✕</button>
                 </div>)}
                 {customStops.length>0&&<button disabled={autoLoading} onClick={buildCustomPlan} style={{width:"100%",marginTop:12,padding:12,borderRadius:10,fontSize:14,fontWeight:700,color:"#fff",background:autoLoading?"#333":"linear-gradient(135deg,#6366f1,#4f46e5)",border:"none"}}>
-                  {autoLoading?"規劃中...":"🚀 產生行程"}
+                  {autoLoading?tr("planning"):"🚀 "+tr("genPlan")}
                 </button>}
               </div>
               <div style={{padding:16,borderRadius:14,background:"rgba(255,255,255,.01)",border:"1px solid rgba(255,255,255,.04)"}}>
-                <h4 style={{fontSize:14,fontWeight:800,color:"#888",marginBottom:8}}>📌 待選景點 ({customAvail.length})</h4>
-                {!customAvail.length?<p style={{fontSize:11,color:"#555",textAlign:"center",padding:"12px 0"}}>所有景點已排入行程</p>
+                <h4 style={{fontSize:14,fontWeight:800,color:"#888",marginBottom:8}}>📌 {tr("waitList")} ({customAvail.length})</h4>
+                {!customAvail.length?<p style={{fontSize:11,color:"#555",textAlign:"center",padding:"12px 0"}}>{tr("allAdded")}</p>
                 :customAvail.map((p,i)=><div key={p.id||i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 0",borderBottom:i<customAvail.length-1?"1px solid rgba(255,255,255,.03)":"none"}}>
                   <div style={{flex:1,minWidth:0}}>
                     <p style={{fontSize:13,fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.n}</p>
@@ -985,21 +997,21 @@ function App(){
             </div>}
           </div>
         </div>:<>
-          <div style={{textAlign:"center"}}><h2 style={{fontSize:22,fontWeight:900}}>{plan.title}</h2>{plan.auto&&<p style={{fontSize:10,color:"#f59e0b",marginTop:4}}>⚡ AI 自動推薦行程</p>}</div>
+          <div style={{textAlign:"center"}}><h2 style={{fontSize:22,fontWeight:900}}>{plan.title}</h2>{plan.auto&&<p style={{fontSize:10,color:"#f59e0b",marginTop:4}}>⚡ {tr('aiAuto2')}</p>}</div>
           {plan.days?.map(day=><div key={day.day} style={{borderRadius:14,overflow:"hidden",background:"rgba(18,20,26,.85)",border:"1px solid rgba(255,255,255,.05)"}}>
             <div style={{display:"flex",alignItems:"center",gap:12,padding:16,borderBottom:"1px solid rgba(255,255,255,.04)"}}><div style={{width:48,height:48,borderRadius:12,background:"linear-gradient(135deg,#10b981,#0d9488)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:20,color:"#fff"}}>{day.day}</div><p style={{fontWeight:800,fontSize:18}}>Day {day.day}</p></div>
             <div style={{padding:14}}>{day.stops?.map((s,i)=><React.Fragment key={i}>
               {/* 交通卡片（站點之間） */}
               {i>0&&s.commute>0&&<div style={{margin:"4px 0",padding:"10px 14px",borderRadius:10,background:"rgba(6,182,212,.04)",border:"1px solid rgba(6,182,212,.08)"}}>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:s.transitSteps?.length?6:0}}>
-                  <span style={{fontSize:12,fontWeight:700,color:"#06b6d4"}}>{({car:"🚗 自駕",walk:"🚶 步行",bus:"🚌 公車",train:"🚆 火車"})[plan.transId||"car"]||"🚗"} {s.commute}分</span>
-                  <span style={{fontSize:10,color:"#f59e0b",fontWeight:600}}>⏰ {addMinF(s.time,-(s.commute))} 出發</span>
+                  <span style={{fontSize:12,fontWeight:700,color:"#06b6d4"}}>{({car:"🚗 "+tr('driving'),walk:"🚶 "+tr('walking'),bus:"🚌 "+tr('transit'),train:"🚆 "+tr('trainMode')})[plan.transId||"car"]||"🚗"} {s.commute}{tr("mins")}</span>
+                  <span style={{fontSize:10,color:"#f59e0b",fontWeight:600}}>⏰ {addMinF(s.time,-(s.commute))} {tr("depart")}</span>
                 </div>
                 {s.transitSteps?.length>0&&<div style={{display:"flex",flexDirection:"column",gap:4}}>
                   {s.transitSteps.map((st,j)=><div key={j} style={{display:"flex",alignItems:"flex-start",gap:8,padding:"4px 0",borderTop:j?"1px solid rgba(255,255,255,.03)":"none"}}>
                     <span style={{fontSize:14,flexShrink:0,marginTop:1}}>{st.mode==='walk'?"🚶":st.icon||"🚍"}</span>
                     <div style={{flex:1,fontSize:11}}>
-                      {st.mode==='walk'?<span style={{color:"#888"}}>步行 <b>{st.min}分</b></span>
+                      {st.mode==='walk'?<span style={{color:"#888"}}>{tr('walking')} <b>{st.min}{tr('mins')}</b></span>
                       :<div>
                         <div style={{color:"#06b6d4",fontWeight:700}}>{st.line||"公共運輸"} <span style={{color:"#888",fontWeight:400}}>{st.min}分</span></div>
                         {st.from&&<div style={{color:"#aaa",fontSize:10,marginTop:2}}>{st.depTime?<b style={{color:"#10b981"}}>{st.depTime}</b>:"🟢"} {st.from} → {st.arrTime?<b style={{color:"#ef4444"}}>{st.arrTime}</b>:"🔴"} {st.to}</div>}
@@ -1017,8 +1029,8 @@ function App(){
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
                     <p style={{fontWeight:800,fontSize:16,flex:1,minWidth:0}}>{s.name}</p>
-                    {s.label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,.05)",color:"#888",fontWeight:600}}>{s.label}</span>}
-                    <button onClick={()=>removeStop(day.day-1,i)} style={{padding:"3px 6px",borderRadius:6,fontSize:9,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)",flexShrink:0,cursor:"pointer"}}>🔄 換</button>
+                    {s.label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,.05)",color:"#888",fontWeight:600}}>{trLabel(s.label)}</span>}
+                    <button onClick={()=>removeStop(day.day-1,i)} style={{padding:"3px 6px",borderRadius:6,fontSize:9,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)",flexShrink:0,cursor:"pointer"}}>🔄 {tr("swap")}</button>
                   </div>
                   {s.address&&<p style={{fontSize:12,color:"#666",marginTop:3}}>{s.address}</p>}
                   {s.rating>0&&<div style={{display:"flex",alignItems:"center",gap:4,marginTop:3}}><span style={{fontSize:12,color:"#fbbf24",fontWeight:700}}>★ {s.rating}</span>{s.rc>0&&<span style={{fontSize:11,color:"#555"}}>({s.rc})</span>}</div>}
