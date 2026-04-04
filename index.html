@@ -46,6 +46,47 @@ img.ph{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity
 </style>
 </head>
 <body>
+<script>
+(function(){
+  var ua=navigator.userAgent||'';
+  var isInApp=/Line\/|FBAV|FBAN|Instagram|WeChat|MicroMessenger|Twitter|Threads|TikTok|Snapchat|Pinterest|Telegram/i.test(ua);
+  if(!isInApp)return;
+  var isIOS=/iPhone|iPad|iPod/i.test(ua);
+  var lang=localStorage.getItem('tw_lang')||'zh';
+  var id=lang==='id';
+  var appName='LINE';
+  if(/FBAV|FBAN/i.test(ua))appName='Facebook';
+  else if(/Instagram/i.test(ua))appName='Instagram';
+  else if(/WeChat|MicroMessenger/i.test(ua))appName='WeChat';
+  else if(/Twitter/i.test(ua))appName='Twitter';
+  else if(/TikTok/i.test(ua))appName='TikTok';
+  else if(/Telegram/i.test(ua))appName='Telegram';
+  var browser=isIOS?'Safari':'Chrome';
+  var overlay=document.createElement('div');
+  overlay.id='inapp-guide';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#080a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;font-family:-apple-system,sans-serif';
+  overlay.innerHTML=
+    '<div style="font-size:64px;margin-bottom:16px">🌐</div>'+
+    '<h2 style="color:#fff;font-size:22px;font-weight:900;margin-bottom:12px">'+(id?'Buka di Browser':'請使用瀏覽器開啟')+'</h2>'+
+    '<p style="color:#aaa;font-size:14px;line-height:1.8;margin-bottom:24px">'+
+    (id?'Terdeteksi Anda membuka di <b style="color:#f59e0b">'+appName+'</b><br>Beberapa fitur (login, install) memerlukan<br><b style="color:#10b981">'+browser+'</b> untuk berfungsi'
+      :'偵測到您正在 <b style="color:#f59e0b">'+appName+'</b> 內開啟<br>部分功能（登入、安裝）需要使用<br><b style="color:#10b981">'+browser+'</b> 瀏覽器才能正常運作')+'</p>'+
+    '<div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px;margin-bottom:16px;width:100%;max-width:300px">'+
+    '<p style="color:#fff;font-size:14px;font-weight:700;margin-bottom:12px">'+(id?'📖 Langkah':'📖 操作步驟')+'</p>'+
+    (isIOS?
+      '<p style="color:#ccc;font-size:13px;line-height:2;text-align:left">'+
+      (id?'① Ketuk <b style="color:#10b981">⋯</b> atau <b style="color:#10b981">↗</b> di bawah<br>② Pilih "<b style="color:#10b981">Buka di Safari</b>"<br>③ Semua fitur siap digunakan'
+        :'① 點右下角 <b style="color:#10b981">⋯</b> 或 <b style="color:#10b981">↗</b><br>② 選擇「<b style="color:#10b981">在 Safari 中開啟</b>」<br>③ 即可正常使用所有功能')+'</p>'
+    :
+      '<p style="color:#ccc;font-size:13px;line-height:2;text-align:left">'+
+      (id?'① Ketuk <b style="color:#10b981">⋮</b> di kanan atas<br>② Pilih "<b style="color:#10b981">Buka di Browser</b>"<br>③ Semua fitur siap digunakan'
+        :'① 點右上角 <b style="color:#10b981">⋮</b> 選單<br>② 選擇「<b style="color:#10b981">在瀏覽器中開啟</b>」<br>③ 即可正常使用所有功能')+'</p>'
+    )+'</div>'+
+    '<button onclick="document.getElementById(\'inapp-guide\').style.display=\'none\'" style="padding:12px 32px;border-radius:12px;font-size:14px;font-weight:700;color:#888;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);cursor:pointer;margin-top:8px">'+(id?'Saya mengerti, lanjutkan':'我知道了，繼續使用')+'</button>'+
+    '<p style="color:#555;font-size:10px;margin-top:16px">'+(id?'⚠️ Login Google tidak bisa di browser bawaan app':'⚠️ 在內建瀏覽器中可能無法登入 Google 帳號')+'</p>';
+  document.body.appendChild(overlay);
+})();
+</script>
 <div id="root"></div>
 <script>
 window.onerror=function(m,s,l,col,e){document.getElementById('root').innerHTML='<div style="padding:20px;color:#ef4444;font:14px monospace;word-break:break-all"><h2>❌ JS Error</h2><p>'+m+'</p><p>Line: '+l+'</p><p>'+(e?e.stack:'')+'</p></div>';};
@@ -398,8 +439,10 @@ function Setup({onDone}){
       /* 存基本資料 */
       db.collection("users").doc(u.uid).set({email:u.email||"",name:u.displayName||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
       /* 自動註冊白名單（如果不存在就建立，預設 enabled） */
-      db.collection("whitelist").doc(u.uid).get().then(wDoc=>{
-        if(!wDoc.exists)db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{});
+      db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).then(()=>{
+        db.collection("whitelist").doc(u.uid).get().then(wDoc=>{
+          if(wDoc.exists&&wDoc.data().enabled===undefined)db.collection("whitelist").doc(u.uid).update({enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{})
+        })
       }).catch(()=>{});
       /* 查後台：共享 Key 是否啟用 + 此用戶是否有權限 */
       Promise.all([

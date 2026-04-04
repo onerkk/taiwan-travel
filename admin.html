@@ -32,6 +32,20 @@ button{cursor:pointer;font-family:inherit}input{font-family:inherit}
 </style>
 </head>
 <body>
+<script>
+(function(){
+  var ua=navigator.userAgent||'';
+  var isInApp=/Line\/|FBAV|FBAN|Instagram|WeChat|MicroMessenger|Twitter|Threads|TikTok|Snapchat|Pinterest|Telegram/i.test(ua);
+  if(!isInApp)return;
+  var isIOS=/iPhone|iPad|iPod/i.test(ua);
+  var lang=localStorage.getItem('tw_lang')||'zh';var id=lang==='id';
+  var browser=isIOS?'Safari':'Chrome';
+  var d=document.createElement('div');d.id='inapp-guide';
+  d.style.cssText='position:fixed;inset:0;z-index:99999;background:#080a0f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;font-family:sans-serif';
+  d.innerHTML='<div style="font-size:64px;margin-bottom:16px">🌐</div><h2 style="color:#fff;font-size:20px;margin-bottom:12px">'+(id?'Buka di '+browser:'請使用 '+browser+' 開啟')+'</h2><p style="color:#aaa;font-size:13px;line-height:1.8">'+(id?'Browser bawaan tidak bisa login<br>Pilih "Buka di Browser" dari menu':'內建瀏覽器無法正常登入<br>請點選單選擇「在瀏覽器中開啟」')+'</p><button onclick="this.parentElement.style.display=\'none\'" style="margin-top:20px;padding:10px 24px;border-radius:10px;color:#888;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:13px;cursor:pointer">'+(id?'Lanjutkan':'繼續使用')+'</button>';
+  document.body.appendChild(d);
+})();
+</script>
 <div id="root"></div>
 <script type="text/babel">
 const{useState,useEffect}=React;
