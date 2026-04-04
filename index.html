@@ -542,34 +542,42 @@ async function autoRecommend(apiKey,cLat,cLng,regionName,days,transId){
     doSearch(regionName+' 晚餐 餐廳 推薦'),
     doSearch(regionName+' 飯店 民宿 住宿')
   ]);
-  /* 依評分排序 */
+  /* 評分篩選（品質門檻），路線用最近距離排 */
   const byR=a=>[...a].sort((x,y)=>(y.r*Math.log10(y.rc+1))-(x.r*Math.log10(x.rc+1)));
   const sAtts=byR(atts),sBf=byR(breakfasts),sLn=byR(lunches),sDn=byR(dinners),sHt=byR(hotels);
   const commute=(a,b)=>{if(!a?.lat||!b?.lat)return 10;const d=hDist(a.lat,a.lng,b.lat,b.lng)*1.4;return Math.max(2,Math.round(d/speed*60+2))};
-  const addMin=(t,m)=>{const[h,mn]=t.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
+  const addMin=(ti,m)=>{const[h,mn]=ti.split(':').map(Number);const tot=h*60+mn+m;return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0')};
   const mkS=(p,time,label)=>({time,name:p.n,address:p.a||'',type:label.includes('景點')?'attraction':'food',tel:p.tel||'',lat:p.lat,lng:p.lng,mapsUrl:p.mapsUrl,label,commute:0,rating:p.r,rc:p.rc,parking:p.parking||null});
   const toMin=ti=>{const[h,m]=ti.split(':').map(Number);return h*60+m};
-  const result=[];let aIdx=0;
+  /* 找最近的未用項目 */
+  const nearest=(list,used,lat,lng)=>{let best=-1,bd=1e9;list.forEach((p,i)=>{if(used.has(i))return;const d=p.lat&&lat?hDist(lat,lng,p.lat,p.lng):9999;if(d<bd){bd=d;best=i}});return best};
+  const result=[];const usedA=new Set(),usedBf=new Set(),usedLn=new Set(),usedDn=new Set(),usedHt=new Set();
   for(let d=0;d<days;d++){
-    const stops=[];let last=null;
-    /* 早餐 固定 07:30 */
-    if(sBf[d]){const p=sBf[d],cm=last?commute(last,p):0;stops.push({...mkS(p,'07:30','🌅 早餐'),commute:cm});last=p}
-    /* 上午景點 08:15~11:30（先算能不能塞進去再加） */
+    const stops=[];let last={lat:cLat,lng:cLng};
+    /* 早餐 固定 07:30 — 找離上一站最近的 */
+    const bfIdx=nearest(sBf,usedBf,last.lat,last.lng);
+    if(bfIdx>=0){const p=sBf[bfIdx];usedBf.add(bfIdx);const cm=commute(last,p);stops.push({...mkS(p,'07:30','🌅 早餐'),commute:cm});last=p}
+    /* 上午景點 08:15~11:30 — 每次找離上一站最近的 */
     let ct='08:15';
-    while(toMin(ct)+75<11*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;
+    while(toMin(ct)+75<11*60+30){const idx=nearest(sAtts,usedA,last.lat,last.lng);if(idx<0)break;
+      const p=sAtts[idx];const cm=commute(last,p);
       if(toMin(ct)+cm+75>11*60+30)break;
-      stops.push({...mkS(p,ct,'🏛 景點'),commute:cm});last=p;ct=addMin(ct,75+cm);aIdx++}
+      usedA.add(idx);stops.push({...mkS(p,ct,'🏛 景點'),commute:cm});last=p;ct=addMin(ct,75+cm)}
     /* 午餐 固定 12:00 */
-    if(sLn[d]){const p=sLn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,'12:00','🍜 午餐'),commute:cm});last=p}
+    const lnIdx=nearest(sLn,usedLn,last.lat,last.lng);
+    if(lnIdx>=0){const p=sLn[lnIdx];usedLn.add(lnIdx);const cm=commute(last,p);stops.push({...mkS(p,'12:00','🍜 午餐'),commute:cm});last=p}
     /* 下午景點 13:00~17:30 */
     ct='13:00';
-    while(toMin(ct)+75<17*60+30&&aIdx<sAtts.length){const p=sAtts[aIdx],cm=last?commute(last,p):0;
+    while(toMin(ct)+75<17*60+30){const idx=nearest(sAtts,usedA,last.lat,last.lng);if(idx<0)break;
+      const p=sAtts[idx];const cm=commute(last,p);
       if(toMin(ct)+cm+75>17*60+30)break;
-      stops.push({...mkS(p,ct,'🏛 景點'),commute:cm});last=p;ct=addMin(ct,75+cm);aIdx++}
+      usedA.add(idx);stops.push({...mkS(p,ct,'🏛 景點'),commute:cm});last=p;ct=addMin(ct,75+cm)}
     /* 晚餐 固定 18:00 */
-    if(sDn[d]){const p=sDn[d],cm=last?commute(last,p):0;stops.push({...mkS(p,'18:00','🌙 晚餐'),commute:cm});last=p}
+    const dnIdx=nearest(sDn,usedDn,last.lat,last.lng);
+    if(dnIdx>=0){const p=sDn[dnIdx];usedDn.add(dnIdx);const cm=commute(last,p);stops.push({...mkS(p,'18:00','🌙 晚餐'),commute:cm});last=p}
     /* 住宿 固定 19:30 */
-    if(sHt[d%sHt.length]){const p=sHt[d%sHt.length],cm=last?commute(last,p):0;stops.push({...mkS(p,'19:30','🏨 住宿'),commute:cm});last=p}
+    const htIdx=nearest(sHt,usedHt,last.lat,last.lng);
+    if(htIdx>=0){const p=sHt[htIdx];usedHt.add(htIdx);const cm=commute(last,p);stops.push({...mkS(p,'19:30','🏨 住宿'),commute:cm});last=p}
     result.push({day:d+1,stops});
   }
   return result;
@@ -729,6 +737,41 @@ function App(){
   const rm=i=>setItin(p=>p.filter((_,x)=>x!==i));
   const curT=TRANS.find(x=>x.id===transport)||TRANS[0];
   const refresh=()=>{if(!curRegion)return;const uL=userLoc&&userLoc.region===region;const cLat=uL?userLoc.lat:curRegion.lat;const cLng=uL?userLoc.lng:curRegion.lng;cache.clear();setLoading(true);setLoadCount(0);fetchP(apiKey,cLat,cLng,15000,region,cat,uL,n=>setLoadCount(n)).then(d=>{setPlaces(d);setLoading(false)})};
+
+  /* 行程：移除站點並自動補新的 */
+  const removeStop=async(dayIdx,stopIdx)=>{
+    if(!plan)return;const p=JSON.parse(JSON.stringify(plan));
+    const day=p.days[dayIdx];const removed=day.stops[stopIdx];
+    const isSpot=removed.label?.includes('景點')||removed.label?.includes('額外');
+    const isMeal=removed.label?.includes('餐')||removed.label?.includes('早餐');
+    /* 找前後站的位置做搜尋中心 */
+    const prev=stopIdx>0?day.stops[stopIdx-1]:null;
+    const next=stopIdx<day.stops.length-1?day.stops[stopIdx+1]:null;
+    const cLat=prev?.lat||next?.lat||curRegion?.lat||23;
+    const cLng=prev?.lng||next?.lng||curRegion?.lng||121;
+    /* 收集行程中已有的地名（排重） */
+    const usedNames=new Set();p.days.forEach(d=>d.stops.forEach(s=>usedNames.add(s.name)));
+    /* 搜尋替代 */
+    const q=isMeal?(region+' '+(removed.label.includes('早餐')?'早餐 早午餐':removed.label.includes('午')?'午餐 餐廳':removed.label.includes('晚')?'晚餐 餐廳':'餐廳')):(region+' 熱門景點 推薦');
+    try{
+      const r=await fetch('https://places.googleapis.com/v1/places:searchText',{method:'POST',
+        headers:{'Content-Type':'application/json','X-Goog-Api-Key':apiKey,'X-Goog-FieldMask':FM},
+        body:JSON.stringify({textQuery:q,maxResultCount:10,languageCode:_lang==='id'?'id':'zh-TW',
+          locationBias:{circle:{center:{latitude:cLat,longitude:cLng},radius:10000}}})});
+      if(r.ok){
+        const d=await r.json();const candidates=(d.places||[]).map(pl=>parseP(pl,'auto')).filter(pl=>!usedNames.has(pl.n)&&pl.r>=3.5);
+        /* 找最近的 */
+        let best=null,bd=1e9;candidates.forEach(c=>{const dist=hDist(cLat,cLng,c.lat,c.lng);if(dist<bd){bd=dist;best=c}});
+        if(best){
+          const newStop={time:removed.time,name:best.n,address:best.a||'',type:isSpot?'attraction':'food',tel:best.tel||'',lat:best.lat,lng:best.lng,mapsUrl:best.mapsUrl,label:removed.label,commute:0,rating:best.r,rc:best.rc,parking:best.parking||null};
+          day.stops.splice(stopIdx,1,newStop);
+        }else{day.stops.splice(stopIdx,1)}
+      }else{day.stops.splice(stopIdx,1)}
+    }catch{day.stops.splice(stopIdx,1)}
+    /* 重算交通時間 */
+    const np=await addRealTimesToPlan(apiKey,p,plan.transId||'car');
+    np._v=2;setPlan(np);try{localStorage.setItem('tw_plan',JSON.stringify(np))}catch{}
+  };
   const geolocate=()=>{if(!navigator.geolocation){setGeoMsg("不支援定位");return}setGeoLoading(true);setGeoMsg("");navigator.geolocation.getCurrentPosition(pos=>{const lat=pos.coords.latitude,lng=pos.coords.longitude;let bestC=COUNTRIES[0],bestR=COUNTRIES[0].regions[0],minD=1e9;COUNTRIES.forEach(c=>c.regions.forEach(r=>{const d=hDist(lat,lng,r.lat,r.lng);if(d<minD){minD=d;bestC=c;bestR=r}}));setUserLoc({lat,lng,region:bestR.n});setCountry(bestC.id);setRegion(bestR.n);setGeoLoading(false);setGeoMsg('📍 '+bestC.f+' '+bestR.n)},()=>{setGeoLoading(false);setGeoMsg("定位失敗")},{timeout:15000,enableHighAccuracy:true,maximumAge:0})};
 
   /* ========== 選國家 ========== */
@@ -873,7 +916,7 @@ function App(){
           {/* 兩個按鈕 */}
           <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
             {/* 自動推薦 */}
-            <button disabled={autoLoading} onClick={async()=>{if(!curRegion||!apiKey)return;setAutoLoading(true);try{const ds=await autoRecommend(apiKey,curRegion.lat,curRegion.lng,region,days,transport);let p={title:curCountry.f+' '+region+' '+days+'日遊',days:ds,gm:curT.gm,auto:true,_v:2};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}}catch(e){console.error(e)}setAutoLoading(false)}} style={{padding:"14px 32px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",display:"inline-flex",alignItems:"center",gap:8,width:"100%",maxWidth:320,justifyContent:"center"}}>
+            <button disabled={autoLoading} onClick={async()=>{if(!curRegion||!apiKey)return;setAutoLoading(true);try{const uL=userLoc&&userLoc.region===region;const sLat=uL?userLoc.lat:curRegion.lat;const sLng=uL?userLoc.lng:curRegion.lng;const ds=await autoRecommend(apiKey,sLat,sLng,region,days,transport);let p={title:curCountry.f+' '+region+' '+days+'日遊',days:ds,gm:curT.gm,auto:true,_v:2};p=await addParkingToPlan(apiKey,p);p=await addRealTimesToPlan(apiKey,p,transport);setPlan(p);try{localStorage.setItem('tw_plan',JSON.stringify(p))}catch{}}catch(e){console.error(e)}setAutoLoading(false)}} style={{padding:"14px 32px",borderRadius:14,fontSize:15,fontWeight:700,color:"#fff",background:"linear-gradient(135deg,#f59e0b,#d97706)",border:"none",display:"inline-flex",alignItems:"center",gap:8,width:"100%",maxWidth:320,justifyContent:"center"}}>
               {autoLoading?<span style={{width:16,height:16,border:"2px solid rgba(255,255,255,.3)",borderTopColor:"#fff",borderRadius:"50%",animation:"spin 1s linear infinite"}}/>:<Ico d={I.zap} s={16} f="white" c="white"/>}{autoLoading?tr("loading"):tr("autoRec")+" "+days+" "+tr("autoRecN")}
             </button>
             <p style={{fontSize:10,color:"#555",textAlign:"center"}}>{tr("autoRecDesc")}</p>
@@ -915,7 +958,11 @@ function App(){
                   <div style={{width:34,height:34,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,background:s.label?.includes("早餐")?"rgba(245,158,11,.15)":s.label?.includes("午餐")?"rgba(59,130,246,.15)":s.label?.includes("晚餐")?"rgba(168,85,247,.15)":s.label?.includes("住宿")?"rgba(99,102,241,.15)":"rgba(16,185,129,.1)",border:"2px solid "+(s.label?.includes("餐")?"rgba(245,158,11,.3)":s.label?.includes("住宿")?"rgba(99,102,241,.3)":"rgba(16,185,129,.2)"),marginTop:4}}>{s.label?.includes("早餐")?"🌅":s.label?.includes("午餐")?"🍜":s.label?.includes("晚餐")?"🌙":s.label?.includes("住宿")?"🏨":"🏛"}</div>
                 </div>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}><p style={{fontWeight:800,fontSize:16}}>{s.name}</p>{s.label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,.05)",color:"#888",fontWeight:600}}>{s.label}</span>}</div>
+                  <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+                    <p style={{fontWeight:800,fontSize:16,flex:1,minWidth:0}}>{s.name}</p>
+                    {s.label&&<span style={{fontSize:10,padding:"2px 8px",borderRadius:6,background:"rgba(255,255,255,.05)",color:"#888",fontWeight:600}}>{s.label}</span>}
+                    <button onClick={()=>removeStop(day.day-1,i)} style={{padding:"3px 6px",borderRadius:6,fontSize:9,color:"#ef4444",background:"rgba(239,68,68,.08)",border:"1px solid rgba(239,68,68,.15)",flexShrink:0,cursor:"pointer"}}>🔄 換</button>
+                  </div>
                   {s.address&&<p style={{fontSize:12,color:"#666",marginTop:3}}>{s.address}</p>}
                   {s.rating>0&&<div style={{display:"flex",alignItems:"center",gap:4,marginTop:3}}><span style={{fontSize:12,color:"#fbbf24",fontWeight:700}}>★ {s.rating}</span>{s.rc>0&&<span style={{fontSize:11,color:"#555"}}>({s.rc})</span>}</div>}
                   <div style={{display:"flex",gap:5,marginTop:8,flexWrap:"wrap"}}>
