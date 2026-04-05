@@ -438,13 +438,21 @@ function Setup({onDone}){
     if(u&&db){setLoadingKey(true);
       /* 存基本資料 */
       db.collection("users").doc(u.uid).set({email:u.email||"",name:u.displayName||"",lastLogin:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{});
-      /* 自動註冊白名單（如果不存在就建立，預設 enabled） */
-      db.collection("whitelist").doc(u.uid).set({email:u.email||'',name:u.displayName||'',lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).then(()=>{
-        db.collection("whitelist").doc(u.uid).get().then(wDoc=>{
-          if(wDoc.exists&&wDoc.data().enabled===undefined)db.collection("whitelist").doc(u.uid).update({enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{})
-        })
-      }).catch(()=>{});
-      /* 查後台：共享 Key 是否啟用 + 此用戶是否有權限 */
+      /* 自動註冊白名單 — 一次寫完所有欄位 */
+      const wlRef=db.collection("whitelist").doc(u.uid);
+      wlRef.get().then(wDoc=>{
+        if(!wDoc.exists){
+          return wlRef.set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp(),lastSeen:firebase.firestore.FieldValue.serverTimestamp()})
+        }else{
+          const d=wDoc.data();const upd={email:u.email||'',name:u.displayName||'',lastSeen:firebase.firestore.FieldValue.serverTimestamp()};
+          if(!d.addedAt)upd.addedAt=firebase.firestore.FieldValue.serverTimestamp();
+          if(d.enabled===undefined)upd.enabled=true;
+          return wlRef.update(upd)
+        }
+      }).catch(()=>{
+        wlRef.set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp(),lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{})
+      }).finally(()=>{
+      /* 白名單寫完後才查共享 Key */
       Promise.all([
         db.collection("admin").doc("config").get(),
         db.collection("whitelist").doc(u.uid).get()
@@ -475,6 +483,7 @@ function Setup({onDone}){
         /* Firestore 失敗 fallback：用本地 Key */
         const lk=getK();if(lk){setKey(lk);hashKey(lk).then(g=>{saveK(lk);saveG(g);onDone(lk,g)})}
         else setLoadingKey(false);
+      });
       });
     }
   })},[]);
@@ -764,7 +773,15 @@ function App(){
   const curRegion=curCountry?.regions.find(r=>r.n===region);
 
   useEffect(()=>{if(apiKey&&!groupId)hashKey(apiKey).then(g=>{saveG(g);setGroupId(g)})},[apiKey,groupId]);
-  useEffect(()=>{if(!fbOK){setAuthChecked(true);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthChecked(true);if(u&&db){db.collection("checkins").doc(u.uid).get().then(d=>{if(d.exists)setCheckins(d.data().regions||{})});db.collection("history").where("uid","==",u.uid).where("gid","==",groupId).orderBy("ts","desc").limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{db.collection("history").where("uid","==",u.uid).limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{})})}})},[groupId]);
+  useEffect(()=>{if(!fbOK){setAuthChecked(true);return}return auth.onAuthStateChanged(u=>{setUser(u);setAuthChecked(true);if(u&&db){
+    /* === 白名單註冊（每次登入都執行，不依賴 Setup） === */
+    const wlRef=db.collection("whitelist").doc(u.uid);
+    wlRef.get().then(wDoc=>{
+      if(!wDoc.exists){wlRef.set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp(),lastSeen:firebase.firestore.FieldValue.serverTimestamp()}).catch(()=>{})}
+      else{const d=wDoc.data();const upd={email:u.email||'',name:u.displayName||'',lastSeen:firebase.firestore.FieldValue.serverTimestamp()};if(!d.addedAt)upd.addedAt=firebase.firestore.FieldValue.serverTimestamp();if(d.enabled===undefined)upd.enabled=true;wlRef.update(upd).catch(()=>{})}
+    }).catch(()=>{wlRef.set({email:u.email||'',name:u.displayName||'',enabled:true,addedAt:firebase.firestore.FieldValue.serverTimestamp(),lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(()=>{})});
+    /* === 載入打卡記錄 === */
+    db.collection("checkins").doc(u.uid).get().then(d=>{if(d.exists)setCheckins(d.data().regions||{})});db.collection("history").where("uid","==",u.uid).where("gid","==",groupId).orderBy("ts","desc").limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{db.collection("history").where("uid","==",u.uid).limit(200).get().then(s=>{const l=[];s.forEach(d=>l.push({id:d.id,...d.data()}));setHistory(l)}).catch(()=>{})})}})},[groupId]);
 
   /* Online presence */
   useEffect(()=>{if(!fbOK||!user||!db||!groupId||!ready)return;const ref=db.collection("online").doc(user.uid);if(sharePos){ref.set({uid:user.uid,name:user.displayName||"",photo:user.photoURL||"",lat:userLoc?.lat||0,lng:userLoc?.lng||0,gid:groupId,ts:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})}else{ref.delete().catch(()=>{})}return()=>{ref.delete().catch(()=>{})}},[user,groupId,ready,sharePos,userLoc]);
