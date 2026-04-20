@@ -677,6 +677,11 @@ function PlanMap({apiKey,stops,transId}){
       if(path.length)mapRef.current.fitBounds(bounds,{top:40,bottom:40,left:20,right:20});
     };
     if(!mapRef.current){
+      if(!window.google?.maps){
+        const wait=setInterval(()=>{if(window.google?.maps){clearInterval(wait);
+          mapRef.current=new window.google.maps.Map(ref.current,{zoom:13,center:{lat:stops[0]?.lat||23,lng:stops[0]?.lng||121},mapTypeId:'roadmap',disableDefaultUI:true,zoomControl:true,styles:[{elementType:'geometry',stylers:[{color:'#1d2c4d'}]},{elementType:'labels.text.fill',stylers:[{color:'#8ec3b9'}]},{elementType:'labels.text.stroke',stylers:[{color:'#1a3646'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#304a7d'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#17263c'}]}]});
+          init()}},200);return;
+      }
       mapRef.current=new window.google.maps.Map(ref.current,{zoom:13,center:{lat:stops[0]?.lat||23,lng:stops[0]?.lng||121},mapTypeId:'roadmap',disableDefaultUI:true,zoomControl:true,styles:[{elementType:'geometry',stylers:[{color:'#1d2c4d'}]},{elementType:'labels.text.fill',stylers:[{color:'#8ec3b9'}]},{elementType:'labels.text.stroke',stylers:[{color:'#1a3646'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#304a7d'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#17263c'}]}]});
       init();
     }else init();
